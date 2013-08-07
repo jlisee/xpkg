@@ -23,15 +23,15 @@ def main():
         cur_var = os.environ.get(varname, None)
 
         if cur_var:
-            os.environ[varname] = '%s;%s' % (varpath, cur_var)
+            os.environ[varname] = cur_var + os.pathsep + varpath
         else:
             os.environ[varname] = varpath
 
-    # Setup up the PS1
+    # Setup up the PS1 (this doesn't work)
     os.environ['PS1'] = '(xpm) \u@\h:\w\$'
 
     # Step into shell
-    print os.execvp('bash', ['bash'])
+    os.execvp('bash', ['bash'])
 
 if __name__ == '__main__':
     sys.exit(main())
