@@ -10,7 +10,7 @@ import urllib
 from contextlib import contextmanager
 
 
-def shellcmd(cmd, echo=True, stream=True):
+def shellcmd(cmd, echo=True, stream=True, shell=True):
     """
     Run 'cmd' in the shell and return its standard out.
     """
@@ -18,13 +18,13 @@ def shellcmd(cmd, echo=True, stream=True):
     if echo:
         print '[cmd] {0}'.format(cmd)
 
-    if stream:
+    if stream and echo:
         out = None
 
         subprocess.check_call(cmd, stderr=sys.stderr, stdout=sys.stdout,
-                              shell=True)
+                              shell=shell)
     else:
-        out = subprocess.check_output(cmd, stderr=sys.stderr, shell=True)
+        out = subprocess.check_output(cmd, stderr=sys.stderr, shell=shell)
 
         if echo:
             print out
@@ -96,6 +96,15 @@ def unpack_tarball(tar_url, extract_path='.'):
     return os.path.join(extract_path, unpack_dir)
 
 
+def make_tarball(output_filename, source_dir):
+    """
+    Target up the given directory.
+    """
+
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(source_dir, arcname=os.path.basename(source_dir))
+
+
 @contextmanager
 def cd(new_dir):
     """
@@ -118,3 +127,19 @@ def cd(new_dir):
     finally:
         # Return to current directory
         os.chdir(cwd)
+
+
+def template_file(source_path, dest_path, args):
+    """
+    Use basic python string interpolation to template file.
+    """
+
+    # Read file
+    text = open(source_path).read()
+
+    # Transform contents
+    output = text % args
+
+    # Write out file
+    with open(dest_path, 'w') as f:
+        f.write(output)
