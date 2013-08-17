@@ -163,3 +163,12 @@ def list_files(path):
 
     # Return the sorted results
     return sorted(results)
+
+
+def ensure_dir(path):
+    """
+    Make sure a given directory exists
+    """
+
+    if not os.path.exists(path):
+        os.makedirs(path)

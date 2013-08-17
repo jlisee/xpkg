@@ -16,10 +16,27 @@ root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
 
 # Project imports
 from xpm import util
-
+from tests import build_tree
 
 
 class FullTests(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Sets up a little test XPM environment
+        """
+        cls.repo_dir = tempfile.mkdtemp(suffix = '-testing-xpm-repo')
+
+        build_tree.create_test_repo(cls.repo_dir)
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        Destroys our test xpm environment
+        """
+        if os.path.exists(cls.repo_dir):
+           shutil.rmtree(cls.repo_dir)
 
     def setUp(self):
         # Create temp dir
@@ -53,43 +70,12 @@ class FullTests(unittest.TestCase):
 
 
     def test_everything(self):
-        # Package directory
-        hello_dir = os.path.join(root_dir, 'tests', 'hello')
-
-        tar_path = os.path.join(self.work_dir, 'hello.tar.gz')
-
-        util.make_tarball(tar_path, hello_dir)
-
-        # Get the hash
-        md5sum = util.hash_file(open(tar_path), hashlib.md5)
-
-        # Template the package file
-        source_xdp = os.path.join(hello_dir, 'hello.xpd.pyt')
-
-        package_xpd = os.path.join(self.work_dir, 'hello.xpd')
-
-        args = {
-            'filehash' : md5sum,
-            'filepath' : tar_path,
-            # These are not being modified by us
-            'prefix' : '%(prefix)s',
-            'jobs' : '%(jobs)s',
-        }
-
-        util.template_file(source_xdp, package_xpd, args)
-
-        # Create our output directory
+        # Get the paths to the env and the other versions
         env_dir = os.path.join(self.work_dir, 'env')
+        package_xpd = os.path.join(self.repo_dir, 'tree', 'hello.xpd')
 
         # Run the install
-        cmd = [
-            os.path.join(root_dir, 'xpm'),
-            'install',
-            package_xpd,
-            env_dir
-        ]
-
-        util.shellcmd(cmd, shell=False)
+        self._xpm_cmd(env_dir, ['install', package_xpd])
 
         # Run our program to make sure it works
         hello_bin = os.path.join(env_dir, 'bin', 'hello')
