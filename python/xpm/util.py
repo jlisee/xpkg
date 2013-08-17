@@ -172,3 +172,12 @@ def ensure_dir(path):
 
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def touch(path, times=None):
+    """
+    Create the given file if it doesn't exist, and if does update access times.
+    """
+
+    with file(path, 'a'):
+        os.utime(path, times)
