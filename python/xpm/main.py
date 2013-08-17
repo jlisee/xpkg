@@ -12,10 +12,17 @@ from xpm import core
 
 def install(args):
     """
-    Installs a given package
+    Installs a given package.
     """
     core.install(args.path, os.path.abspath(args.root))
 
+
+def remove(args):
+    """
+    Remove the desired package.
+    """
+
+    core.remove(args.name, os.path.abspath(args.root))
 
 def jump(args):
     """
@@ -36,6 +43,7 @@ def info(args):
     # Make sure we have a package database
     if not os.path.exists(env_dir):
         print 'No XPM package DB found in root "%s"' % env_dir
+        return
 
     # Load the package database
     pdb = core.PackageDatabase(env_dir)
@@ -44,7 +52,7 @@ def info(args):
     info = pdb.get_info(package_name)
 
     if info:
-        print 'Package %s at version %s' % (package_name, info)
+        print 'Package %s at version %s' % (package_name, info['version'])
     else:
         print 'Package %s not installed.' % package_name
 
@@ -66,6 +74,11 @@ def main(argv = None):
     parser_i.add_argument('path', type=str, help='YAML install file')
     parser_i.add_argument('root', type=str, help='Root directory')
     parser_i.set_defaults(func=install)
+
+    parser_i = subparsers.add_parser('remove', help=remove.__doc__)
+    parser_i.add_argument('name', type=str, help='Name of package')
+    parser_i.add_argument('root', type=str, help='Root directory')
+    parser_i.set_defaults(func=remove)
 
     parser_i = subparsers.add_parser('info', help=info.__doc__)
     parser_i.add_argument('name', type=str, help='Name of package')

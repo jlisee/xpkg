@@ -65,13 +65,25 @@ class PackageDatabase(object):
             yaml.dump(self._db, f)
 
 
-    def mark_installed(self, name, version):
+    def mark_installed(self, name, info):
         """
         Marks the current package installed
         """
 
         # Mark package with the current installed version
-        self._db[name] = version
+        self._db[name] = info
+
+        # Save the data to disk
+        self._save_db()
+
+
+    def mark_removed(self, name):
+        """
+        Marks the current package installed
+        """
+
+        # Mark package with the current installed version
+        del self._db[name]
 
         # Save the data to disk
         self._save_db()
@@ -195,11 +207,59 @@ def install(yaml_path, env_dir):
         util.shellcmd(cmd)
 
         # Install
+        pre_files = set(util.list_files(env_dir))
+
         util.shellcmd(data['install'])
+
+        post_files = set(util.list_files(env_dir))
+
+        new_files = post_files - pre_files
 
     # Mark the package installed
     pdb = PackageDatabase(env_dir)
-    pdb.mark_installed(data['name'], data['version'])
+
+    info = {
+        'version' : data['version'],
+        'files' : list(new_files),
+    }
+
+    pdb.mark_installed(data['name'], info)
+
+
+def remove(name, env_dir):
+    """
+    Removes the given package from the environment.
+    """
+
+    # Make sure we have a package database
+    if not os.path.exists(env_dir):
+        print 'No XPM package DB found in root "%s"' % env_dir
+        return
+
+    # Load the package database
+    pdb = PackageDatabase(env_dir)
+
+    # Remove all the files from the db
+    info = pdb.get_info(name)
+
+    if info:
+        # Iterate in reverse order so that we get the files before the
+        # directories
+        for f in sorted(info['files'], reverse=True):
+            full_path = os.path.join(env_dir, f)
+            if os.path.exists(full_path):
+                if os.path.isdir(full_path):
+                    os.rmdir(full_path)
+                else:
+                    os.remove(full_path)
+            else:
+                # TODO: Log a warning here
+                print 'WARNING: package %s file not found: %s' % (name, full_path)
+
+        # Remove the package from the database
+        pdb.mark_removed(name)
+    else:
+        print 'Package %s not installed.' % package_name
 
 
 def jump(env_dir):

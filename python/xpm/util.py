@@ -143,3 +143,23 @@ def template_file(source_path, dest_path, args):
     # Write out file
     with open(dest_path, 'w') as f:
         f.write(output)
+
+
+def list_files(path):
+    """
+    Return a list of all files and directories in the given path, recursively.
+    All paths are relative to the given path.
+    """
+
+    # Walk directory getting all paths
+    raw_results = []
+
+    for root, dirs, files in os.walk(path):
+        raw_results.extend([os.path.join(root, d) for d in dirs])
+        raw_results.extend([os.path.join(root, f) for f in files])
+
+    # Trim the prefix path from the results
+    results = [os.path.relpath(r, path) for r in raw_results]
+
+    # Return the sorted results
+    return sorted(results)
