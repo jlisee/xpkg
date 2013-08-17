@@ -1,5 +1,16 @@
-#! /bin/bash
+#! /usr/bin/env python
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+import os
+import sys
 
-PYTHONPATH=$SCRIPT_DIR/python:$PYTHONPATH python -m xpm.main $*
+# Get current directory
+cur_dir, _ = os.path.split(__file__)
+
+# Modify the python path
+python_path = os.environ.get('PYTHONPATH', '')
+python_dir = os.path.join(cur_dir, 'python')
+
+os.environ['PYTHONPATH'] =  python_dir + os.pathsep + python_path
+
+# Run our python program
+os.execvp(sys.executable, [sys.executable, '-m', 'xpm.main'] + sys.argv[1:])
