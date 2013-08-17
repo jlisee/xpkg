@@ -43,6 +43,15 @@ class FullTests(unittest.TestCase):
         return util.shellcmd(cmd, shell=False, stream=False)
 
 
+    def test_no_env(self):
+
+        env_dir = os.path.join(self.work_dir, 'env')
+
+        output = self._xpm_cmd(env_dir, ['list'])
+
+        self.assertRegexpMatches(output, 'No XPM package DB found in root.*')
+
+
     def test_everything(self):
         # Package directory
         hello_dir = os.path.join(root_dir, 'tests', 'hello')
