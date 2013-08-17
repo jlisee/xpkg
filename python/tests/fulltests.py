@@ -12,9 +12,12 @@ import unittest
 import hashlib
 
 cur_dir, _ = os.path.split(__file__)
+root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
 
 # Project imports
 from xpm import util
+
+
 
 class FullTests(unittest.TestCase):
 
@@ -30,10 +33,18 @@ class FullTests(unittest.TestCase):
            shutil.rmtree(self.work_dir)
 
 
+    def _xpm_cmd(self, env_dir, args):
+        """
+        Run XPM command and return the output.
+        """
+
+        cmd = [os.path.join(root_dir, 'xpm')] + args + [env_dir]
+
+        return util.shellcmd(cmd, shell=False, stream=False)
+
+
     def test_everything(self):
         # Package directory
-        root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
-
         hello_dir = os.path.join(root_dir, 'tests', 'hello')
 
         tar_path = os.path.join(self.work_dir, 'hello.tar.gz')
@@ -79,17 +90,14 @@ class FullTests(unittest.TestCase):
         self.assertEqual('Hello, world!\n', output)
 
         # Make sure the package is marked installed
-        cmd = [
-            os.path.join(root_dir, 'xpm'),
-            'info',
-            'hello',
-            env_dir
-        ]
-
-        output = util.shellcmd(cmd, shell=False, stream=False)
+        output = self._xpm_cmd(env_dir, ['info', 'hello'])
 
         self.assertEqual('Package hello at version 1.0.0\n', output)
 
+        # Un-install the package
+        self._xpm_cmd(env_dir, ['remove', 'hello'])
+
+        self.assertFalse(os.path.exists(hello_bin))
 
 if __name__ == '__main__':
     unittest.main()
