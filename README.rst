@@ -24,6 +24,7 @@ Design
 Concepts:
 
  - Environment: directory which supports your application
+   - contains a set of installed packages
    - structured like a linux/unix tree
    - you "jump" into the environment
 

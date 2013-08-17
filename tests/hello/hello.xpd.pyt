@@ -1,4 +1,5 @@
 name: hello
+version: 1.0.0
 
 files:
   md5-%(filehash)s:

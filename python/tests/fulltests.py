@@ -29,6 +29,7 @@ class FullTests(unittest.TestCase):
         if os.path.exists(self.work_dir):
            shutil.rmtree(self.work_dir)
 
+
     def test_everything(self):
         # Package directory
         root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
@@ -76,6 +77,19 @@ class FullTests(unittest.TestCase):
         output = util.shellcmd(hello_bin, echo=False)
 
         self.assertEqual('Hello, world!\n', output)
+
+        # Make sure the package is marked installed
+        cmd = [
+            os.path.join(root_dir, 'xpm'),
+            'info',
+            'hello',
+            env_dir
+        ]
+
+        output = util.shellcmd(cmd, shell=False, stream=False)
+
+        self.assertEqual('Package hello at version 1.0.0\n', output)
+
 
 if __name__ == '__main__':
     unittest.main()

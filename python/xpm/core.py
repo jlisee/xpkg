@@ -10,6 +10,89 @@ import shutil
 # Project Imports
 from xpm import util
 
+class PackageDatabase(object):
+    """
+    Manages the on disk database of packages.
+    """
+
+    def __init__(self, env_dir):
+
+        # Package db location
+        self._db_dir = os.path.join(env_dir, 'etc', 'xpm')
+        self._db_path = os.path.join(self._db_dir, 'db.yml')
+
+        # Create package database if it doesn't exist
+        if not os.path.exists(self._db_path):
+            self._create_db()
+
+        # Load database
+        self._load_db()
+
+
+    def _create_db(self):
+        """
+        Create database
+        """
+
+        # Create directory
+        if not os.path.exists(self._db_dir):
+            os.makedirs(self._db_dir)
+
+        # Create empty db file if needed
+        if not os.path.exists(self._db_path):
+            with open(self._db_path, 'w') as f:
+                f.write('')
+
+
+    def _load_db(self):
+        """
+        Write DB to disk.
+        """
+
+        self._db = yaml.load(open(self._db_path))
+
+        # Handle the empty database case
+        if self._db is None:
+            self._db = {}
+
+
+    def _save_db(self):
+        """
+        Save DB to disk.
+        """
+
+        with open(self._db_path, 'w') as f:
+            yaml.dump(self._db, f)
+
+
+    def mark_installed(self, name, version):
+        """
+        Marks the current package installed
+        """
+
+        # Mark package with the current installed version
+        self._db[name] = version
+
+        # Save the data to disk
+        self._save_db()
+
+
+    def get_packages(self):
+        """
+        Returns an iterator of (package, version) pairs
+        """
+
+        return self._db.iterkeys()
+
+
+    def get_info(self, name):
+        """
+        Return the information on the installed package, returns None if it
+        doesn't exist.
+        """
+
+        return self._db.get(name, None)
+
 
 def fetch_file(filehash, url):
     # Make sure cache exists
@@ -115,6 +198,8 @@ def install(yaml_path, env_dir):
         util.shellcmd(data['install'])
 
     # Mark the package installed
+    pdb = PackageDatabase(env_dir)
+    pdb.mark_installed(data['name'], data['version'])
 
 
 def jump(env_dir):

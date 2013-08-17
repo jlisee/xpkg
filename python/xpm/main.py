@@ -24,6 +24,31 @@ def jump(args):
     core.jump(os.path.abspath(args.root))
 
 
+def info(args):
+    """
+    Get information on the given package.
+    """
+
+    # Parse argument
+    package_name = args.name
+    env_dir = os.path.abspath(args.root)
+
+    # Make sure we have a package database
+    if not os.path.exists(env_dir):
+        print 'No XPM package DB found in root "%s"' % env_dir
+
+    # Load the package database
+    pdb = core.PackageDatabase(env_dir)
+
+    # Grab the information
+    info = pdb.get_info(package_name)
+
+    if info:
+        print 'Package %s at version %s' % (package_name, info)
+    else:
+        print 'Package %s not installed.' % package_name
+
+
 def main(argv = None):
     if argv is None:
         argv = sys.argv
@@ -41,6 +66,12 @@ def main(argv = None):
     parser_i.add_argument('path', type=str, help='YAML install file')
     parser_i.add_argument('root', type=str, help='Root directory')
     parser_i.set_defaults(func=install)
+
+    parser_i = subparsers.add_parser('info', help=info.__doc__)
+    parser_i.add_argument('name', type=str, help='Name of package')
+    parser_i.add_argument('root', type=str, help='Root directory')
+    parser_i.set_defaults(func=info)
+
 
     # parse some argument lists
     args = parser.parse_args(argv[1:])
