@@ -14,7 +14,9 @@ def install(args):
     """
     Installs a given package.
     """
-    core.install(args.path, os.path.abspath(args.root))
+
+    env = core.Environment(os.path.abspath(args.root), create=True)
+    env.install(args.path)
 
 
 def remove(args):
@@ -22,13 +24,17 @@ def remove(args):
     Remove the desired package.
     """
 
-    core.remove(args.name, os.path.abspath(args.root))
+    env = core.Environment(os.path.abspath(args.root))
+    env.remove(args.name)
+
 
 def jump(args):
     """
     Jumps into an activated environment.
     """
-    core.jump(os.path.abspath(args.root))
+
+    env = core.Environment(os.path.abspath(args.root))
+    env.jump()
 
 
 def info(args):
@@ -40,16 +46,11 @@ def info(args):
     package_name = args.name
     env_dir = os.path.abspath(args.root)
 
-    # Make sure we have a package database
-    if not os.path.exists(env_dir):
-        print 'No XPM package DB found in root "%s"' % env_dir
-        return
-
     # Load the package database
-    pdb = core.PackageDatabase(env_dir)
+    env = core.Environment(env_dir)
 
     # Grab the information
-    info = pdb.get_info(package_name)
+    info = env._pdb.get_info(package_name)
 
     if info:
         print 'Package %s at version %s' % (package_name, info['version'])
@@ -65,15 +66,10 @@ def list_packages(args):
     # Parse argument
     env_dir = os.path.abspath(args.root)
 
-    # Make sure we have a package database
-    if not os.path.exists(env_dir):
-        print 'No XPM package DB found in root "%s"' % env_dir
-        return
-
     # List packages
-    pdb = core.PackageDatabase(env_dir)
+    env = core.Environment(env_dir)
 
-    for package, info in pdb.iter_packages():
+    for package, info in env._pdb.iter_packages():
         print '  %s - %s' % (package, info['version'])
 
 
@@ -115,4 +111,7 @@ def main(argv = None):
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except core.Exception as e:
+        print e
