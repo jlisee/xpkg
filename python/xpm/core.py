@@ -89,12 +89,13 @@ class PackageDatabase(object):
         self._save_db()
 
 
-    def get_packages(self):
+    def iter_packages(self):
         """
         Returns an iterator of (package, version) pairs
         """
 
-        return self._db.iterkeys()
+        for k in self._db.iteritems():
+            yield k
 
 
     def get_info(self, name):

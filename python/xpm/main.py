@@ -57,6 +57,26 @@ def info(args):
         print 'Package %s not installed.' % package_name
 
 
+def list_packages(args):
+    """
+    Lists all packages installed in environment
+    """
+
+    # Parse argument
+    env_dir = os.path.abspath(args.root)
+
+    # Make sure we have a package database
+    if not os.path.exists(env_dir):
+        print 'No XPM package DB found in root "%s"' % env_dir
+        return
+
+    # List packages
+    pdb = core.PackageDatabase(env_dir)
+
+    for package, info in pdb.iter_packages():
+        print '  %s - %s' % (package, info['version'])
+
+
 def main(argv = None):
     if argv is None:
         argv = sys.argv
@@ -85,6 +105,9 @@ def main(argv = None):
     parser_i.add_argument('root', type=str, help='Root directory')
     parser_i.set_defaults(func=info)
 
+    parser_i = subparsers.add_parser('list', help=list_packages.__doc__)
+    parser_i.add_argument('root', type=str, help='Root directory')
+    parser_i.set_defaults(func=list_packages)
 
     # parse some argument lists
     args = parser.parse_args(argv[1:])

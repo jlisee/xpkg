@@ -94,10 +94,16 @@ class FullTests(unittest.TestCase):
 
         self.assertEqual('Package hello at version 1.0.0\n', output)
 
+        # Get the package list
+        output = self._xpm_cmd(env_dir, ['list'])
+
+        self.assertEqual('  hello - 1.0.0\n', output)
+
         # Un-install the package
         self._xpm_cmd(env_dir, ['remove', 'hello'])
 
         self.assertFalse(os.path.exists(hello_bin))
+
 
 if __name__ == '__main__':
     unittest.main()
