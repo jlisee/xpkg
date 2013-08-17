@@ -10,6 +10,8 @@ import shutil
 # Project Imports
 from xpm import util
 
+xpm_root = 'XPM_ROOT'
+
 class Exception(BaseException):
     pass
 
@@ -272,7 +274,7 @@ class Environment(object):
             print 'Package %s not installed.' % package_name
 
 
-    def jump(self):
+    def jump(self, program='bash', args=[]):
         """
         Jump into the desired environment
         """
@@ -281,13 +283,14 @@ class Environment(object):
         env_paths = {
             'PATH' : os.path.join(self._env_dir, 'bin'),
             'LD_LIBRARY_PATH' : os.path.join(self._env_dir, 'lib'),
+            xpm_root : self._env_dir,
            }
 
         for varname, varpath in env_paths.iteritems():
             cur_var = os.environ.get(varname, None)
 
             if cur_var:
-                os.environ[varname] = cur_var + os.pathsep + varpath
+                os.environ[varname] = varpath + os.pathsep + cur_var
             else:
                 os.environ[varname] = varpath
 
@@ -295,4 +298,4 @@ class Environment(object):
         os.environ['PS1'] = '(xpm) \u@\h:\w\$'
 
         # Step into shell
-        os.execvp('bash', ['bash'])
+        os.execvp(program, [program] + args)

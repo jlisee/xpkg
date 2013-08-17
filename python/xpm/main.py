@@ -4,6 +4,7 @@
 
 import argparse
 import os
+import shlex
 import sys
 
 # Project Imports
@@ -34,7 +35,15 @@ def jump(args):
     """
 
     env = core.Environment(os.path.abspath(args.root))
-    env.jump()
+
+    # Parse the executable and it's arguments apart
+    parts = shlex.split(args.command)
+
+    program = parts[0]
+    pargs = parts[1:]
+
+    # Now lets run the command inside the environment
+    env.jump(program=program, args=pargs)
 
 
 def info(args):
@@ -84,6 +93,8 @@ def main(argv = None):
     # create the parser for the "jump""
     parser_j = subparsers.add_parser('jump', help='Jump into environment')
     parser_j.add_argument('root', type=str, help='Root directory')
+    parser_j.add_argument('-c','--command', type=str, help='Command to run',
+                          default='bash', dest='command')
     parser_j.set_defaults(func=jump)
 
     parser_i = subparsers.add_parser('install', help='Install from YAML file')

@@ -15,6 +15,7 @@ cur_dir, _ = os.path.split(__file__)
 root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
 
 # Project imports
+from xpm import core
 from xpm import util
 from tests import build_tree
 
@@ -65,9 +66,11 @@ class FullTests(unittest.TestCase):
         Run XPM command and return the output.
         """
 
+        # Setup arguments
         if env_dir is None:
             env_dir = self.env_dir
 
+        # Run command and return the results
         cmd = [os.path.join(root_dir, 'xpm')] + args + [env_dir]
 
         return util.shellcmd(cmd, shell=False, stream=False)
@@ -131,6 +134,41 @@ class FullTests(unittest.TestCase):
         hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
 
         self.assertFalse(os.path.exists(hello_bin))
+
+
+    def test_jump(self):
+        # Create and empty db files
+        db_dir = os.path.join(self.env_dir, 'etc', 'xpm',)
+        util.ensure_dir(db_dir)
+
+        db_path = os.path.join(db_dir, 'db.yml')
+        util.touch(db_path)
+
+        # Test ENV_ROOT
+        def get_var(varname):
+            py_command = 'python -c "import os; print os.environ[\'%s\']"' % varname
+
+            return self._xpm_cmd(['jump', '-c', py_command]).strip()
+
+        self.assertEquals(self.env_dir, get_var(core.xpm_root))
+
+        # Make sure PATH is set
+        path = get_var('PATH')
+        paths = path.split(os.pathsep)
+
+        bin_dir = os.path.join(self.env_dir, 'bin')
+
+        self.assertEqual(1, paths.count(bin_dir))
+        self.assertTrue(path.startswith(bin_dir))
+
+        # Make sure LD_LIBRARY_PATH is set
+        path = get_var('LD_LIBRARY_PATH')
+        paths = path.split(os.pathsep)
+
+        lib_dir = os.path.join(self.env_dir, 'lib')
+
+        self.assertEqual(1, paths.count(lib_dir))
+        self.assertTrue(path.startswith(lib_dir))
 
 
 if __name__ == '__main__':
