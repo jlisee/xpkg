@@ -34,8 +34,11 @@ class FullTests(unittest.TestCase):
 
         build_tree.create_test_repo(cls.repo_dir)
 
+        # Provide path to the package description tree
+        cls.tree_dir = os.path.join(cls.repo_dir, 'tree')
+
         # Provide a path to the xpd
-        cls.hello_xpd = os.path.join(cls.repo_dir, 'tree', 'hello.xpd')
+        cls.hello_xpd = os.path.join(cls.tree_dir, 'hello.xpd')
 
 
     @classmethod
@@ -128,6 +131,20 @@ class FullTests(unittest.TestCase):
         output = util.shellcmd(hello_bin, echo=False)
 
         self.assertEqual('Hello, world!\n', output)
+
+
+    def test_install_with_tree_flag(self):
+        """
+        Make sure we can install with the package tree.
+        """
+
+        # Run the install
+        self._xpm_cmd(['install', 'hello', '--tree', self.tree_dir])
+
+        # Run our program to make sure it works
+        hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
+
+        self.assertTrue(os.path.exists(hello_bin))
 
 
     def test_info(self):

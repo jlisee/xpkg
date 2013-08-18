@@ -162,7 +162,7 @@ class Environment(object):
     This class manages the local package environment.
     """
 
-    def __init__(self, env_dir=None, create=False):
+    def __init__(self, env_dir=None, create=False, tree_path=None):
 
         if env_dir is None:
             if xpm_root in os.environ:
@@ -180,14 +180,36 @@ class Environment(object):
         # If needed this will setup the empty enviornment
         self._pdb = PackageDatabase(self._env_dir)
 
+        # Setup the package tree to either load from the given path or return
+        # no packages
+        if tree_path:
+            self._tree = FilePackageTree(tree_path)
+        else:
+            self._tree = EmptyPackageTree()
 
-    def install(self, yaml_path):
+
+    def install(self, input_val):
+
+        # We either have a direct path, or have to lookup the name in the tree
+        if input_val.endswith('.xpd'):
+            xpd_data = util.load_xpd(input_val)
+        else:
+            # The input_val must be a package name so try to find the xpd
+            # path from the tree.
+            xpd_data = self._tree.lookup(input_val)
+
+            if xpd_data is None:
+                msg = "Cannot find description for package: %s" % input_val
+                raise Exception(msg)
+
+        # Do our install
+        self._install_xpd(xpd_data)
+
+
+    def _install_xpd(self, data):
         """
         Really basic install command
         """
-
-        # Load our file
-        data = yaml.load(open(yaml_path))
 
         # Create our temporary directory
         work_dir = tempfile.mkdtemp(suffix = '-xpm-' + data['name'])
@@ -308,3 +330,54 @@ class Environment(object):
 
         # Step into shell
         os.execvp(program, [program] + args)
+
+
+class EmptyPackageTree(object):
+    """
+    Package tree which has no packages in it.
+    """
+
+    def lookup(self, package):
+        return None
+
+
+class FilePackageTree(object):
+    """
+    Allows for named (and eventually versioned) lookup of packages from a
+    directory full of description.
+    """
+
+    def __init__(self, path):
+        # Holds are information
+        self._index = {}
+
+        # Make sure our path exists
+        if not os.path.exists(path):
+            raise Exception('Package tree path "%s" does not exist' % path)
+
+        # Get information on all the dicts found in the directory
+        for root, dirs, files in os.walk(path):
+            for file_name in files:
+                if file_name.endswith('.xpd'):
+
+                    # Load the description
+                    full_path = os.path.join(root, file_name)
+
+                    data = util.load_xpd(full_path)
+
+                    # Store the path in the index
+                    self._index[data['name']] = full_path
+
+
+    def lookup(self, package):
+        """
+        Returns the xpd data for the desired package, None if the package is
+        not present.
+        """
+
+        if package in self._index:
+            result = util.load_xpd(self._index[package])
+        else:
+            result = None
+
+        return result

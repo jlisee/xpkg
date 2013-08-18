@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tarfile
 import urllib
+import yaml
 
 from contextlib import contextmanager
 
@@ -181,3 +182,11 @@ def touch(path, times=None):
 
     with file(path, 'a'):
         os.utime(path, times)
+
+
+def load_xpd(path):
+    """
+    Loads the desired yaml file.
+    """
+
+    return yaml.load(open(path))
