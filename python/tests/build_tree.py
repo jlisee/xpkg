@@ -76,7 +76,7 @@ def main(argv = None):
     args = parser.parse_args(argv[1:])
 
     # Do our work!
-    create_test_repo(create_test_repo(os.path.abspath(args.dest)))
+    create_test_repo(os.path.abspath(args.dest))
 
 if __name__ == '__main__':
     sys.exit(main())
