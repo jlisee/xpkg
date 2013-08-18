@@ -157,6 +157,7 @@ def fetch_file(filehash, url):
 
     return cache_path
 
+
 class Environment(object):
     """
     This class manages the local package environment.
@@ -211,60 +212,10 @@ class Environment(object):
         Really basic install command
         """
 
-        # Create our temporary directory
-        work_dir = tempfile.mkdtemp(suffix = '-xpm-' + data['name'])
+        # Build and install the package
+        builder = PackageBuilder(data)
 
-        print 'Working in:',work_dir
-
-        # Download and unpack our files
-        for filehash, info in data['files'].iteritems():
-
-            # Fetch our file
-            download_path = fetch_file(filehash, info['url'])
-
-            # Unpack into directory
-            root_dir = util.unpack_tarball(download_path, work_dir)
-
-            # Move if needed
-            relative_path = info.get('location', None)
-
-            if relative_path:
-                dst_path = os.path.join(work_dir, relative_path)
-
-                print root_dir,'->',dst_path
-
-                shutil.move(root_dir, dst_path)
-
-        # Figure out which directory we need
-        dirs = os.listdir(work_dir)
-        if len(dirs) == 1:
-            build_dir = os.path.join(work_dir, dirs[0])
-        else:
-            build_dir = work_dir
-
-
-        with util.cd(build_dir):
-            # Configure if needed
-            if 'configure' in data:
-                raw_cmd = data['configure']
-
-                cmd = raw_cmd % {'prefix' : self._env_dir}
-
-                util.shellcmd(cmd)
-
-            # Build
-            raw_cmd = data['build']
-            cmd = raw_cmd % {'jobs' : '8'}
-            util.shellcmd(cmd)
-
-            # Install
-            pre_files = set(util.list_files(self._env_dir))
-
-            util.shellcmd(data['install'])
-
-            post_files = set(util.list_files(self._env_dir))
-
-            new_files = post_files - pre_files
+        new_files = builder.build(self._env_dir)
 
         # Mark the package installed
         info = {
@@ -381,3 +332,127 @@ class FilePackageTree(object):
             result = None
 
         return result
+
+
+class PackageBuilder(object):
+    """
+    Assuming all the dependency conditions for the XPD are met, this builds
+    and install the a package based on it's XPD into the target directory.
+    """
+
+    def __init__(self, package_xpd):
+        self._xpd = package_xpd
+        self._work_dir = None
+        self._target_dir = None
+
+
+    def build(self, target_dir):
+        """
+        Right now this just executes instructions inside the XPD, but in the
+        not presentfuture we can make this a little smarter.
+
+        It returns the paths of the files created in the target_dir relative
+        to the target dir itself.
+        """
+
+        # Create our temporary directory
+        self._work_dir = tempfile.mkdtemp(suffix = '-xpm-' + self._xpd['name'])
+
+        # TODO: LOG THIS
+        print 'Working in:',self._work_dir
+
+        self._target_dir = target_dir
+
+        try:
+            # Fetches and unpacks all the required sources for the package
+            self._get_sources()
+
+            # Determine what directory we have to do the build in
+            dirs = os.listdir(self._work_dir)
+            if len(dirs) == 1:
+                build_dir = os.path.join(self._work_dir, dirs[0])
+            else:
+                build_dir = self._work_dir
+
+            with util.cd(build_dir):
+                # Standard build configure install
+                self._configure()
+
+                self._build()
+
+                new_files = self._install()
+        finally:
+            # Make sure we cleanup after we are done
+            # Don't do this right now
+            #shutil.rmtree(self._work_dir)
+            pass
+
+        return new_files
+
+
+    def _get_sources(self):
+        """
+        Fetches and unpacks all the needed source files.
+        """
+
+        # Download and unpack our files
+        for filehash, info in self._xpd['files'].iteritems():
+
+            # Fetch our file
+            download_path = fetch_file(filehash, info['url'])
+
+            # Unpack into directory
+            root_dir = util.unpack_tarball(download_path, self._work_dir)
+
+            # Move if needed
+            relative_path = info.get('location', None)
+
+            if relative_path:
+                dst_path = os.path.join(self._work_dir, relative_path)
+
+                # TODO: LOG THIS
+                print root_dir,'->',dst_path
+
+                shutil.move(root_dir, dst_path)
+
+
+    def _configure(self):
+        """
+        Run a configure step for the package if it has one.
+        """
+
+        # Configure if needed
+        if 'configure' in self._xpd:
+            raw_cmd = self._xpd['configure']
+
+            cmd = raw_cmd % {'prefix' : self._target_dir}
+
+            util.shellcmd(cmd)
+
+
+    def _build(self):
+        """
+        Builds the desired package.
+        """
+
+        raw_cmd = self._xpd['build']
+
+        cmd = raw_cmd % {'jobs' : '8'}
+
+        util.shellcmd(cmd)
+
+
+    def _install(self):
+        """
+        Installs the package, keeping track of what files it creates.
+        """
+
+        pre_files = set(util.list_files(self._target_dir))
+
+        util.shellcmd(self._xpd['install'])
+
+        post_files = set(util.list_files(self._target_dir))
+
+        new_files = post_files - pre_files
+
+        return new_files
