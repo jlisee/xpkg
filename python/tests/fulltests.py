@@ -40,7 +40,6 @@ class FullTests(unittest.TestCase):
         # Provide a path to the xpd
         cls.hello_xpd = os.path.join(cls.tree_dir, 'hello.xpd')
 
-
     @classmethod
     def tearDownClass(cls):
         """
@@ -58,7 +57,7 @@ class FullTests(unittest.TestCase):
         # Save the env_dir
         self.env_dir = os.path.join(self.work_dir, 'env')
 
-        os.environ['MARK'] = '0'
+        self.hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
 
         # Save the environment
         self._env = copy.deepcopy(os.environ)
@@ -126,9 +125,7 @@ class FullTests(unittest.TestCase):
         self._xpm_cmd(['install', self.hello_xpd])
 
         # Run our program to make sure it works
-        hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
-
-        output = util.shellcmd(hello_bin, echo=False)
+        output = util.shellcmd(self.hello_bin, echo=False)
 
         self.assertEqual('Hello, world!\n', output)
 
@@ -142,9 +139,7 @@ class FullTests(unittest.TestCase):
         self._xpm_cmd(['install', 'hello', '--tree', self.tree_dir])
 
         # Run our program to make sure it works
-        hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
-
-        self.assertTrue(os.path.exists(hello_bin))
+        self.assertTrue(os.path.exists(self.hello_bin))
 
 
     def test_info(self):
@@ -186,9 +181,7 @@ class FullTests(unittest.TestCase):
         # Un-install the package
         self._xpm_cmd(['remove', 'hello'])
 
-        hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
-
-        self.assertFalse(os.path.exists(hello_bin))
+        self.assertFalse(os.path.exists(self.hello_bin))
 
 
     def test_jump(self):
@@ -224,6 +217,33 @@ class FullTests(unittest.TestCase):
 
         self.assertEqual(1, paths.count(lib_dir))
         self.assertTrue(path.startswith(lib_dir))
+
+
+    def test_build(self):
+        # Create a directory to store our package
+        pkg_dir = os.path.join(self.work_dir, 'pkgs')
+        util.ensure_dir(pkg_dir)
+
+        # Build our package
+        self._xpm_cmd(['build', self.hello_xpd, '--dest', pkg_dir])
+
+        # Get the path to the created package
+        new_files = os.listdir(pkg_dir)
+
+        self.assertEqual(1, len(new_files))
+
+        pkg_path = os.path.join(pkg_dir, new_files[0])
+
+        # Install the package
+        self._xpm_cmd(['install', pkg_path])
+
+        # Make sure the package is in the info
+        output = self._xpm_cmd(['info', 'hello'], )
+
+        self.assertEqual('Package hello at version 1.0.0\n', output)
+
+        # Make sure the actual binary exists
+        self.assertTrue(os.path.exists(self.hello_bin))
 
 
 if __name__ == '__main__':
