@@ -9,6 +9,7 @@ import sys
 
 # Project Imports
 from xpm import core
+from xpm import util
 
 
 def install(args):
@@ -33,6 +34,18 @@ def remove(args):
 
     env = core.Environment(_get_env_dir(args.root))
     env.remove(args.name)
+
+
+def build(args):
+    """
+    Create the binary for of the desired package.
+    """
+
+    builder = core.BinaryPackageBuilder(util.load_xpd(args.path))
+
+    res = builder.build(args.dest)
+
+    print 'Package in:', res
 
 
 def jump(args):
@@ -124,6 +137,13 @@ def main(argv = None):
                           help='Package description tree')
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=install)
+
+    parser_i = subparsers.add_parser('build', help=build.__doc__)
+    #parser_i.add_argument(*root_args, **root_kwargs)
+    parser_i.add_argument('path', type=str, help='YAML install file')
+    parser_i.add_argument('-d','--dest', type=str, default='.',
+                          help='Where to place the package')
+    parser_i.set_defaults(func=build)
 
     parser_i = subparsers.add_parser('remove', help=remove.__doc__)
     parser_i.add_argument('name', type=str, help='Name of package')

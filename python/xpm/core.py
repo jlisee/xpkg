@@ -1,11 +1,13 @@
 # Author: Joseph Lisee <jlisee@gmail.com>
 
 # Python Imports
-import os
 import hashlib
-import yaml
-import tempfile
+import os
+import platform
 import shutil
+import tarfile
+import tempfile
+import yaml
 
 # Project Imports
 from xpm import util
@@ -191,9 +193,15 @@ class Environment(object):
 
     def install(self, input_val):
 
-        # We either have a direct path, or have to lookup the name in the tree
-        if input_val.endswith('.xpd'):
+        if input_val.endswith('.xpa'):
+            # We have a binary package so install that
+            self._install_xpa(input_val)
+
+        elif input_val.endswith('.xpd'):
+            # Path is an xpd file load that then install
             xpd_data = util.load_xpd(input_val)
+
+            self._install_xpd(xpd_data)
         else:
             # The input_val must be a package name so try to find the xpd
             # path from the tree.
@@ -203,27 +211,43 @@ class Environment(object):
                 msg = "Cannot find description for package: %s" % input_val
                 raise Exception(msg)
 
-        # Do our install
-        self._install_xpd(xpd_data)
+            # Do our install
+            self._install_xpd(xpd_data)
 
 
     def _install_xpd(self, data):
         """
-        Really basic install command
+        Builds package and directly installs it into the given environment.
         """
 
         # Build and install the package
         builder = PackageBuilder(data)
 
-        new_files = builder.build(self._env_dir)
-
-        # Mark the package installed
-        info = {
-            'version' : data['version'],
-            'files' : list(new_files),
-        }
+        info = builder.build(self._env_dir)
 
         self._pdb.mark_installed(data['name'], info)
+
+
+    def _install_xpa(self, path):
+        """
+        Install the given binary XPM package.
+        """
+
+        # Open up the tar file
+        with tarfile.open(path) as tar:
+
+            # Pull out and parse the metadata
+            info = yaml.load(tar.extractfile('xpm.yml'))
+
+            # Install the files into the target environment location
+            file_tar = tar.extractfile('files.tar.gz')
+
+            with tarfile.open(fileobj = file_tar) as file_tar:
+
+                file_tar.extractall(self._env_dir)
+
+        # Mark the package install
+        self._pdb.mark_installed(info['name'], info)
 
 
     def remove(self, name):
@@ -351,8 +375,17 @@ class PackageBuilder(object):
         Right now this just executes instructions inside the XPD, but in the
         not presentfuture we can make this a little smarter.
 
-        It returns the paths of the files created in the target_dir relative
-        to the target dir itself.
+        It returns the info structure for the created package.  Currently in
+        the following form:
+
+        {
+          'name' : 'hello',
+          'version' : '1.0.0',
+          'files' : [
+            'bin',
+            'bin/hello'
+          ]
+        }
         """
 
         # Create our temporary directory
@@ -387,7 +420,7 @@ class PackageBuilder(object):
             #shutil.rmtree(self._work_dir)
             pass
 
-        return new_files
+        return self._create_info(new_files)
 
 
     def _get_sources(self):
@@ -456,3 +489,117 @@ class PackageBuilder(object):
         new_files = post_files - pre_files
 
         return new_files
+
+
+    def _create_info(self, new_files):
+        """
+        Creates the info structure from the new files and the package XPD info.
+        """
+
+        info = {
+            'name' : self._xpd['name'],
+            'version' : self._xpd['version'],
+            'files' : list(new_files),
+        }
+
+        return info
+
+
+class BinaryPackageBuilder(object):
+    """
+    Turns XPD files into binary packages. They are built and installed into a
+    temporary directory.
+
+    The binary package format starts with an uncompressed tar file containing:
+         xpm.yml - Contains the package information
+         files.tar.gz - Archive of files rooted in the env
+    """
+
+    def __init__(self,  package_xpd):
+        self._xpd = package_xpd
+        self._work_dir = None
+        self._target_dir = None
+
+
+    def build(self, storage_dir):
+        """
+        Run the standard PackageBuilder then pack up the results in a package.
+        """
+
+        # Create our temporary directory
+        self._work_dir = tempfile.mkdtemp(suffix = '-xpm-install-' + self._xpd['name'])
+
+        install_dir = os.path.join(self._work_dir, 'install')
+
+        # TODO: LOG THIS
+        print 'Binary working in:',self._work_dir
+
+        try:
+            # Build the package
+            builder = PackageBuilder(self._xpd)
+            info = builder.build(install_dir)
+
+            # Tar up the files
+            file_tar = os.path.join(self._work_dir, 'files.tar.gz')
+
+            with tarfile.open(file_tar, "w:gz") as tar:
+                for entry_name in os.listdir(install_dir):
+                    full_path = os.path.join(install_dir, entry_name)
+                    tar.add(full_path, arcname=entry_name)
+
+            # Create our metadata file
+            meta_file = os.path.join(self._work_dir, 'xpm.yml')
+            with open(meta_file, 'w') as f:
+                yaml.dump(info, f)
+
+            # Create our package
+            package_name = self._get_package_name()
+            package_tar = os.path.join(self._work_dir, package_name)
+
+            with tarfile.open(package_tar, "w:gz") as tar:
+                tar.add(file_tar, arcname=os.path.basename(file_tar))
+                tar.add(meta_file, arcname=os.path.basename(meta_file))
+
+            # Move to the desired location
+            dest_path = os.path.join(storage_dir, package_name)
+
+            if os.path.exists(dest_path):
+                os.remove(dest_path)
+
+            shutil.move(package_tar, storage_dir)
+
+        finally:
+            # Make sure we cleanup after we are done
+            # Don't do this right now
+            #shutil.rmtree(self._work_dir)
+            pass
+
+        return dest_path
+
+    def _get_package_name(self):
+        """
+        Gets the platform name in the following format:
+
+           <name>_<version>_<arch>_<linkage>_<kernel>.deb
+
+        It's really long, but we want to be able to support all platforms!
+        """
+
+        # Use the python platform module to find out about our system
+        bits, linkage = platform.architecture()
+        arch = platform.machine()
+        kernel = platform.system()
+
+        # Build our arguments
+        args = {
+            'name' : self._xpd['name'],
+            'version' : self._xpd['version'],
+            'arch' : arch,
+            'linkage' : linkage.lower(),
+            'kernel' : kernel.lower(),
+        }
+
+        # Create our version
+        fmt_str = '%(name)s_%(version)s_%(arch)s_%(linkage)s_%(kernel)s.xpa'
+
+        return fmt_str % args
