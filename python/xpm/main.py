@@ -16,7 +16,7 @@ def install(args):
     Installs a given package.
     """
 
-    env = core.Environment(os.path.abspath(args.root), create=True)
+    env = core.Environment(_get_env_dir(args.root), create=True)
     env.install(args.path)
 
 
@@ -25,7 +25,7 @@ def remove(args):
     Remove the desired package.
     """
 
-    env = core.Environment(os.path.abspath(args.root))
+    env = core.Environment(_get_env_dir(args.root))
     env.remove(args.name)
 
 
@@ -34,7 +34,7 @@ def jump(args):
     Jumps into an activated environment.
     """
 
-    env = core.Environment(os.path.abspath(args.root))
+    env = core.Environment(_get_env_dir(args.root))
 
     # Parse the executable and it's arguments apart
     parts = shlex.split(args.command)
@@ -53,7 +53,7 @@ def info(args):
 
     # Parse argument
     package_name = args.name
-    env_dir = os.path.abspath(args.root)
+    env_dir = _get_env_dir(args.root)
 
     # Load the package database
     env = core.Environment(env_dir)
@@ -73,13 +73,24 @@ def list_packages(args):
     """
 
     # Parse argument
-    env_dir = os.path.abspath(args.root)
+    env_dir = _get_env_dir(args.root)
 
     # List packages
     env = core.Environment(env_dir)
 
     for package, info in env._pdb.iter_packages():
         print '  %s - %s' % (package, info['version'])
+
+
+def _get_env_dir(env_dir):
+    """
+    Returns the absolute path to the given directory, or just the None.
+    """
+
+    if env_dir:
+        return os.path.abspath(env_dir)
+    else:
+        None
 
 
 def main(argv = None):
@@ -90,30 +101,34 @@ def main(argv = None):
     parser = argparse.ArgumentParser(prog=argv[0])
     subparsers = parser.add_subparsers(help='sub-commands')
 
-    # create the parser for the "jump""
+    # Common arguments for environment root argument
+    root_args = ['-r','--root']
+    root_kwargs = {'type' : str, 'help' : 'Root directory', 'default' : None}
+
+    # Create command parsers
     parser_j = subparsers.add_parser('jump', help='Jump into environment')
-    parser_j.add_argument('root', type=str, help='Root directory')
+    parser_j.add_argument(*root_args, **root_kwargs)
     parser_j.add_argument('-c','--command', type=str, help='Command to run',
                           default='bash', dest='command')
     parser_j.set_defaults(func=jump)
 
     parser_i = subparsers.add_parser('install', help='Install from YAML file')
     parser_i.add_argument('path', type=str, help='YAML install file')
-    parser_i.add_argument('root', type=str, help='Root directory')
+    parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=install)
 
     parser_i = subparsers.add_parser('remove', help=remove.__doc__)
     parser_i.add_argument('name', type=str, help='Name of package')
-    parser_i.add_argument('root', type=str, help='Root directory')
+    parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=remove)
 
     parser_i = subparsers.add_parser('info', help=info.__doc__)
     parser_i.add_argument('name', type=str, help='Name of package')
-    parser_i.add_argument('root', type=str, help='Root directory')
+    parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=info)
 
     parser_i = subparsers.add_parser('list', help=list_packages.__doc__)
-    parser_i.add_argument('root', type=str, help='Root directory')
+    parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=list_packages)
 
     # parse some argument lists

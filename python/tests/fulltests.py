@@ -4,12 +4,13 @@ __doc__ = """Really basic full up tests
 """
 
 # Python Imports
+import copy
+import hashlib
 import os
 import shutil
 import sys
 import tempfile
 import unittest
-import hashlib
 
 cur_dir, _ = os.path.split(__file__)
 root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
@@ -54,14 +55,28 @@ class FullTests(unittest.TestCase):
         # Save the env_dir
         self.env_dir = os.path.join(self.work_dir, 'env')
 
+        os.environ['MARK'] = '0'
+
+        # Save the environment
+        self._env = copy.deepcopy(os.environ)
+
 
     def tearDown(self):
         # Remove temp dir
         if os.path.exists(self.work_dir):
            shutil.rmtree(self.work_dir)
 
+        # Purge new environment variables
+        for key in os.environ.keys():
+            if not key in self._env:
+                del os.environ[key]
 
-    def _xpm_cmd(self, args, env_dir=None):
+        # Restore new variables
+        for key, val in self._env.iteritems():
+            os.environ[key] = val
+
+
+    def _xpm_cmd(self, args, env_dir=None, use_var=True):
         """
         Run XPM command and return the output.
         """
@@ -70,8 +85,19 @@ class FullTests(unittest.TestCase):
         if env_dir is None:
             env_dir = self.env_dir
 
+        if use_var:
+            env_args = []
+            os.environ[core.xpm_root] = env_dir
+        else:
+            # Clear variable
+            if core.xpm_root in os.environ:
+                del os.environ[core.xpm_root]
+
+            # Set out args
+            env_args = ['--root',env_dir]
+
         # Run command and return the results
-        cmd = [os.path.join(root_dir, 'xpm')] + args + [env_dir]
+        cmd = [os.path.join(root_dir, 'xpm')] + args + env_args
 
         return util.shellcmd(cmd, shell=False, stream=False)
 
@@ -109,11 +135,23 @@ class FullTests(unittest.TestCase):
         Makes sure we can get the proper information back about an installed
         package.
         """
-        # Install the package
+
+        self._xpm_cmd(['install', self.hello_xpd])
+
+        output = self._xpm_cmd(['info', 'hello'], use_var=False)
+
+        self.assertEqual('Package hello at version 1.0.0\n', output)
+
+
+    def test_info_root_args(self):
+        """
+        Make sure we can pass the root with the command line flag.
+        """
+
         self._xpm_cmd(['install', self.hello_xpd])
 
         # Make sure the info command returns the right data
-        output = self._xpm_cmd(['info', 'hello'])
+        output = self._xpm_cmd(['info', 'hello'], )
 
         self.assertEqual('Package hello at version 1.0.0\n', output)
 
