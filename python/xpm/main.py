@@ -16,7 +16,13 @@ def install(args):
     Installs a given package.
     """
 
-    env = core.Environment(_get_env_dir(args.root), create=True)
+    if args.tree:
+        tree_path = os.path.abspath(args.tree)
+    else:
+        tree_path = None
+
+    env = core.Environment(_get_env_dir(args.root), create=True,
+                           tree_path=tree_path)
     env.install(args.path)
 
 
@@ -114,6 +120,8 @@ def main(argv = None):
 
     parser_i = subparsers.add_parser('install', help='Install from YAML file')
     parser_i.add_argument('path', type=str, help='YAML install file')
+    parser_i.add_argument('-t', '--tree', type=str, default=None,
+                          help='Package description tree')
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=install)
 
