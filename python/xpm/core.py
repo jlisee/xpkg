@@ -162,8 +162,15 @@ class Environment(object):
     This class manages the local package environment.
     """
 
-    def __init__(self, env_dir, create=False):
-        self._env_dir = env_dir
+    def __init__(self, env_dir=None, create=False):
+
+        if env_dir is None:
+            if xpm_root in os.environ:
+                self._env_dir = os.environ[xpm_root]
+            else:
+                raise Exception("No XPM_ROOT not defined, can't find environment")
+        else:
+            self._env_dir = env_dir
 
         # Error out if we are not creating and environment and this one does
         # not exist
@@ -283,7 +290,6 @@ class Environment(object):
         env_paths = {
             'PATH' : os.path.join(self._env_dir, 'bin'),
             'LD_LIBRARY_PATH' : os.path.join(self._env_dir, 'lib'),
-            xpm_root : self._env_dir,
            }
 
         for varname, varpath in env_paths.iteritems():
@@ -293,6 +299,9 @@ class Environment(object):
                 os.environ[varname] = varpath + os.pathsep + cur_var
             else:
                 os.environ[varname] = varpath
+
+        # Setup the XPM path
+        os.environ[xpm_root] = self._env_dir
 
         # Setup up the PS1 (this doesn't work)
         os.environ['PS1'] = '(xpm) \u@\h:\w\$'
