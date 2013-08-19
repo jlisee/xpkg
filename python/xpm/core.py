@@ -14,6 +14,7 @@ from xpm import util
 
 xpm_root_var = 'XPM_ROOT'
 xpm_tree_var = 'XPM_TREE'
+xpm_repo_var = 'XPM_REPO'
 
 class Exception(BaseException):
     pass
@@ -166,7 +167,8 @@ class Environment(object):
     This class manages the local package environment.
     """
 
-    def __init__(self, env_dir=None, create=False, tree_path=None):
+    def __init__(self, env_dir=None, create=False, tree_path=None,
+                 repo_path=None):
 
         if env_dir is None:
             if xpm_root_var in os.environ:
@@ -193,11 +195,19 @@ class Environment(object):
         else:
             self._tree = EmptyPackageTree()
 
+        # Setup the package repository so we can install pre-compiled packages
+        if repo_path:
+            self._repo = FilePackageRepo(repo_path)
+        elif xpm_repo_var in os.environ:
+            self._repo = FilePackageRepo(os.environ['XPM_REPO'])
+        else:
+            self._repo = EmptyPackageRepo()
+
 
     def install(self, input_val):
 
         if input_val.endswith('.xpa'):
-            # We have a binary package so install that
+            # We have a binary package so install it
             self._install_xpa(input_val)
 
         elif input_val.endswith('.xpd'):
@@ -207,15 +217,24 @@ class Environment(object):
             self._install_xpd(xpd_data)
         else:
             # The input_val must be a package name so try to find the xpd
-            # path from the tree.
-            xpd_data = self._tree.lookup(input_val)
+            # so first try to find the package in a pre-compile manner
+            xpa_path = self._repo.lookup(input_val)
 
-            if xpd_data is None:
-                msg = "Cannot find description for package: %s" % input_val
-                raise Exception(msg)
+            if xpa_path:
+                # Install the XPD
+                self._install_xpa(xpa_path)
 
-            # Do our install
-            self._install_xpd(xpd_data)
+            else:
+                # No binary package try, so lets try and find a description in
+                # the package tree
+                xpd_data = self._tree.lookup(input_val)
+
+                if xpd_data is None:
+                    msg = "Cannot find description for package: %s" % input_val
+                    raise Exception(msg)
+
+                # Install the XPD
+                self._install_xpd(xpd_data)
 
 
     def _install_xpd(self, data):
@@ -359,6 +378,55 @@ class FilePackageTree(object):
             result = None
 
         return result
+
+
+class EmptyPackageRepo(object):
+    """
+    Package repository which has no packages in it
+    """
+
+    def lookup(self, package):
+        return None
+
+
+class FilePackageRepo(object):
+    """
+    Allows for named (and eventually versioned) lookup of pre-build binary
+    packages from a directory full of them.
+    """
+
+    def __init__(self, path):
+        # Holds are information
+        self._index = {}
+
+        # Make sure our path exists
+        if not os.path.exists(path):
+            raise Exception('Package repo path "%s" does not exist' % path)
+
+        # Get information on all the dicts found in the directory
+        for root, dirs, files in os.walk(path):
+            for file_name in files:
+                if file_name.endswith('.xpa'):
+
+                    # Open up the package file
+                    full_path = os.path.join(root, file_name)
+
+                    with tarfile.open(full_path) as tar:
+
+                        # Pull out and parse the metadata
+                        info = yaml.load(tar.extractfile('xpm.yml'))
+
+                    # Store the path in the index
+                    self._index[info['name']] = full_path
+
+
+    def lookup(self, package):
+        """
+        Returns the path the binary package, if it doesn't exist None is
+        returned.
+        """
+
+        return self._index.get(package, None)
 
 
 class PackageBuilder(object):
