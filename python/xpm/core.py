@@ -353,17 +353,12 @@ class FilePackageTree(object):
             raise Exception('Package tree path "%s" does not exist' % path)
 
         # Get information on all the dicts found in the directory
-        for root, dirs, files in os.walk(path):
-            for file_name in files:
-                if file_name.endswith('.xpd'):
+        for full_path in util.match_files(path, '*.xpd'):
+            # Load the description
+            data = util.load_xpd(full_path)
 
-                    # Load the description
-                    full_path = os.path.join(root, file_name)
-
-                    data = util.load_xpd(full_path)
-
-                    # Store the path in the index
-                    self._index[data['name']] = full_path
+            # Store the path in the index
+            self._index[data['name']] = full_path
 
 
     def lookup(self, package):
@@ -404,20 +399,15 @@ class FilePackageRepo(object):
             raise Exception('Package repo path "%s" does not exist' % path)
 
         # Get information on all the dicts found in the directory
-        for root, dirs, files in os.walk(path):
-            for file_name in files:
-                if file_name.endswith('.xpa'):
+        for full_path in util.match_files(path, '*.xpa'):
+            # Open up the package file
+            with tarfile.open(full_path) as tar:
 
-                    # Open up the package file
-                    full_path = os.path.join(root, file_name)
+                # Pull out and parse the metadata
+                info = yaml.load(tar.extractfile('xpm.yml'))
 
-                    with tarfile.open(full_path) as tar:
-
-                        # Pull out and parse the metadata
-                        info = yaml.load(tar.extractfile('xpm.yml'))
-
-                    # Store the path in the index
-                    self._index[info['name']] = full_path
+            # Store the path in the index
+            self._index[info['name']] = full_path
 
 
     def lookup(self, package):

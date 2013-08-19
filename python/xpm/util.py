@@ -1,5 +1,6 @@
 # Author: Joseph Lisee <jlisee@gmail.com>
 
+import fnmatch
 import hashlib
 import os
 import subprocess
@@ -190,3 +191,17 @@ def load_xpd(path):
     """
 
     return yaml.load(open(path))
+
+
+def match_files(path, pattern):
+    """
+    Rerusively find all files which match the given pattern.  Results are
+    returned as a generator.
+    """
+
+    for root, dirs, files in os.walk(path):
+        for file_name in files:
+            if fnmatch.fnmatch(file_name, pattern):
+                full_path = os.path.join(root, file_name)
+
+                yield full_path
