@@ -19,7 +19,7 @@ xpm_repo_var = 'XPM_REPO'
 class Exception(BaseException):
     pass
 
-class PackageDatabase(object):
+class InstallDatabase(object):
     """
     Manages the on disk database of packages.
     """
@@ -184,7 +184,7 @@ class Environment(object):
             raise Exception('No XPM package DB found in root "%s"' % self._env_dir)
 
         # If needed this will setup the empty enviornment
-        self._pdb = PackageDatabase(self._env_dir)
+        self._pdb = InstallDatabase(self._env_dir)
 
         # Setup the package tree to either load from the given path or return
         # no packages
