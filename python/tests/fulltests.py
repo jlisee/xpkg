@@ -89,11 +89,11 @@ class FullTests(unittest.TestCase):
 
         if use_var:
             env_args = []
-            os.environ[core.xpm_root] = env_dir
+            os.environ[core.xpm_root_var] = env_dir
         else:
             # Clear variable
-            if core.xpm_root in os.environ:
-                del os.environ[core.xpm_root]
+            if core.xpm_root_var in os.environ:
+                del os.environ[core.xpm_root_var]
 
             # Set out args
             env_args = ['--root',env_dir]
@@ -198,7 +198,7 @@ class FullTests(unittest.TestCase):
 
             return self._xpm_cmd(['jump', '-c', py_command]).strip()
 
-        self.assertEquals(self.env_dir, get_var(core.xpm_root))
+        self.assertEquals(self.env_dir, get_var(core.xpm_root_var))
 
         # Make sure PATH is set
         path = get_var('PATH')

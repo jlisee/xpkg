@@ -12,7 +12,7 @@ import yaml
 # Project Imports
 from xpm import util
 
-xpm_root = 'XPM_ROOT'
+xpm_root_var = 'XPM_ROOT'
 
 class Exception(BaseException):
     pass
@@ -168,8 +168,8 @@ class Environment(object):
     def __init__(self, env_dir=None, create=False, tree_path=None):
 
         if env_dir is None:
-            if xpm_root in os.environ:
-                self._env_dir = os.environ[xpm_root]
+            if xpm_root_var in os.environ:
+                self._env_dir = os.environ[xpm_root_var]
             else:
                 raise Exception("No XPM_ROOT not defined, can't find environment")
         else:
@@ -298,7 +298,7 @@ class Environment(object):
                 os.environ[varname] = varpath
 
         # Setup the XPM path
-        os.environ[xpm_root] = self._env_dir
+        os.environ[xpm_root_var] = self._env_dir
 
         # Setup up the PS1 (this doesn't work)
         os.environ['PS1'] = '(xpm) \u@\h:\w\$'
