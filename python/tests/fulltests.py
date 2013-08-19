@@ -60,6 +60,10 @@ class FullTests(unittest.TestCase):
 
         self.hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
 
+        # Create our binary package repository dir
+        self.repo_dir = os.path.join(self.work_dir, 'repo')
+        util.ensure_dir(self.repo_dir)
+
         # Save the environment
         self._env = copy.deepcopy(os.environ)
 
@@ -152,6 +156,23 @@ class FullTests(unittest.TestCase):
         os.environ['XPM_TREE'] = self.tree_dir
 
         # Run the install
+        self._xpm_cmd(['install', 'hello'])
+
+        # Run our program to make sure it works
+        self.assertTrue(os.path.exists(self.hello_bin))
+
+
+    def test_install_with_tree_repo(self):
+        """
+        Make sure we can install with the package tree.
+        """
+
+        # Build our package
+        self._xpm_cmd(['build', self.hello_xpd, '--dest', self.repo_dir])
+
+        # Run the install
+        os.environ['XPM_REPO'] = self.repo_dir
+
         self._xpm_cmd(['install', 'hello'])
 
         # Run our program to make sure it works
