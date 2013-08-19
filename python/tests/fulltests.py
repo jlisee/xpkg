@@ -142,6 +142,21 @@ class FullTests(unittest.TestCase):
         self.assertTrue(os.path.exists(self.hello_bin))
 
 
+    def test_install_with_tree_var(self):
+        """
+        Make sure we can install with the package tree.
+        """
+
+        # Set our environment variable
+        os.environ['XPM_TREE'] = self.tree_dir
+
+        # Run the install
+        self._xpm_cmd(['install', 'hello'])
+
+        # Run our program to make sure it works
+        self.assertTrue(os.path.exists(self.hello_bin))
+
+
     def test_info(self):
         """
         Makes sure we can get the proper information back about an installed
