@@ -30,23 +30,24 @@ class FullTests(unittest.TestCase):
         """
 
         # Create test repository
-        cls.repo_dir = tempfile.mkdtemp(suffix = '-testing-xpm-repo')
+        cls.storage_dir = tempfile.mkdtemp(suffix = '-testing-xpm-repo')
 
-        build_tree.create_test_repo(cls.repo_dir)
+        build_tree.create_test_repo(cls.storage_dir)
 
         # Provide path to the package description tree
-        cls.tree_dir = os.path.join(cls.repo_dir, 'tree')
+        cls.tree_dir = os.path.join(cls.storage_dir, 'tree')
 
         # Provide a path to the xpd
         cls.hello_xpd = os.path.join(cls.tree_dir, 'hello.xpd')
+
 
     @classmethod
     def tearDownClass(cls):
         """
         Destroys our test xpm environment
         """
-        if os.path.exists(cls.repo_dir):
-           shutil.rmtree(cls.repo_dir)
+        if os.path.exists(cls.storage_dir):
+           shutil.rmtree(cls.storage_dir)
 
 
     def setUp(self):
@@ -54,7 +55,7 @@ class FullTests(unittest.TestCase):
         self.work_dir = tempfile.mkdtemp(suffix = '-testing-xpm')
         print self.work_dir
 
-        # Save the env_dir
+        # Create the env_dir
         self.env_dir = os.path.join(self.work_dir, 'env')
 
         self.hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
@@ -235,19 +236,15 @@ class FullTests(unittest.TestCase):
 
 
     def test_build(self):
-        # Create a directory to store our package
-        pkg_dir = os.path.join(self.work_dir, 'pkgs')
-        util.ensure_dir(pkg_dir)
-
         # Build our package
-        self._xpm_cmd(['build', self.hello_xpd, '--dest', pkg_dir])
+        self._xpm_cmd(['build', self.hello_xpd, '--dest', self.repo_dir])
 
         # Get the path to the created package
-        new_files = os.listdir(pkg_dir)
+        new_files = os.listdir(self.repo_dir)
 
         self.assertEqual(1, len(new_files))
 
-        pkg_path = os.path.join(pkg_dir, new_files[0])
+        pkg_path = os.path.join(self.repo_dir, new_files[0])
 
         # Install the package
         self._xpm_cmd(['install', pkg_path])
