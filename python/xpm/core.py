@@ -13,6 +13,7 @@ import yaml
 from xpm import util
 
 xpm_root_var = 'XPM_ROOT'
+xpm_tree_var = 'XPM_TREE'
 
 class Exception(BaseException):
     pass
@@ -187,6 +188,8 @@ class Environment(object):
         # no packages
         if tree_path:
             self._tree = FilePackageTree(tree_path)
+        elif xpm_tree_var in os.environ:
+            self._tree = FilePackageTree(os.environ['XPM_TREE'])
         else:
             self._tree = EmptyPackageTree()
 
