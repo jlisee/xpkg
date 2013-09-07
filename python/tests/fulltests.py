@@ -8,6 +8,7 @@ import copy
 import hashlib
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -83,7 +84,7 @@ class FullTests(unittest.TestCase):
             os.environ[key] = val
 
 
-    def _xpm_cmd(self, args, env_dir=None, use_var=True):
+    def _xpm_cmd(self, args, env_dir=None, use_var=True, should_fail=False):
         """
         Run XPM command and return the output.
         """
@@ -106,8 +107,26 @@ class FullTests(unittest.TestCase):
         # Run command and return the results
         cmd = [os.path.join(root_dir, 'xpm')] + args + env_args
 
-        return util.shellcmd(cmd, shell=False, stream=False)
+        try:
+            output = util.shellcmd(cmd, shell=False, stream=False)
 
+            # If we got here but we should of failed error out
+            if should_fail:
+                args = ' '.join(cmd)
+                msg = 'Command "%s" did not return a non-zero exit code' % args
+                self.fail(msg)
+
+        except subprocess.CalledProcessError as c:
+            # Capture this error, and only re throw if we were not excepting
+            # an exception
+            output = c.output
+
+            if not should_fail:
+                raise c
+
+
+
+        return output
 
     def test_no_env(self):
         """
@@ -116,7 +135,7 @@ class FullTests(unittest.TestCase):
 
         env_dir = os.path.join(self.work_dir, 'env')
 
-        output = self._xpm_cmd(['list'])
+        output = self._xpm_cmd(['list'], should_fail = True)
 
         self.assertRegexpMatches(output, 'No XPM package DB found in root.*')
 
