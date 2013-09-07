@@ -48,7 +48,7 @@ class FullTests(unittest.TestCase):
         Destroys our test xpm environment
         """
         if os.path.exists(cls.storage_dir):
-           shutil.rmtree(cls.storage_dir)
+            shutil.rmtree(cls.storage_dir)
 
 
     def setUp(self):
@@ -72,7 +72,7 @@ class FullTests(unittest.TestCase):
     def tearDown(self):
         # Remove temp dir
         if os.path.exists(self.work_dir):
-           shutil.rmtree(self.work_dir)
+            shutil.rmtree(self.work_dir)
 
         # Purge new environment variables
         for key in os.environ.keys():
@@ -186,10 +186,10 @@ class FullTests(unittest.TestCase):
         Make sure we can install with the package tree.
         """
 
-        # Build our package
+        # Build our package and place it into our repo directory
         self._xpm_cmd(['build', self.hello_xpd, '--dest', self.repo_dir])
 
-        # Run the install
+        # Run the install, referencing our adhoc package repository
         os.environ[core.xpm_repo_var] = self.repo_dir
 
         self._xpm_cmd(['install', 'hello'])
