@@ -221,6 +221,12 @@ class Environment(object):
             xpa_path = self._repo.lookup(input_val)
 
             if xpa_path:
+                # Verify XPA path
+                if not os.path.exists(xpa_path):
+                    args = (input_val, xpa_path)
+                    msg = 'XPA path for package "%s" does not exist: "%s"' % args
+                    raise Exception(msg)
+
                 # Install the XPD
                 self._install_xpa(xpa_path)
 
@@ -345,8 +351,8 @@ class FilePackageTree(object):
     """
 
     def __init__(self, path):
-        # Holds are information
-        self._index = {}
+        # Holds the package information
+        self._db = PackageDatabase()
 
         # Make sure our path exists
         if not os.path.exists(path):
@@ -358,8 +364,9 @@ class FilePackageTree(object):
             data = util.load_xpd(full_path)
 
             # Store the path in the index
-            self._index[data['name']] = full_path
-
+            self._db.store(name=data['name'],
+                           version = data.get('version', ''),
+                           data=full_path)
 
     def lookup(self, package):
         """
@@ -367,8 +374,9 @@ class FilePackageTree(object):
         not present.
         """
 
-        if package in self._index:
-            result = util.load_xpd(self._index[package])
+        xpd_path = self._db.lookup(package)
+        if xpd_path:
+            result = util.load_xpd(xpd_path)
         else:
             result = None
 
@@ -386,13 +394,15 @@ class EmptyPackageRepo(object):
 
 class FilePackageRepo(object):
     """
-    Allows for named (and eventually versioned) lookup of pre-build binary
+    Allows for named (and eventually versioned) lookup of pre-built binary
     packages from a directory full of them.
     """
 
     def __init__(self, path):
+        print 'Build package repo from dir:',path
+
         # Holds are information
-        self._index = {}
+        self._db = PackageDatabase()
 
         # Make sure our path exists
         if not os.path.exists(path):
@@ -406,8 +416,14 @@ class FilePackageRepo(object):
                 # Pull out and parse the metadata
                 info = yaml.load(tar.extractfile('xpm.yml'))
 
-            # Store the path in the index
-            self._index[info['name']] = full_path
+            # Get the name and version of the package from the internal info
+            name = info['name']
+            version = info.get('version', '')
+
+            # Store the path to the file in the package DB
+            print 'Storing "%s" as %s version: %s' % (full_path, name, version)
+
+            self._db.store(name=name, version=version, data=full_path)
 
 
     def lookup(self, package):
@@ -416,7 +432,52 @@ class FilePackageRepo(object):
         returned.
         """
 
-        return self._index.get(package, None)
+        return self._db.lookup(package)
+
+
+class PackageDatabase(object):
+    """
+    Stores information about packages, right now just does version and name
+    look ups.  Will eventually support more advanced queries.
+    """
+
+    def __init__(self):
+        self._db = {}
+
+
+    def store(self, name, version, data):
+        """
+        Stores the desired package data by name and version.
+        """
+
+        self._db.setdefault(name, {})[version] = data
+
+
+    def lookup(self, name, version=None):
+        """
+        Grabs the data for the specific packages, returning either the specific
+        package, of the most recent version.
+        """
+
+        # Get all versions of a package
+        versions = self._db.get(name, [])
+
+        res = None
+
+        if len(versions):
+            if version and (version in versions):
+                # Version specified and we have it
+                res = versions[version]
+            else:
+                # Sorted the version data pairs
+                sorted_versions = sorted(
+                    versions.items(),
+                    cmp = lambda a,b: util.compare_versions(a[0], b[0]))
+
+                # Get the data for the most recent version
+                return sorted_versions[-1][1]
+
+        return res
 
 
 class PackageBuilder(object):
