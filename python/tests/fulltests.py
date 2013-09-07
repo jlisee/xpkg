@@ -153,7 +153,7 @@ class FullTests(unittest.TestCase):
         """
 
         # Set our environment variable
-        os.environ['XPM_TREE'] = self.tree_dir
+        os.environ[core.xpm_tree_var] = self.tree_dir
 
         # Run the install
         self._xpm_cmd(['install', 'hello'])
@@ -171,7 +171,7 @@ class FullTests(unittest.TestCase):
         self._xpm_cmd(['build', self.hello_xpd, '--dest', self.repo_dir])
 
         # Run the install
-        os.environ['XPM_REPO'] = self.repo_dir
+        os.environ[core.xpm_repo_var] = self.repo_dir
 
         self._xpm_cmd(['install', 'hello'])
 

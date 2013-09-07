@@ -191,7 +191,7 @@ class Environment(object):
         if tree_path:
             self._tree = FilePackageTree(tree_path)
         elif xpm_tree_var in os.environ:
-            self._tree = FilePackageTree(os.environ['XPM_TREE'])
+            self._tree = FilePackageTree(os.environ[xpm_tree_var])
         else:
             self._tree = EmptyPackageTree()
 
@@ -199,7 +199,7 @@ class Environment(object):
         if repo_path:
             self._repo = FilePackageRepo(repo_path)
         elif xpm_repo_var in os.environ:
-            self._repo = FilePackageRepo(os.environ['XPM_REPO'])
+            self._repo = FilePackageRepo(os.environ[xpm_repo_var])
         else:
             self._repo = EmptyPackageRepo()
 
