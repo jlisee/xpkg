@@ -29,10 +29,17 @@ def shellcmd(cmd, echo=True, stream=True, shell=True):
         subprocess.check_call(cmd, stderr=sys.stderr, stdout=sys.stdout,
                               shell=shell)
     else:
-        out = subprocess.check_output(cmd, stderr=sys.stderr, shell=shell)
+        try:
+            out = subprocess.check_output(cmd, stderr=sys.stderr, shell=shell)
 
-        if echo:
-            print out
+        except subprocess.CalledProcessError as c:
+            # Capture the process output
+            out = c.output
+            raise c
+
+        finally:
+            if echo:
+                print out
 
     return out
 

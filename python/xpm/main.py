@@ -169,3 +169,4 @@ if __name__ == '__main__':
         sys.exit(main())
     except core.Exception as e:
         print e
+        sys.exit(1)
