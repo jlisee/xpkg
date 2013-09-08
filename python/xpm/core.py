@@ -312,9 +312,16 @@ class Environment(object):
         """
 
         # Set our path vars
+        cflags = '-I%s' % os.path.join(self._env_dir, 'include')
+        ldflags = '-L%s' % os.path.join(self._env_dir, 'lib')
+
         env_paths = {
             'PATH' : os.path.join(self._env_dir, 'bin'),
             'LD_LIBRARY_PATH' : os.path.join(self._env_dir, 'lib'),
+            'CFLAGS' : cflags,
+            'CCFLAGS' : cflags,
+            'CPPFLAGS' : cflags,
+            'LDFLAGS' : ldflags,
            }
 
         for varname, varpath in env_paths.iteritems():
