@@ -66,7 +66,7 @@ class FullTests(unittest.TestCase):
         util.ensure_dir(self.repo_dir)
 
         # Save the environment
-        self._env = copy.deepcopy(os.environ)
+        self._envStorage = util.EnvStorage(store = True)
 
 
     def tearDown(self):
@@ -74,14 +74,8 @@ class FullTests(unittest.TestCase):
         if os.path.exists(self.work_dir):
             shutil.rmtree(self.work_dir)
 
-        # Purge new environment variables
-        for key in os.environ.keys():
-            if not key in self._env:
-                del os.environ[key]
-
         # Restore new variables
-        for key, val in self._env.iteritems():
-            os.environ[key] = val
+        self._envStorage.restore()
 
 
     def _xpm_cmd(self, args, env_dir=None, use_var=True, should_fail=False):
@@ -124,9 +118,8 @@ class FullTests(unittest.TestCase):
             if not should_fail:
                 raise c
 
-
-
         return output
+
 
     def test_no_env(self):
         """

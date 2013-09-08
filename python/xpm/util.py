@@ -1,6 +1,7 @@
 # Author: Joseph Lisee <jlisee@gmail.com>
 
 # Python Imports
+import copy
 import fnmatch
 import hashlib
 import os
@@ -215,6 +216,47 @@ def match_files(path, pattern):
                 full_path = os.path.join(root, file_name)
 
                 yield full_path
+
+
+class EnvStorage(object):
+    """
+    Helper class for saving and restoring environment variables.
+    """
+
+    def __init__(self, store = False):
+        self._env = None
+
+        if store:
+            self.store()
+
+
+    def store(self):
+        """
+        Store the contents of the current environment variables.
+        """
+
+        if self._env:
+            raise BaseException("Environment already stored")
+
+        self._env = copy.deepcopy(os.environ)
+
+
+    def restore(self):
+        """
+        Restores the previously stored environment variables.
+        """
+
+        # Purge new environment variables
+        for key in os.environ.keys():
+            if not key in self._env:
+                del os.environ[key]
+
+        # Restore new variables
+        for key, val in self._env.iteritems():
+            os.environ[key] = val
+
+        self._env = None
+
 
 class Version(object):
     def __init__(self, verstr):
