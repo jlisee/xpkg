@@ -1,7 +1,7 @@
 name: greeter
-version: 1.0.0
+version: 2.0.0
 dependencies:
- - libgreet==1.0.0  # Need to print things
+ - libgreet==2.0.0  # Need to print things
  - faketools # Needed for configuration
 
 files:

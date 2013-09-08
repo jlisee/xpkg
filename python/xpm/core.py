@@ -218,7 +218,9 @@ class Environment(object):
         else:
             # The input_val must be a package name so try to find the xpd
             # so first try to find the package in a pre-compile manner
-            xpa_path = self._repo.lookup(input_val)
+            name, version = self._parse_install_input(input_val)
+
+            xpa_path = self._repo.lookup(name, version)
 
             if xpa_path:
                 # Verify XPA path
@@ -233,7 +235,7 @@ class Environment(object):
             else:
                 # No binary package try, so lets try and find a description in
                 # the package tree
-                xpd_data = self._tree.lookup(input_val)
+                xpd_data = self._tree.lookup(name, version)
 
                 if xpd_data is None:
                     msg = "Cannot find description for package: %s" % input_val
@@ -371,13 +373,35 @@ class Environment(object):
         # Setup the XPM path
         os.environ[xpm_root_var] = self._env_dir
 
+    def _parse_install_input(self, value):
+        """
+        Basic support for version based installs.  Right now it just parses
+           mypackage==1.0.0 -> ('mypackage', '1.0.0')
+           mypackage -> ('mypackage', None)
+        """
+
+        # Split into parts
+        parts = value.split('==')
+
+        # We always have name
+        name = parts[0]
+
+        # Pull out the version, or report an error
+        if len(parts) == 1:
+            version = None
+        elif len(parts) == 2:
+            version = parts[1]
+        else:
+            raise Exception('Invalid package expression: "%s"' % value)
+
+        return (name, version)
 
 class EmptyPackageTree(object):
     """
     Package tree which has no packages in it.
     """
 
-    def lookup(self, package):
+    def lookup(self, package, version=None):
         return None
 
 
@@ -405,13 +429,13 @@ class FilePackageTree(object):
                            version = data.get('version', ''),
                            data=full_path)
 
-    def lookup(self, package):
+    def lookup(self, package, version=None):
         """
         Returns the xpd data for the desired package, None if the package is
         not present.
         """
 
-        xpd_path = self._db.lookup(package)
+        xpd_path = self._db.lookup(name=package, version=version)
         if xpd_path:
             result = util.load_xpd(xpd_path)
         else:
@@ -425,7 +449,7 @@ class EmptyPackageRepo(object):
     Package repository which has no packages in it
     """
 
-    def lookup(self, package):
+    def lookup(self, package, version=None):
         return None
 
 
@@ -463,13 +487,13 @@ class FilePackageRepo(object):
             self._db.store(name=name, version=version, data=full_path)
 
 
-    def lookup(self, package):
+    def lookup(self, package, version=None):
         """
         Returns the path the binary package, if it doesn't exist None is
         returned.
         """
 
-        return self._db.lookup(package)
+        return self._db.lookup(name=package, version=version)
 
 
 class PackageDatabase(object):

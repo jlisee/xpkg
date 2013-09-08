@@ -302,7 +302,21 @@ class FullTests(unittest.TestCase):
 
         output = self._xpm_cmd(['jump', '-c', 'greeter'])
 
-        self.assertEqual('Hello, world!\n', output)
+        self.assertEqual('Welcome to a better world!\n', output)
+
+    def test_versions(self):
+        # Make sure we can access the package tree for building
+        os.environ[core.xpm_tree_var] = self.tree_dir
+
+        # Install greet
+        self._xpm_cmd(['install', 'greeter==1.0.0'])
+
+        # Make sure the greeter works
+        greeter_bin = os.path.join(self.env_dir, 'bin', 'greeter')
+
+        output = self._xpm_cmd(['jump', '-c', 'greeter'])
+
+        self.assertEqual('Hello!\n', output)
 
 
 if __name__ == '__main__':

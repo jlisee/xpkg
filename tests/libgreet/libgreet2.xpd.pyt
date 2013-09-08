@@ -1,7 +1,6 @@
-name: greeter
-version: 1.0.0
+name: libgreet
+version: 2.0.0
 dependencies:
- - libgreet==1.0.0  # Need to print things
  - faketools # Needed for configuration
 
 files:
@@ -12,7 +11,7 @@ configure:
   ./configure --prefix=%(prefix)s
 
 build:
-  make -j%(jobs)s
+  make -j%(jobs)s EXTRA_FLAGS='-DGREETING="Welcome to a better world!"'
 
 install:
   make install
