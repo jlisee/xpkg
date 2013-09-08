@@ -6,6 +6,7 @@
 import argparse
 import hashlib
 import os
+import re
 import sys
 
 # Project Imports
@@ -60,7 +61,15 @@ def create_test_repo(dest_dir):
         full_path = os.path.join(test_package_dir, name)
 
         if os.path.isdir(full_path):
-            setup_package(name, full_path, file_dir, tree_dir)
+            # Do this for all the xpd files starting with name in the directory
+            regex = re.compile('(%s\d*).xpd.pyt' % name)
+
+            for file_name in os.listdir(full_path):
+                match = regex.match(file_name)
+
+                if match:
+                    xpd_name = match.group(1)
+                    setup_package(xpd_name, full_path, file_dir, tree_dir)
 
 
 def main(argv = None):
