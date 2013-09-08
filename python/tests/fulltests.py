@@ -4,7 +4,6 @@ __doc__ = """Really basic full up tests
 """
 
 # Python Imports
-import copy
 import hashlib
 import os
 import shutil
@@ -289,6 +288,21 @@ class FullTests(unittest.TestCase):
 
         # Make sure the actual binary exists
         self.assertTrue(os.path.exists(self.hello_bin))
+
+
+    def test_dependencies(self):
+        # Make sure we can access the package tree for building
+        os.environ[core.xpm_tree_var] = self.tree_dir
+
+        # Install greet
+        self._xpm_cmd(['install', 'greeter'])
+
+        # Make sure the greeter works
+        greeter_bin = os.path.join(self.env_dir, 'bin', 'greeter')
+
+        output = self._xpm_cmd(['jump', '-c', 'greeter'])
+
+        self.assertEqual('Hello, world!\n', output)
 
 
 if __name__ == '__main__':
