@@ -1,7 +1,7 @@
 all: libgreet.so
 
 greet.o:
-	g++ -fPIC -c greet.cpp
+	g++ -fPIC -c greet.cpp ${EXTRA_FLAGS}
 
 libgreet.so: greet.o
 	g++ -shared -o libgreet.so greet.o
