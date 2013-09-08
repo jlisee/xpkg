@@ -248,10 +248,13 @@ class Environment(object):
         Builds package and directly installs it into the given environment.
         """
 
+        # Make sure all dependencies are properly installed
+        self._install_deps(data)
+
         # Build and install the package
         builder = PackageBuilder(data)
 
-        info = builder.build(self._env_dir)
+        info = builder.build(self._env_dir, self)
 
         self._pdb.mark_installed(data['name'], info)
 
@@ -267,6 +270,9 @@ class Environment(object):
             # Pull out and parse the metadata
             info = yaml.load(tar.extractfile('xpm.yml'))
 
+            # Make sure all dependencies are properly installed
+            self._install_deps(info)
+
             # Install the files into the target environment location
             file_tar = tar.extractfile('files.tar.gz')
 
@@ -276,6 +282,20 @@ class Environment(object):
 
         # Mark the package install
         self._pdb.mark_installed(info['name'], info)
+
+
+    def _install_deps(self, data):
+        """
+        Makes sure all the dependencies for the given package are properly
+        installed.
+
+        TODO: handle versions someday
+        """
+
+        deps = data.get('dependencies', [])
+
+        for dep in deps:
+            self.install(dep)
 
 
     def remove(self, name):
@@ -311,6 +331,22 @@ class Environment(object):
         Jump into the desired environment
         """
 
+        # Setup the environment variables
+        self.apply_env_variables()
+
+        # Setup up the PS1 (this doesn't work)
+        os.environ['PS1'] = '(xpm) \u@\h:\w\$'
+
+        # Step into shell
+        os.execvp(program, [program] + args)
+
+
+    def apply_env_variables(self):
+        """
+        Change the current environment variables so that we can use the things
+        are in that environment.
+        """
+
         # Set our path vars
         cflags = '-I%s' % os.path.join(self._env_dir, 'include')
         ldflags = '-L%s' % os.path.join(self._env_dir, 'lib')
@@ -334,12 +370,6 @@ class Environment(object):
 
         # Setup the XPM path
         os.environ[xpm_root_var] = self._env_dir
-
-        # Setup up the PS1 (this doesn't work)
-        os.environ['PS1'] = '(xpm) \u@\h:\w\$'
-
-        # Step into shell
-        os.execvp(program, [program] + args)
 
 
 class EmptyPackageTree(object):
@@ -499,10 +529,10 @@ class PackageBuilder(object):
         self._target_dir = None
 
 
-    def build(self, target_dir):
+    def build(self, target_dir, environment = None):
         """
         Right now this just executes instructions inside the XPD, but in the
-        not presentfuture we can make this a little smarter.
+        future we can make this a little smarter.
 
         It returns the info structure for the created package.  Currently in
         the following form:
@@ -526,6 +556,12 @@ class PackageBuilder(object):
         self._target_dir = target_dir
 
         try:
+            # Store the current environment
+            env_vars = util.EnvStorage(store = True)
+
+            if environment:
+                environment.apply_env_variables()
+
             # Fetches and unpacks all the required sources for the package
             self._get_sources()
 
@@ -544,10 +580,11 @@ class PackageBuilder(object):
 
                 new_files = self._install()
         finally:
+            # Put back our environment
+            env_vars.restore()
+
             # Make sure we cleanup after we are done
-            # Don't do this right now
-            #shutil.rmtree(self._work_dir)
-            pass
+            shutil.rmtree(self._work_dir)
 
         return self._create_info(new_files)
 
@@ -650,7 +687,7 @@ class BinaryPackageBuilder(object):
         self._target_dir = None
 
 
-    def build(self, storage_dir):
+    def build(self, storage_dir, environment = None):
         """
         Run the standard PackageBuilder then pack up the results in a package.
         """
@@ -666,7 +703,7 @@ class BinaryPackageBuilder(object):
         try:
             # Build the package
             builder = PackageBuilder(self._xpd)
-            info = builder.build(install_dir)
+            info = builder.build(install_dir, environment)
 
             # Tar up the files
             file_tar = os.path.join(self._work_dir, 'files.tar.gz')
