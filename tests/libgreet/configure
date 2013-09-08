@@ -1,0 +1,11 @@
+#! /usr/bin/env python
+
+# Author: Joseph Lisee <jlisee@gmail.com>
+
+__doc__ = """Configure script"""
+
+import subprocess
+import sys
+
+if __name__ == '__main__':
+    sys.exit(subprocess.call(['fake-configure', '--root', '.'] + sys.argv[1:]))
