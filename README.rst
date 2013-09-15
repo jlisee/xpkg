@@ -37,54 +37,55 @@ Design
 
 Concepts:
 
- - Environment: directory which supports your application
+- Environment: directory which supports your application
 
-   - contains a set of installed packages (managed by the install database)
-   - structured like a linux/unix tree
-   - you "jump" into the environment
-   - tool can pick up on this with an environment variable
-
-
- - Install database:
-
-   - Manages information about the packages in an environment
+ - contains a set of installed packages (managed by the install database)
+ - structured like a linux/unix tree
+ - you "jump" into the environment
+ - tool can pick up on this with an environment variable
 
 
- - Package tree:
+- Install database:
 
-   - database of package descriptions
-   - can contain multiple version of each description
-   - initially will just be file tree
+ - Manages information about the packages in an environment
 
 
- - Package description:
+- Package tree:
 
-   - lists files needed
-   - instructions for building and configuring
-   - later:
-
-     - instructions for packaging
-     - customization of build (ie: with or without python, )
-     - patching instructions
+ - database of package descriptions
+ - can contain multiple version of each description
+ - initially will just be file tree
 
 
- - Package repository: Pile of binary packages
+- Package description:
+
+ - lists files needed
+ - instructions for building and configuring
+ - later:
+
+  - instructions for packaging
+  - customization of build (ie: with or without python, )
+  - patching instructions
 
 
- - Binary Package: bundle of files with metadata
-
-   - either a zip or tar ball
-   - metadata:
-
-     - manifest of files
-     - info on platform & toolset
-     - raw package file
-   - try to hold off on pre-post install scripts
+- Package repository: Pile of binary packages
 
 
- - Toolset: compiler, standard libraries, language revision
+- Binary Package: bundle of files with metadata
 
-   - Will need a way to specify compatibility between toolsets
+ - either a zip or tar ball
+ - metadata:
+
+  - manifest of files
+  - info on platform & toolset
+  - raw package file
+
+ - try to hold off on pre-post install scripts
 
 
- - Platform: for us this is the binary format and expected kernel
+- Toolset: compiler, standard libraries, language revision
+
+ - Will need a way to specify compatibility between toolsets
+
+
+- Platform: for us this is the binary format and expected kernel
