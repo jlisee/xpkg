@@ -16,8 +16,8 @@ cur_dir, _ = os.path.split(__file__)
 root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
 
 # Project imports
-from xpm import core
-from xpm import util
+from xpkg import core
+from xpkg import util
 from tests import build_tree
 
 
@@ -26,11 +26,11 @@ class FullTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """
-        Sets up a little test XPM environment
+        Sets up a little test Xpkg environment
         """
 
         # Create test repository
-        cls.storage_dir = tempfile.mkdtemp(suffix = '-testing-xpm-repo')
+        cls.storage_dir = tempfile.mkdtemp(suffix = '-testing-xpkg-repo')
 
         build_tree.create_test_repo(cls.storage_dir)
 
@@ -44,7 +44,7 @@ class FullTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """
-        Destroys our test xpm environment
+        Destroys our test xpkg environment
         """
         if os.path.exists(cls.storage_dir):
             shutil.rmtree(cls.storage_dir)
@@ -52,7 +52,7 @@ class FullTests(unittest.TestCase):
 
     def setUp(self):
         # Create temp dir
-        self.work_dir = tempfile.mkdtemp(suffix = '-testing-xpm')
+        self.work_dir = tempfile.mkdtemp(suffix = '-testing-xpkg')
         print self.work_dir
 
         # Create the env_dir
@@ -77,9 +77,9 @@ class FullTests(unittest.TestCase):
         self._envStorage.restore()
 
 
-    def _xpm_cmd(self, args, env_dir=None, use_var=True, should_fail=False):
+    def _xpkg_cmd(self, args, env_dir=None, use_var=True, should_fail=False):
         """
-        Run XPM command and return the output.
+        Run Xpkg command and return the output.
         """
 
         # Setup arguments
@@ -88,17 +88,17 @@ class FullTests(unittest.TestCase):
 
         if use_var:
             env_args = []
-            os.environ[core.xpm_root_var] = env_dir
+            os.environ[core.xpkg_root_var] = env_dir
         else:
             # Clear variable
-            if core.xpm_root_var in os.environ:
-                del os.environ[core.xpm_root_var]
+            if core.xpkg_root_var in os.environ:
+                del os.environ[core.xpkg_root_var]
 
             # Set out args
             env_args = ['--root',env_dir]
 
         # Run command and return the results
-        cmd = [os.path.join(root_dir, 'xpm')] + args + env_args
+        cmd = [os.path.join(root_dir, 'xpkg')] + args + env_args
 
         try:
             output = util.shellcmd(cmd, shell=False, stream=False)
@@ -127,9 +127,9 @@ class FullTests(unittest.TestCase):
 
         env_dir = os.path.join(self.work_dir, 'env')
 
-        output = self._xpm_cmd(['list'], should_fail = True)
+        output = self._xpkg_cmd(['list'], should_fail = True)
 
-        self.assertRegexpMatches(output, 'No XPM package DB found in root.*')
+        self.assertRegexpMatches(output, 'No Xpkg package DB found in root.*')
 
 
     def test_install(self):
@@ -138,7 +138,7 @@ class FullTests(unittest.TestCase):
         """
 
         # Run the install
-        self._xpm_cmd(['install', self.hello_xpd])
+        self._xpkg_cmd(['install', self.hello_xpd])
 
         # Run our program to make sure it works
         output = util.shellcmd(self.hello_bin, echo=False)
@@ -152,7 +152,7 @@ class FullTests(unittest.TestCase):
         """
 
         # Run the install
-        self._xpm_cmd(['install', 'hello', '--tree', self.tree_dir])
+        self._xpkg_cmd(['install', 'hello', '--tree', self.tree_dir])
 
         # Run our program to make sure it works
         self.assertTrue(os.path.exists(self.hello_bin))
@@ -164,10 +164,10 @@ class FullTests(unittest.TestCase):
         """
 
         # Set our environment variable
-        os.environ[core.xpm_tree_var] = self.tree_dir
+        os.environ[core.xpkg_tree_var] = self.tree_dir
 
         # Run the install
-        self._xpm_cmd(['install', 'hello'])
+        self._xpkg_cmd(['install', 'hello'])
 
         # Run our program to make sure it works
         self.assertTrue(os.path.exists(self.hello_bin))
@@ -179,12 +179,12 @@ class FullTests(unittest.TestCase):
         """
 
         # Build our package and place it into our repo directory
-        self._xpm_cmd(['build', self.hello_xpd, '--dest', self.repo_dir])
+        self._xpkg_cmd(['build', self.hello_xpd, '--dest', self.repo_dir])
 
         # Run the install, referencing our adhoc package repository
-        os.environ[core.xpm_repo_var] = self.repo_dir
+        os.environ[core.xpkg_repo_var] = self.repo_dir
 
-        self._xpm_cmd(['install', 'hello'])
+        self._xpkg_cmd(['install', 'hello'])
 
         # Run our program to make sure it works
         self.assertTrue(os.path.exists(self.hello_bin))
@@ -196,9 +196,9 @@ class FullTests(unittest.TestCase):
         package.
         """
 
-        self._xpm_cmd(['install', self.hello_xpd])
+        self._xpkg_cmd(['install', self.hello_xpd])
 
-        output = self._xpm_cmd(['info', 'hello'], use_var=False)
+        output = self._xpkg_cmd(['info', 'hello'], use_var=False)
 
         self.assertEqual('Package hello at version 1.0.0\n', output)
 
@@ -208,10 +208,10 @@ class FullTests(unittest.TestCase):
         Make sure we can pass the root with the command line flag.
         """
 
-        self._xpm_cmd(['install', self.hello_xpd])
+        self._xpkg_cmd(['install', self.hello_xpd])
 
         # Make sure the info command returns the right data
-        output = self._xpm_cmd(['info', 'hello'], )
+        output = self._xpkg_cmd(['info', 'hello'], )
 
         self.assertEqual('Package hello at version 1.0.0\n', output)
 
@@ -219,22 +219,22 @@ class FullTests(unittest.TestCase):
     def test_remove(self):
 
         # Install the package
-        self._xpm_cmd(['install', self.hello_xpd])
+        self._xpkg_cmd(['install', self.hello_xpd])
 
         # Get the package list
-        output = self._xpm_cmd(['list'])
+        output = self._xpkg_cmd(['list'])
 
         self.assertEqual('  hello - 1.0.0\n', output)
 
         # Un-install the package
-        self._xpm_cmd(['remove', 'hello'])
+        self._xpkg_cmd(['remove', 'hello'])
 
         self.assertFalse(os.path.exists(self.hello_bin))
 
 
     def test_jump(self):
         # Create and empty db files
-        db_dir = os.path.join(self.env_dir, 'etc', 'xpm',)
+        db_dir = os.path.join(self.env_dir, 'etc', 'xpkg',)
         util.ensure_dir(db_dir)
 
         db_path = os.path.join(db_dir, 'db.yml')
@@ -244,9 +244,9 @@ class FullTests(unittest.TestCase):
         def get_var(varname):
             py_command = 'python -c "import os; print os.environ[\'%s\']"' % varname
 
-            return self._xpm_cmd(['jump', '-c', py_command]).strip()
+            return self._xpkg_cmd(['jump', '-c', py_command]).strip()
 
-        self.assertEquals(self.env_dir, get_var(core.xpm_root_var))
+        self.assertEquals(self.env_dir, get_var(core.xpkg_root_var))
 
         # Make sure PATH is set
         path = get_var('PATH')
@@ -269,7 +269,7 @@ class FullTests(unittest.TestCase):
 
     def test_build(self):
         # Build our package
-        self._xpm_cmd(['build', self.hello_xpd, '--dest', self.repo_dir])
+        self._xpkg_cmd(['build', self.hello_xpd, '--dest', self.repo_dir])
 
         # Get the path to the created package
         new_files = os.listdir(self.repo_dir)
@@ -279,10 +279,10 @@ class FullTests(unittest.TestCase):
         pkg_path = os.path.join(self.repo_dir, new_files[0])
 
         # Install the package
-        self._xpm_cmd(['install', pkg_path])
+        self._xpkg_cmd(['install', pkg_path])
 
         # Make sure the package is in the info
-        output = self._xpm_cmd(['info', 'hello'], )
+        output = self._xpkg_cmd(['info', 'hello'], )
 
         self.assertEqual('Package hello at version 1.0.0\n', output)
 
@@ -292,29 +292,29 @@ class FullTests(unittest.TestCase):
 
     def test_dependencies(self):
         # Make sure we can access the package tree for building
-        os.environ[core.xpm_tree_var] = self.tree_dir
+        os.environ[core.xpkg_tree_var] = self.tree_dir
 
         # Install greet
-        self._xpm_cmd(['install', 'greeter'])
+        self._xpkg_cmd(['install', 'greeter'])
 
         # Make sure the greeter works
         greeter_bin = os.path.join(self.env_dir, 'bin', 'greeter')
 
-        output = self._xpm_cmd(['jump', '-c', 'greeter'])
+        output = self._xpkg_cmd(['jump', '-c', 'greeter'])
 
         self.assertEqual('Welcome to a better world!\n', output)
 
     def test_versions(self):
         # Make sure we can access the package tree for building
-        os.environ[core.xpm_tree_var] = self.tree_dir
+        os.environ[core.xpkg_tree_var] = self.tree_dir
 
         # Install greet
-        self._xpm_cmd(['install', 'greeter==1.0.0'])
+        self._xpkg_cmd(['install', 'greeter==1.0.0'])
 
         # Make sure the greeter works
         greeter_bin = os.path.join(self.env_dir, 'bin', 'greeter')
 
-        output = self._xpm_cmd(['jump', '-c', 'greeter'])
+        output = self._xpkg_cmd(['jump', '-c', 'greeter'])
 
         self.assertEqual('Hello!\n', output)
 

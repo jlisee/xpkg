@@ -10,11 +10,11 @@ import tempfile
 import yaml
 
 # Project Imports
-from xpm import util
+from xpkg import util
 
-xpm_root_var = 'XPM_ROOT'
-xpm_tree_var = 'XPM_TREE'
-xpm_repo_var = 'XPM_REPO'
+xpkg_root_var = 'XPKG_ROOT'
+xpkg_tree_var = 'XPKG_TREE'
+xpkg_repo_var = 'XPKG_REPO'
 
 class Exception(BaseException):
     pass
@@ -27,7 +27,7 @@ class InstallDatabase(object):
     def __init__(self, env_dir):
 
         # Package db location
-        self._db_dir = os.path.join(env_dir, 'etc', 'xpm')
+        self._db_dir = os.path.join(env_dir, 'etc', 'xpkg')
         self._db_path = os.path.join(self._db_dir, 'db.yml')
 
         # Create package database if it doesn't exist
@@ -118,7 +118,7 @@ class InstallDatabase(object):
 
 def fetch_file(filehash, url):
     # Make sure cache exists
-    cache_dir = os.path.expanduser(os.path.join('~', '.xpm', 'cache'))
+    cache_dir = os.path.expanduser(os.path.join('~', '.xpkg', 'cache'))
 
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
@@ -171,17 +171,17 @@ class Environment(object):
                  repo_path=None):
 
         if env_dir is None:
-            if xpm_root_var in os.environ:
-                self._env_dir = os.environ[xpm_root_var]
+            if xpkg_root_var in os.environ:
+                self._env_dir = os.environ[xpkg_root_var]
             else:
-                raise Exception("No XPM_ROOT not defined, can't find environment")
+                raise Exception("No XPKG_ROOT not defined, can't find environment")
         else:
             self._env_dir = env_dir
 
         # Error out if we are not creating and environment and this one does
         # not exist
         if not os.path.exists(self._env_dir) and not create:
-            raise Exception('No XPM package DB found in root "%s"' % self._env_dir)
+            raise Exception('No Xpkg package DB found in root "%s"' % self._env_dir)
 
         # If needed this will setup the empty enviornment
         self._pdb = InstallDatabase(self._env_dir)
@@ -190,16 +190,16 @@ class Environment(object):
         # no packages
         if tree_path:
             self._tree = FilePackageTree(tree_path)
-        elif xpm_tree_var in os.environ:
-            self._tree = FilePackageTree(os.environ[xpm_tree_var])
+        elif xpkg_tree_var in os.environ:
+            self._tree = FilePackageTree(os.environ[xpkg_tree_var])
         else:
             self._tree = EmptyPackageTree()
 
         # Setup the package repository so we can install pre-compiled packages
         if repo_path:
             self._repo = FilePackageRepo(repo_path)
-        elif xpm_repo_var in os.environ:
-            self._repo = FilePackageRepo(os.environ[xpm_repo_var])
+        elif xpkg_repo_var in os.environ:
+            self._repo = FilePackageRepo(os.environ[xpkg_repo_var])
         else:
             self._repo = EmptyPackageRepo()
 
@@ -263,14 +263,14 @@ class Environment(object):
 
     def _install_xpa(self, path):
         """
-        Install the given binary XPM package.
+        Install the given binary Xpkg package.
         """
 
         # Open up the tar file
         with tarfile.open(path) as tar:
 
             # Pull out and parse the metadata
-            info = yaml.load(tar.extractfile('xpm.yml'))
+            info = yaml.load(tar.extractfile('xpkg.yml'))
 
             # Make sure all dependencies are properly installed
             self._install_deps(info)
@@ -337,7 +337,7 @@ class Environment(object):
         self.apply_env_variables()
 
         # Setup up the PS1 (this doesn't work)
-        os.environ['PS1'] = '(xpm) \u@\h:\w\$'
+        os.environ['PS1'] = '(xpkg) \u@\h:\w\$'
 
         # Step into shell
         os.execvp(program, [program] + args)
@@ -370,8 +370,8 @@ class Environment(object):
             else:
                 os.environ[varname] = varpath
 
-        # Setup the XPM path
-        os.environ[xpm_root_var] = self._env_dir
+        # Setup the Xpkg path
+        os.environ[xpkg_root_var] = self._env_dir
 
     def _parse_install_input(self, value):
         """
@@ -475,7 +475,7 @@ class FilePackageRepo(object):
             with tarfile.open(full_path) as tar:
 
                 # Pull out and parse the metadata
-                info = yaml.load(tar.extractfile('xpm.yml'))
+                info = yaml.load(tar.extractfile('xpkg.yml'))
 
             # Get the name and version of the package from the internal info
             name = info['name']
@@ -572,7 +572,7 @@ class PackageBuilder(object):
         """
 
         # Create our temporary directory
-        self._work_dir = tempfile.mkdtemp(suffix = '-xpm-' + self._xpd['name'])
+        self._work_dir = tempfile.mkdtemp(suffix = '-xpkg-' + self._xpd['name'])
 
         # TODO: LOG THIS
         print 'Working in:',self._work_dir
@@ -701,7 +701,7 @@ class BinaryPackageBuilder(object):
     temporary directory.
 
     The binary package format starts with an uncompressed tar file containing:
-         xpm.yml - Contains the package information
+         xpkg.yml - Contains the package information
          files.tar.gz - Archive of files rooted in the env
     """
 
@@ -717,7 +717,7 @@ class BinaryPackageBuilder(object):
         """
 
         # Create our temporary directory
-        self._work_dir = tempfile.mkdtemp(suffix = '-xpm-install-' + self._xpd['name'])
+        self._work_dir = tempfile.mkdtemp(suffix = '-xpkg-install-' + self._xpd['name'])
 
         install_dir = os.path.join(self._work_dir, 'install')
 
@@ -738,7 +738,7 @@ class BinaryPackageBuilder(object):
                     tar.add(full_path, arcname=entry_name)
 
             # Create our metadata file
-            meta_file = os.path.join(self._work_dir, 'xpm.yml')
+            meta_file = os.path.join(self._work_dir, 'xpkg.yml')
             with open(meta_file, 'w') as f:
                 yaml.dump(info, f)
 

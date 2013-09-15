@@ -7,7 +7,7 @@ __doc__ = """Tests for the util module
 import unittest
 
 # Project Imports
-from xpm import util
+from xpkg import util
 
 
 class UtilTests(unittest.TestCase):

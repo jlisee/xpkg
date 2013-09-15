@@ -8,8 +8,8 @@ import shlex
 import sys
 
 # Project Imports
-from xpm import core
-from xpm import util
+from xpkg import core
+from xpkg import util
 
 
 def install(args):
