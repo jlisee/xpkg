@@ -13,4 +13,4 @@ python_dir = os.path.join(cur_dir, 'python')
 os.environ['PYTHONPATH'] =  python_dir + os.pathsep + python_path
 
 # Run our python program
-os.execvp(sys.executable, [sys.executable, '-m', 'xpm.main'] + sys.argv[1:])
+os.execvp(sys.executable, [sys.executable, '-m', 'xpkg.main'] + sys.argv[1:])

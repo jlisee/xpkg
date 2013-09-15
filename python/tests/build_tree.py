@@ -10,7 +10,7 @@ import re
 import sys
 
 # Project Imports
-from xpm import util
+from xpkg import util
 
 # Lets find the root of our source tree
 cur_dir, _ = os.path.split(__file__)
@@ -44,7 +44,7 @@ def setup_package(name, source_dir, file_dir, tree_dir):
 
 def create_test_repo(dest_dir):
     """
-    Creates a set of XPM package files and matches source tar balls from our
+    Creates a set of Xpkg package files and matches source tar balls from our
     test projects.
     """
 
