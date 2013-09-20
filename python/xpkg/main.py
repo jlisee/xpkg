@@ -41,9 +41,22 @@ def build(args):
     Create the binary for of the desired package.
     """
 
-    builder = core.BinaryPackageBuilder(util.load_xpd(args.path))
+    # Load the description from th file
+    package_description = util.load_xpd(args.path)
 
-    res = builder.build(args.dest)
+    dest_path = args.dest
+
+
+    if 'dependencies' in package_description:
+        # If we have dependencies build within the enviornemnt
+        env = core.Environment(_get_env_dir(args.root))
+
+        res = env.build_xpd(package_description, dest_path)
+    else:
+        # If there are no dependencies, preform a free standing build
+        builder = core.BinaryPackageBuilder(package_description)
+
+        res = builder.build(dest_path)
 
     print 'Package in:', res
 
@@ -139,7 +152,7 @@ def main(argv = None):
     parser_i.set_defaults(func=install)
 
     parser_i = subparsers.add_parser('build', help=build.__doc__)
-    #parser_i.add_argument(*root_args, **root_kwargs)
+    parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.add_argument('path', type=str, help='YAML install file')
     parser_i.add_argument('-d','--dest', type=str, default='.',
                           help='Where to place the package')

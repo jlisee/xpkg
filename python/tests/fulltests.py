@@ -80,6 +80,9 @@ class FullTests(unittest.TestCase):
     def _xpkg_cmd(self, args, env_dir=None, use_var=True, should_fail=False):
         """
         Run Xpkg command and return the output.
+
+        This sets the XPKG_ROOT environment var commands are executed with
+        respected to self.env_dir directory.
         """
 
         # Setup arguments
@@ -118,6 +121,19 @@ class FullTests(unittest.TestCase):
                 raise c
 
         return output
+
+    def _make_empty_db(self):
+        """
+        Creates an empty environment so we know that this is really an
+        environment.
+        """
+
+        # Create and empty db files
+        db_dir = os.path.join(self.env_dir, 'etc', 'xpkg',)
+        util.ensure_dir(db_dir)
+
+        db_path = os.path.join(db_dir, 'db.yml')
+        util.touch(db_path)
 
 
     def test_no_env(self):
@@ -233,12 +249,8 @@ class FullTests(unittest.TestCase):
 
 
     def test_jump(self):
-        # Create and empty db files
-        db_dir = os.path.join(self.env_dir, 'etc', 'xpkg',)
-        util.ensure_dir(db_dir)
-
-        db_path = os.path.join(db_dir, 'db.yml')
-        util.touch(db_path)
+        # Setup environment
+        self._make_empty_db()
 
         # Test ENV_ROOT
         def get_var(varname):
@@ -304,6 +316,7 @@ class FullTests(unittest.TestCase):
 
         self.assertEqual('Welcome to a better world!\n', output)
 
+
     def test_versions(self):
         # Make sure we can access the package tree for building
         os.environ[core.xpkg_tree_var] = self.tree_dir
@@ -317,6 +330,23 @@ class FullTests(unittest.TestCase):
         output = self._xpkg_cmd(['jump', '-c', 'greeter'])
 
         self.assertEqual('Hello!\n', output)
+
+
+    def test_build_with_deps(self):
+        """
+        Make sure that when we build an XPD package it's dependencies are
+        installed first.
+        """
+
+        # Setup environment
+        self._make_empty_db()
+
+        # Make sure we can access the package tree for building
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # This will force the install faketools
+        xpd_path = os.path.join(self.tree_dir, 'libgreet.xpd')
+        self._xpkg_cmd(['build', xpd_path, '--dest', self.repo_dir])
 
 
 if __name__ == '__main__':

@@ -245,6 +245,22 @@ class Environment(object):
                 self._install_xpd(xpd_data)
 
 
+    def build_xpd(self, data, dest_path):
+        """
+        Builds the given package from it's package description (XPD) data.
+        """
+
+        # Make sure all dependencies are properly installed
+        self._install_deps(data)
+
+        # Build the package and return the path
+        builder = BinaryPackageBuilder(data)
+
+        res = builder.build(dest_path, environment = self)
+
+        return res
+
+
     def _install_xpd(self, data):
         """
         Builds package and directly installs it into the given environment.
