@@ -266,21 +266,17 @@ class Environment(object):
         Install the given binary Xpkg package.
         """
 
-        # Open up the tar file
-        with tarfile.open(path) as tar:
+        # Open up the package
+        xpa = XPA(path)
 
-            # Pull out and parse the metadata
-            info = yaml.load(tar.extractfile('xpkg.yml'))
+        # Grab the meta data
+        info = xpa.info
 
-            # Make sure all dependencies are properly installed
-            self._install_deps(info)
+        # Make sure all dependencies are properly installed
+        self._install_deps(info)
 
-            # Install the files into the target environment location
-            file_tar = tar.extractfile('files.tar.gz')
-
-            with tarfile.open(fileobj = file_tar) as file_tar:
-
-                file_tar.extractall(self._env_dir)
+        # Install the files into the target environment location
+        xpa.install(self._env_dir)
 
         # Mark the package install
         self._pdb.mark_installed(info['name'], info)
@@ -395,6 +391,40 @@ class Environment(object):
             raise Exception('Invalid package expression: "%s"' % value)
 
         return (name, version)
+
+
+class XPA(object):
+    """
+    Represents a package archive.
+    """
+
+    def __init__(self, xpa_path):
+        """
+        Parses the metadata out of the XPA file.
+        """
+
+        # Only save the XPA path so we don't keep the tarfile itself open
+        self._xpa_path = xpa_path
+
+        with tarfile.open(xpa_path) as tar:
+
+            # Pull out and parse the metadata
+            self.info = yaml.load(tar.extractfile('xpkg.yml'))
+
+
+    def install(self, path):
+        """
+        Extract all the files in the package to the destination directory.
+        """
+
+        with tarfile.open(self._xpa_path) as tar:
+
+            file_tar = tar.extractfile('files.tar.gz')
+
+            with tarfile.open(fileobj = file_tar) as file_tar:
+
+                file_tar.extractall(path)
+
 
 class EmptyPackageTree(object):
     """
