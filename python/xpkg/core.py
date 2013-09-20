@@ -345,29 +345,33 @@ class Environment(object):
         are in that environment.
         """
 
-        # Set our path vars
+        # Set our path vars, defining different separators based on whether we
+        # are directly lists of compiler flags
         cflags = '-I%s' % os.path.join(self._env_dir, 'include')
         ldflags = '-L%s' % os.path.join(self._env_dir, 'lib')
 
         env_paths = {
-            'PATH' : os.path.join(self._env_dir, 'bin'),
-            'LD_LIBRARY_PATH' : os.path.join(self._env_dir, 'lib'),
-            'CFLAGS' : cflags,
-            'CCFLAGS' : cflags,
-            'CPPFLAGS' : cflags,
-            'LDFLAGS' : ldflags,
+            'PATH' : (os.path.join(self._env_dir, 'bin'), os.pathsep),
+            'LD_LIBRARY_PATH' : (os.path.join(self._env_dir, 'lib'), os.pathsep),
+            'CFLAGS' : (cflags, ' '),
+            'CCFLAGS' : (cflags, ' '),
+            'CPPFLAGS' : (cflags, ' '),
+            'LDFLAGS' : (ldflags, ' '),
            }
 
-        for varname, varpath in env_paths.iteritems():
+        for varname, pathinfo in env_paths.iteritems():
+            varpath, sep = pathinfo
+
             cur_var = os.environ.get(varname, None)
 
             if cur_var:
-                os.environ[varname] = varpath + os.pathsep + cur_var
+                os.environ[varname] = varpath + sep + cur_var
             else:
                 os.environ[varname] = varpath
 
         # Setup the Xpkg path
         os.environ[xpkg_root_var] = self._env_dir
+
 
     def _parse_install_input(self, value):
         """
