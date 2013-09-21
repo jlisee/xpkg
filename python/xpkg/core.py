@@ -289,6 +289,7 @@ class Environment(object):
         # Make sure all dependencies are properly installed
         self._install_deps(data)
 
+        print 'INSTALLING(XPD): %s-%s' % (data['name'], data['version'])
         # Build and install the package
         builder = PackageBuilder(data)
 
@@ -310,6 +311,8 @@ class Environment(object):
 
         # Make sure all dependencies are properly installed
         self._install_deps(info)
+
+        print 'INSTALLING(XPA): %s-%s' % (info['name'], info['version'])
 
         # Install the files into the target environment location
         xpa.install(self._env_dir)
@@ -509,6 +512,7 @@ class XPA(object):
         Extract all the files in the package to the destination directory.
         """
 
+        # Extract all the files
         with tarfile.open(self._xpa_path) as tar:
 
             file_tar = tar.extractfile('files.tar.gz')
@@ -516,6 +520,73 @@ class XPA(object):
             with tarfile.open(fileobj = file_tar) as file_tar:
 
                 file_tar.extractall(path)
+
+        # Fix up the install paths
+        self._fix_install_paths(path)
+
+    def _fix_install_paths(self, dest_path):
+        """
+        Given the package info go in and replace all occurrences of the original
+        install path with the new install path.
+        """
+
+        offset_info = self.info['install_path_offsets']
+        install_dir = offset_info['install_dir']
+
+        # Make sure we have enough space in binary files to replace the string
+        install_len = len(install_dir)
+        dest_len = len(dest_path)
+
+        if install_len < dest_len:
+            args = (dest_path, dest_len)
+            msg = 'Install directory path "%s" exceeds length limit of %d'
+            raise Exception(msg % args)
+
+        # Helper function for replacement
+        def replace_env_in_files(files, old, new, len_check=False):
+            """
+            Read the full file, do the replace then write it out
+            """
+            for file_path in files:
+                full_path = os.path.join(dest_path, file_path)
+
+                contents = open(full_path).read()
+
+                results = contents.replace(old, new)
+
+                # Check to make sure the length hasn't changed
+                if len_check:
+                    len_contents = len(contents)
+                    len_results = len(results)
+
+                    args = (len_contents, len_results)
+                    msg = 'Len changed from %d to %d' % args
+
+                    assert len_contents == len_results, msg
+
+                # Write out the final results
+                with open(full_path, 'w') as f:
+                    f.write(results)
+
+        # Do a simple find and replace in all text files
+        replace_env_in_files(files = offset_info['text_files'],
+                             old = install_dir,
+                             new = dest_path)
+
+        # Create a null padded replacement string for complete instances of
+        # null binary strings only.
+        null_install_dir = install_dir + '\0'
+        null_install_len = len(null_install_dir)
+
+        padded_env = dest_path + ('\0' * (null_install_len - dest_len))
+
+        assert(len(padded_env) == len(null_install_dir))
+
+        # For binary replaces find and replace with a null padded string
+        replace_env_in_files(files = offset_info['binary_files'],
+                             old = null_install_dir,
+                             new = padded_env,
+                             len_check = True)
 
 
 class EmptyPackageTree(object):
@@ -907,6 +978,7 @@ class BinaryPackageBuilder(object):
         # Create our temporary directory
         self._work_dir = tempfile.mkdtemp(suffix = '-xpkg-install-' + self._xpd['name'])
 
+        # TODO: pad with a large hash so we have enough space to replace this
         install_dir = os.path.join(self._work_dir, 'install')
 
         # TODO: LOG THIS

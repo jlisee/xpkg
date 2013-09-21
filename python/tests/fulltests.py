@@ -389,5 +389,34 @@ class FullTests(unittest.TestCase):
     # TODO: test that install the same package twice will return and error
     # TODO: test for version conflicts for deps
 
+    def test_basic_install_path_changes(self):
+        # Setup environment
+        self._make_empty_db()
+
+        # Make sure we can access the package tree for building
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Put a libgreet binary package in the repo, so that's embedded build
+        # directory is different and needs to be actively changed.
+        xpd_path = os.path.join(self.tree_dir, 'libgreet2.xpd')
+        self._xpkg_cmd(['build', xpd_path, '--dest', self.repo_dir])
+
+        # Make sure we have the repo dir setup so pull in our pre-built package
+        os.environ[core.xpkg_repo_var] = self.repo_dir
+
+        # Install greet
+        self._xpkg_cmd(['install', 'greeter'])
+
+        # Make sure the greeter works
+        greeter_bin = os.path.join(self.env_dir, 'bin', 'greeter')
+
+        output = self._xpkg_cmd(['jump', '-c', 'greeter -i'])
+
+        # We expect the path to have the install directory
+        expected = 'Hello from (bin): %s\n' % self.env_dir
+
+        self.assertEqual(expected, output)
+
+
 if __name__ == '__main__':
     unittest.main()
