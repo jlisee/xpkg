@@ -232,8 +232,20 @@ class Environment(object):
             self._repo = EmptyPackageRepo()
 
 
-    def install(self, input_val):
 
+    def install(self, input_val):
+        """
+        Installs the desired input this can be any of the following:
+          path/to/description/package.xpd
+          path/to/binary/package.xpa
+          package
+          package==version
+        """
+
+        # Check to make sure the install is allowed
+        self._install_check(input_val)
+
+        # Install our input
         if input_val.endswith('.xpa'):
             # We have a binary package so install it
             self._install_xpa(input_val)
@@ -244,10 +256,11 @@ class Environment(object):
 
             self._install_xpd(xpd_data)
         else:
-            # The input_val must be a package name so try to find the xpd
-            # so first try to find the package in a pre-compile manner
+            # The input_val is a package name so parse out the desired version
+            # and name
             name, version = self._parse_install_input(input_val)
 
+            # First try and find the xpa (pre-compiled) version of the package
             xpa_path = self._repo.lookup(name, version)
 
             if xpa_path:
@@ -342,7 +355,7 @@ class Environment(object):
 
         # Install or report a version conflict for each dependency as needed
         for dep in deps:
-            installed, version_match = self._is_package_installed(dep)
+            installed, version_match, depname, version = self._is_package_installed(dep)
 
             if not installed:
                 # Not installed so install the package
@@ -352,11 +365,10 @@ class Environment(object):
                 # Installed but we have the wrong version, so lookup the current
                 # package version and throw and error
 
-                depname, needed_version = self._parse_install_input(dep)
                 current_version = self._pdb.get_info(depname)['version']
 
                 args = (data['name'], data['version'], depname, current_version,
-                        needed_version)
+                        version)
 
                 msg = '%s-%s requires package %s at version: %s, but: %s ' \
                       'is installed'
@@ -364,12 +376,39 @@ class Environment(object):
                 raise Exception(msg % args)
 
 
+    def _install_check(self, input_val):
+        """
+        Checks for the package already being installed, or if there is a
+        conflicting version installed.
+        """
+
+        # Check to see if we already have a version of that package
+        # installed and if so what version
+        installed, version_match, name, version = self._is_package_installed(input_val)
+
+        if installed:
+            current_version = self._pdb.get_info(name)['version']
+
+        # Bail out if we already have the package installed, or we already
+        # have a different version installed
+        if installed and version_match:
+            args = (name, current_version)
+            raise Exception('Package %s already at version: %s')
+
+        elif installed:
+            args = (name, current_version, version)
+
+            msg = 'Package %s already at version: %s conflicts with: %s'
+
+            raise Exception(msg % args)
+
+
     def _is_package_installed(self, input_val):
         """
         Returns a tuple saying whether the package is installed, and if so
         it's the proper version, example:
 
-          (installed, version_match)
+          (installed, version_match, pkgname, version)
         """
 
         if input_val.endswith('.xpa'):
@@ -392,7 +431,7 @@ class Environment(object):
         installed = self._pdb.installed(name)
         version_match = self._pdb.installed(name, version)
 
-        return (installed, version_match)
+        return (installed, version_match, name, version)
 
 
     def remove(self, name):

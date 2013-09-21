@@ -1,8 +1,6 @@
 TODO
 =====
 
- - don't let the user install a package that is already installed
-
  - create much better tracing functionality
 
  - build package before installing it

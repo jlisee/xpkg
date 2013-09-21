@@ -169,6 +169,26 @@ class FullTests(unittest.TestCase):
         self.assertEqual('Hello, world!\n', output)
 
 
+    def test_install_twice(self):
+        """
+        Make sure the desired program was installed and works.
+        """
+
+        # Run the install
+        self._xpkg_cmd(['install', self.hello_xpd])
+
+        # Get the modification time
+        mtime = os.path.getmtime(self.hello_bin)
+
+        # A second install attempt should fail
+        self._xpkg_cmd(['install', self.hello_xpd], should_fail=True)
+
+        # Make sure the modification time hasn't changed
+        new_mtime = os.path.getmtime(self.hello_bin)
+
+        self.assertEqual(mtime, new_mtime)
+
+
     def test_install_with_tree_flag(self):
         """
         Make sure we can install with the package tree.
