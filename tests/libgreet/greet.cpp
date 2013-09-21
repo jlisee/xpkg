@@ -11,12 +11,12 @@
 
 namespace greet {
 
-void sayhello()
+void say_hello()
 {
   std::cout << STRINGIZE_VALUE_OF(GREETING) << std::endl;
 }
 
-void sayinstall()
+void say_install()
 {
   std::cout << "Hello from (bin): " << STRINGIZE_VALUE_OF(INSTALL_DIR)
             << std::endl;

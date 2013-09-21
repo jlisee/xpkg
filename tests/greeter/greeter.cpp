@@ -4,21 +4,21 @@
 
 int main(int argc, char** argv)
 {
-  bool sayinstall = false;
+  bool say_install = false;
   bool long_install = false;
 
   if ((argc == 2) && (std::string("-i") == std::string(argv[1])))
   {
-      sayinstall = true;
+      say_install = true;
   }
   else if ((argc == 2) && (std::string("-l") == std::string(argv[1])))
   {
       long_install = true;
   }
 
-  if (sayinstall)
+  if (say_install)
   {
-    greet::sayinstall();
+    greet::say_install();
   }
   else if (long_install)
   {
@@ -26,7 +26,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    greet::sayhello();
+    greet::say_hello();
   }
 
   return 0;
