@@ -490,7 +490,28 @@ class Environment(object):
 
 class XPA(object):
     """
-    Represents a package archive.
+    Represents a package archive.  The xpkg.yml format is:
+
+        {
+          'name' : 'hello',
+          'version' : '1.0.0',
+          'files' : [
+            'bin',
+            'bin/hello'
+          ],
+          'install_path_offsets' : {
+            'install_dir' : '/tmp/install-list',
+            'binary_files' : {
+               'bin/hello' : [12947, 57290]
+            },
+            'sub_binary_files' : {
+               'bin/hello' : [(1000,50), (7562,30)]
+            },
+            'text_files' : {
+               'share/hello/msg.txt' : [5, 100]
+            }
+          }
+        }
     """
 
     def __init__(self, xpa_path):
@@ -543,16 +564,27 @@ class XPA(object):
             raise Exception(msg % args)
 
         # Helper function for replacement
-        def replace_env_in_files(files, old, new, len_check=False):
+        def replace_env_in_files(files, old, new, len_check=False,
+                                 replace=None):
             """
             Read the full file, do the replace then write it out
+
+            len_check - when true it makes sure the file length hasn't changed
+            this important for binary files.
+
+            replace - an optional external function to use for replacement,
+            passed the file file_path, contents, old, and new string.
             """
+
             for file_path in files:
                 full_path = os.path.join(dest_path, file_path)
 
                 contents = open(full_path).read()
 
-                results = contents.replace(old, new)
+                if replace:
+                    results = replace(file_path, contents, old, new)
+                else:
+                    results = contents.replace(old, new)
 
                 # Check to make sure the length hasn't changed
                 if len_check:
@@ -587,6 +619,44 @@ class XPA(object):
                              old = null_install_dir,
                              new = padded_env,
                              len_check = True)
+
+        # Define a function to do our binary substring replacements
+        def binary_sub_replace(file_path, contents, old, new):
+            """
+            This is not very efficient at all, but it does the job for now.
+            """
+
+            assert old == install_dir, "install dir not string to replace"
+            assert new == dest_path, "dest path not replacement string"
+
+            offsets = offset_info['sub_binary_files'][file_path]
+
+            for offset, null_offset in offsets:
+                # Calculate the offset at which are install_dir ends
+                dir_offset = offset + install_len
+
+                # Grab the suffix after the install dir
+                suffix = contents[dir_offset:null_offset]
+
+                # Build a replacement string with needed padding so it matches
+                # in length
+                replacer = dest_path + suffix +  ('\0' * (install_len - dest_len))
+
+                # Now lets replace that
+                results = contents[0:offset] + replacer + contents[null_offset:]
+
+                # Make sure we haven't effected length before moving on
+                assert len(contents) == len(results)
+                contents = results
+
+            return contents
+
+        # Do our binary substring replacements
+        replace_env_in_files(files = offset_info['sub_binary_files'],
+                             old = install_dir,
+                             new = dest_path,
+                             len_check = True,
+                             replace=binary_sub_replace)
 
 
 class EmptyPackageTree(object):
@@ -751,26 +821,8 @@ class PackageBuilder(object):
         Right now this just executes instructions inside the XPD, but in the
         future we can make this a little smarter.
 
-        It returns the info structure for the created package.  Currently in
-        the following form:
-
-        {
-          'name' : 'hello',
-          'version' : '1.0.0',
-          'files' : [
-            'bin',
-            'bin/hello'
-          ],
-          'install_path_offsets' : {
-            'install_dir' : '/tmp/install-list',
-            'binary_files' : {
-               'bin/hello' : [12947, 57290]
-            },
-            'text_files' : {
-               'share/hello/msg.txt' : [5, 100]
-            }
-          }
-        }
+        It returns the info structure for the created package.  See the XPA
+        class for the structure of the data returned.
         """
 
         # Create our temporary directory
@@ -908,9 +960,16 @@ class PackageBuilder(object):
 
           {
             'install_dir' : '/tmp/xpkg-720617e18f95633fec423f7a522d88eb',
+            # The location of the null-terminated install string
             'binary_files' : {
                'bin/hello' : [12947, 57290]
             }
+            # The location of the install string and the null of the string
+            # it's located in
+            'sub_binary_files' : {
+               'bin/hello' : [(1000, 1015), (12947, 12965)]
+            }
+            # The location in each file of the string we have to replace
             'text_files' : {
                'share/hello/message.txt' : [23,105]
             }
@@ -924,6 +983,7 @@ class PackageBuilder(object):
 
         # State we are finding
         binary_files = {}
+        sub_binary_files = {}
         text_files = {}
 
         for full_path, filepath in files:
@@ -934,13 +994,36 @@ class PackageBuilder(object):
             offsets = [m.start() for m in re.finditer(install_dir, contents)]
 
             # Count number of zero bytes to determine if we are binary or not
+            # WARNING: this will fail with UTF16 or UTF32 files
             zeros = contents.count('\0')
 
             if len(offsets) > 0:
                 # If we found any record the fact
                 if zeros > 0:
-                    binary_files[filepath] = offsets
+                    binary_offsets = []
+                    sub_binary_offsets = []
+
+                    # Stores each offset as full or a binary substring
+                    for offset in offsets:
+                        # Find the location of the null termination
+                        null_term = contents.find('\0', offset)
+
+                        if null_term == offset + len(install_dir):
+                            # Record strings that are just null terminated
+                            binary_offsets.append(offset)
+                        else:
+                            # If not record the offset and null location
+                            sub_binary_offsets.append((offset, null_term))
+
+                    # Store our results for this file path if needed
+                    if len(binary_offsets) > 0:
+                        binary_files[filepath] = binary_offsets
+
+                    if len(sub_binary_offsets) > 0:
+                        sub_binary_files[filepath] = sub_binary_offsets
+
                 else:
+                    # If we have found text files record the fact
                     text_files[filepath] = offsets
 
 
@@ -948,6 +1031,7 @@ class PackageBuilder(object):
         results = {
             'install_dir' : install_dir,
             'binary_files' : binary_files,
+            'sub_binary_files' : sub_binary_files,
             'text_files' : text_files,
         }
 
