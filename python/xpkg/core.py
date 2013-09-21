@@ -30,7 +30,7 @@ class InstallDatabase(object):
     def __init__(self, env_dir):
 
         # Package db location
-        self._db_dir = os.path.join(env_dir, 'etc', 'xpkg')
+        self._db_dir = self.db_dir(env_dir)
         self._db_path = os.path.join(self._db_dir, 'db.yml')
 
         # Create package database if it doesn't exist
@@ -134,6 +134,14 @@ class InstallDatabase(object):
                 return True
         else:
             return False
+
+
+    @staticmethod
+    def db_dir(root):
+        """
+        Returns the db directory relative to the given root.
+        """
+        return os.path.join(root, 'var', 'xpkg')
 
 
 def fetch_file(filehash, url):
