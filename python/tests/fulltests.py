@@ -389,7 +389,7 @@ class FullTests(unittest.TestCase):
     # TODO: test that install the same package twice will return and error
     # TODO: test for version conflicts for deps
 
-    def test_basic_install_path_changes(self):
+    def test_install_path_changes(self):
         # Setup environment
         self._make_empty_db()
 
@@ -414,6 +414,14 @@ class FullTests(unittest.TestCase):
 
         # We expect the path to have the install directory
         expected = 'Hello from (bin): %s\n' % self.env_dir
+
+        self.assertEqual(expected, output)
+
+
+        # Now try binary substrings
+        output = self._xpkg_cmd(['jump', '-c', 'greeter -l'])
+
+        expected = 'Hello from (bin/greet): %s\n' % (self.env_dir + '/greet')
 
         self.assertEqual(expected, output)
 
