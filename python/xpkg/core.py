@@ -116,6 +116,23 @@ class InstallDatabase(object):
         return self._db.get(name, None)
 
 
+    def installed(self, name, version=None):
+        """
+        Returns true if the given package is installed, supplying no version
+        will return true if any version is installed.
+        """
+
+        info = self.get_info(name)
+
+        if info:
+            if version:
+                return version == info.get('version', None)
+            else:
+                return True
+        else:
+            return False
+
+
 def fetch_file(filehash, url):
     # Make sure cache exists
     cache_dir = os.path.expanduser(os.path.join('~', '.xpkg', 'cache'))
@@ -303,13 +320,65 @@ class Environment(object):
         Makes sure all the dependencies for the given package are properly
         installed.
 
-        TODO: handle versions someday
+        TODO: handle proper version checks someday
         """
 
+        # Get the list of deps in the form of ['package', 'package==1.2.2']
         deps = data.get('dependencies', [])
 
+        # Install or report a version conflict for each dependency as needed
         for dep in deps:
-            self.install(dep)
+            installed, version_match = self._is_package_installed(dep)
+
+            if not installed:
+                # Not installed so install the package
+                self.install(dep)
+
+            elif installed and not version_match:
+                # Installed but we have the wrong version, so lookup the current
+                # package version and throw and error
+
+                depname, needed_version = self._parse_install_input(dep)
+                current_version = self._pdb.get_info(depname)['version']
+
+                args = (data['name'], data['version'], depname, current_version,
+                        needed_version)
+
+                msg = '%s-%s requires package %s at version: %s, but: %s ' \
+                      'is installed'
+
+                raise Exception(msg % args)
+
+
+    def _is_package_installed(self, input_val):
+        """
+        Returns a tuple saying whether the package is installed, and if so
+        it's the proper version, example:
+
+          (installed, version_match)
+        """
+
+        if input_val.endswith('.xpa'):
+            # Grab the name out of the XPA metadata
+            xpa = XPA(input_val)
+
+            name = xpa.info['name']
+            version = xpa.info['version']
+        elif input_val.endswith('.xpd'):
+            # Path is an xpd file load that then install
+            xpd_data = util.load_xpd(input_val)
+
+            name = xpd_data['name']
+            version = xpd_data['version']
+        else:
+            # The input_val must be a package name so try to find the xpd
+            # so first try to find the package in a pre-compile manner
+            name, version = self._parse_install_input(input_val)
+
+        installed = self._pdb.installed(name)
+        version_match = self._pdb.installed(name, version)
+
+        return (installed, version_match)
 
 
     def remove(self, name):
