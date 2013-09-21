@@ -348,6 +348,9 @@ class FullTests(unittest.TestCase):
         xpd_path = os.path.join(self.tree_dir, 'libgreet.xpd')
         self._xpkg_cmd(['build', xpd_path, '--dest', self.repo_dir])
 
+    # TODO: test that if a dep is installed it would be-installed
+    # TODO: test that install the same package twice will return and error
+    # TODO: test for version conflicts for deps
 
 if __name__ == '__main__':
     unittest.main()
