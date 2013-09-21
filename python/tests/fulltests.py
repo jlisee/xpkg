@@ -136,7 +136,7 @@ class FullTests(unittest.TestCase):
         """
 
         # Create and empty db files
-        db_dir = os.path.join(self.env_dir, 'etc', 'xpkg',)
+        db_dir = core.InstallDatabase.db_dir(self.env_dir)
         util.ensure_dir(db_dir)
 
         db_path = os.path.join(db_dir, 'db.yml')
@@ -368,7 +368,8 @@ class FullTests(unittest.TestCase):
         self._xpkg_cmd(['install', 'libgreet'])
 
         # Read in the DB
-        db_path = os.path.join(self.env_dir, 'etc', 'xpkg', 'db.yml')
+        db_dir = core.InstallDatabase.db_dir(self.env_dir)
+        db_path = os.path.join(db_dir, 'db.yml')
 
         self.assertTrue(os.path.exists(db_path))
 

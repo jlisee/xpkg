@@ -1,13 +1,11 @@
 TODO
 =====
 
- - variablize install db and move to /var
+ - don't let the user install a package that is already installed
 
  - create much better tracing functionality
 
  - build package before installing it
-
- - don't let the use install a package that is already installed
 
  - repos and packages:
    - make sure we can specify multiple source locations
