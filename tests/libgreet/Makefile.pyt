@@ -1,7 +1,7 @@
 all: libgreet.so
 
 greet.o:
-	g++ -fPIC -c greet.cpp ${EXTRA_FLAGS}
+	g++ -fPIC -c greet.cpp ${EXTRA_FLAGS} -DINSTALL_DIR="${DESTDIR}"
 
 libgreet.so: greet.o
 	g++ -shared -o libgreet.so greet.o

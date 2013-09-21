@@ -16,4 +16,10 @@ void sayhello()
   std::cout << STRINGIZE_VALUE_OF(GREETING) << std::endl;
 }
 
+void sayinstall()
+{
+  std::cout << "Hello from (bin): " << STRINGIZE_VALUE_OF(INSTALL_DIR)
+            << std::endl;
+}
+
 }
