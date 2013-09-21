@@ -1,12 +1,16 @@
 TODO
 =====
 
- - repos and packages:
-   - make sure we can specify multiple source locations
+ - variablize install db and move to /var
 
- - path editing - make sure we can change embedded
+ - create much better tracing functionality
 
  - build package before installing it
+
+ - don't let the use install a package that is already installed
+
+ - repos and packages:
+   - make sure we can specify multiple source locations
 
  - create core package to support chroot builds
    - coreutils
@@ -28,6 +32,10 @@ TODO
    - can't build opengl, it comes from the vendor
    - need a way to install these in chroot, need a way to create these header
      only packages, and pull in the needed binaries into the chroot
+
+ - Document file formats:
+   - package-name.xpd - format
+   - xpkg.yml - format (see PackageBuilder.build method)
 
  - Create the concept of a toolset
 
