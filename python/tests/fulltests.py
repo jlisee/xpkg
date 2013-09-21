@@ -1,6 +1,9 @@
 # Author: Joseph Lisee <jlisee@gmail.com>
 
-__doc__ = """Really basic full up tests
+__doc__ = """
+These are tests using the public interface and files of Xpkg itself, not the
+internal python implementation.  This idea is that we can use these tests when
+porting over to a future version.
 """
 
 # Python Imports
@@ -11,6 +14,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+# Library Imports
+import yaml
+
 
 cur_dir, _ = os.path.split(__file__)
 root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
@@ -347,6 +354,36 @@ class FullTests(unittest.TestCase):
         # This will force the install faketools
         xpd_path = os.path.join(self.tree_dir, 'libgreet.xpd')
         self._xpkg_cmd(['build', xpd_path, '--dest', self.repo_dir])
+
+
+    def test_for_path_offsets(self):
+
+        # Make sure we can access the package tree for building
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Install faketools so we don't depend on dependencies working
+        self._xpkg_cmd(['install', 'faketools'])
+
+        # Install the package with offsets
+        self._xpkg_cmd(['install', 'libgreet'])
+
+        # Read in the DB
+        db_path = os.path.join(self.env_dir, 'etc', 'xpkg', 'db.yml')
+
+        self.assertTrue(os.path.exists(db_path))
+
+        # Make sure our package is in it
+        db = yaml.load(open(db_path))
+
+        self.assertIn('libgreet', db)
+
+        # Now lets make sure we have the right info
+        info = db['libgreet']
+        binary_offsets = info['install_path_offsets']['binary_files']
+
+        self.assertEqual(1, len(binary_offsets))
+        self.assertIn('lib/libgreet.so', binary_offsets)
+
 
     # TODO: test that if a dep is installed it would be-installed
     # TODO: test that install the same package twice will return and error
