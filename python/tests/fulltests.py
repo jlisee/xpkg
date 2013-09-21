@@ -417,11 +417,18 @@ class FullTests(unittest.TestCase):
 
         self.assertEqual(expected, output)
 
-
         # Now try binary substrings
         output = self._xpkg_cmd(['jump', '-c', 'greeter -l'])
 
         expected = 'Hello from (bin/greet): %s\n' % (self.env_dir + '/greet')
+
+        self.assertEqual(expected, output)
+
+        # Now test that text files substitutions happen
+        output = self._xpkg_cmd(['jump', '-c', 'greeter -c'])
+
+        args = (self.env_dir, 'I am in: ' + self.env_dir)
+        expected = 'Hello conf (%s/share/libgreet/settings.conf): %s\n' % args
 
         self.assertEqual(expected, output)
 
