@@ -22,4 +22,11 @@ void sayinstall()
             << std::endl;
 }
 
+void say_long_install()
+{
+  std::cout << "Hello from (bin/greet): "
+            << STRINGIZE_VALUE_OF(INSTALL_DIR) "/greet"
+            << std::endl;
+}
+
 }
