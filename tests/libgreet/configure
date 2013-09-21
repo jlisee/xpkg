@@ -8,4 +8,6 @@ import subprocess
 import sys
 
 if __name__ == '__main__':
-    sys.exit(subprocess.call(['fake-configure', '--root', '.'] + sys.argv[1:]))
+    files = ['Makefile.pyt', 'settings.conf.pyt']
+    args = ['fake-configure', '--root', '.'] + files + sys.argv[1:]
+    sys.exit(subprocess.call(args))

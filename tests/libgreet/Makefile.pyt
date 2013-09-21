@@ -13,8 +13,11 @@ install:
 	mkdir -p ${DESTDIR}/include/greet
 	install -m 644 greet.h ${DESTDIR}/include/greet
 
+	mkdir -p ${DESTDIR}/share/libgreet
+	install -m 644 settings.conf ${DESTDIR}/share/libgreet
+
 clean:
 	rm -f greet.o libgreet.so
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile settings.conf

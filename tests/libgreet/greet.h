@@ -13,6 +13,9 @@ void say_install();
 // embedded in the binary.
 void say_long_install();
 
+// Reads the greeting from a text file
+void say_config_install();
+
 }
 
 #endif
