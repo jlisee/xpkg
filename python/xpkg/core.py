@@ -4,9 +4,12 @@
 import hashlib
 import os
 import platform
+import re
 import shutil
 import tarfile
 import tempfile
+
+# Library Imports
 import yaml
 
 # Project Imports
@@ -686,7 +689,16 @@ class PackageBuilder(object):
           'files' : [
             'bin',
             'bin/hello'
-          ]
+          ],
+          'install_path_offsets' : {
+            'install_dir' : '/tmp/install-list',
+            'binary_files' : {
+               'bin/hello' : [12947, 57290]
+            },
+            'text_files' : {
+               'share/hello/msg.txt' : [5, 100]
+            }
+          }
         }
         """
 
@@ -805,13 +817,70 @@ class PackageBuilder(object):
         Creates the info structure from the new files and the package XPD info.
         """
 
+        # Find all instances of our install path in our data
+        install_path_offsets = self._find_path_offsets(new_files)
+
         info = {
             'name' : self._xpd['name'],
             'version' : self._xpd['version'],
             'files' : list(new_files),
+            'install_path_offsets' : install_path_offsets,
         }
 
         return info
+
+
+    def _find_path_offsets(self, paths):
+        """
+        Search the given paths of the packages for instances of the targetdir.
+        Here is some example output:
+
+          {
+            'install_dir' : '/tmp/xpkg-720617e18f95633fec423f7a522d88eb',
+            'binary_files' : {
+               'bin/hello' : [12947, 57290]
+            }
+            'text_files' : {
+               'share/hello/message.txt' : [23,105]
+            }
+          }
+        """
+
+        # Get just our files
+        install_dir = self._target_dir
+        full_paths = [(os.path.join(install_dir, p),p) for p in paths]
+        files = [p for p in full_paths if os.path.isfile(p[0])]
+
+        # State we are finding
+        binary_files = {}
+        text_files = {}
+
+        for full_path, filepath in files:
+            # Load file into memory
+            contents = open(full_path).read()
+
+            # Find the locations of all strings
+            offsets = [m.start() for m in re.finditer(install_dir, contents)]
+
+            # Count number of zero bytes to determine if we are binary or not
+            zeros = contents.count('\0')
+
+            if len(offsets) > 0:
+                # If we found any record the fact
+                if zeros > 0:
+                    binary_files[filepath] = offsets
+                else:
+                    text_files[filepath] = offsets
+
+
+        # Form information into a dict return to the user
+        results = {
+            'install_dir' : install_dir,
+            'binary_files' : binary_files,
+            'text_files' : text_files,
+        }
+
+        return results
 
 
 class BinaryPackageBuilder(object):
