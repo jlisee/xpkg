@@ -6,7 +6,7 @@ greet.o:
 libgreet.so: greet.o
 	g++ -shared -o libgreet.so greet.o
 
-install:
+install: libgreet.so
 	mkdir -p ${DESTDIR}/lib
 	install -m 744 libgreet.so ${DESTDIR}/lib
 

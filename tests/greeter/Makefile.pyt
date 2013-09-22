@@ -6,7 +6,7 @@ greeter.o:
 greeter: greeter.o
 	g++ -o greeter greeter.o -lgreet ${LDFLAGS}
 
-install:
+install: greeter
 	mkdir -p ${DESTDIR}/bin
 	install -m 744 greeter ${DESTDIR}/bin
 
