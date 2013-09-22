@@ -107,8 +107,8 @@ class FullTests(unittest.TestCase):
             # Set out args
             env_args = ['--root',env_dir]
 
-        # Run command and return the results
-        cmd = [os.path.join(root_dir, 'xpkg')] + args + env_args
+        # Run the command directly calling the python xpkg implementation
+        cmd = [sys.executable, '-m', 'xpkg.main'] + args + env_args
 
         try:
             output = util.shellcmd(cmd, shell=False, stream=False)

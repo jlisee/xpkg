@@ -5,8 +5,18 @@ TODO
 
  - build package before installing it
 
+ - support for long multiline configure commands
+
  - repos and packages:
    - make sure we can specify multiple source locations
+
+ - don't let a user remove a package that has dependencies
+
+ - add support for a check/test step (libgmp, libmpfr have "make check")
+
+ - add some way to easily check/configure environment variables
+
+ - support proper CPU detection for job count
 
  - create core package to support chroot builds
    - coreutils
