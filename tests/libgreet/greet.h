@@ -16,6 +16,9 @@ void say_long_install();
 // Reads the greeting from a text file
 void say_config_install();
 
+// Print a binary command with the install path in it twice
+void print_double_install();
+
 }
 
 #endif

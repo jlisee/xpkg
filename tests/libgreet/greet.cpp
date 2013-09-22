@@ -31,6 +31,7 @@ void say_long_install()
             << std::endl;
 }
 
+
 void say_config_install()
 {
   // Path to configuration file
@@ -69,4 +70,14 @@ void say_config_install()
   std::cout << "Hello conf (" << conf_path << "): " << greeting << std::endl;
 }
 
+
+void print_double_install()
+{
+  static const char* str = "./configure --prefix="
+    STRINGIZE_VALUE_OF(INSTALL_DIR) " --libdir="
+    STRINGIZE_VALUE_OF(INSTALL_DIR) "/lib --fast";
+
+  std::cout << "Str: " << str << std::endl;
 }
+
+} // namespace greet
