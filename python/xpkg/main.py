@@ -84,19 +84,35 @@ def info(args):
     """
 
     # Parse argument
-    package_name = args.name
-    env_dir = _get_env_dir(args.root)
+    input_val = args.name
 
-    # Load the package database
-    env = core.Environment(env_dir)
 
-    # Grab the information
-    info = env._pdb.get_info(package_name)
+    if input_val.endswith('.xpa'):
+        # Actual package parse and print out information
+        xpa = core.XPA(input_val)
 
-    if info:
-        print 'Package %s at version %s' % (package_name, info['version'])
+        info = xpa.info
     else:
-        print 'Package %s not installed.' % package_name
+        # Package name lookup info from our environment
+        env_dir = _get_env_dir(args.root)
+
+        # Load the package database
+        env = core.Environment(env_dir)
+
+        # Grab the information
+        info = env._pdb.get_info(input_val)
+
+    # Display info
+    if info:
+        print '  name:',info['name']
+        print '  version:',info['version']
+
+        if args.verbose:
+            print '  files:'
+            for f in sorted(info['files']):
+                print '    -',f
+    else:
+        print 'Package %s not installed.' % input_val
 
 
 def list_packages(args):
@@ -165,6 +181,8 @@ def main(argv = None):
 
     parser_i = subparsers.add_parser('info', help=info.__doc__)
     parser_i.add_argument('name', type=str, help='Name of package')
+    parser_i.add_argument('-v','--verbose', action='store_true', default=False,
+                          help='Show more details about the package')
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=info)
 

@@ -18,6 +18,8 @@ TODO
 
  - support proper CPU detection for job count
 
+ - order files in XPA archive so xpkg.yml is first (also don't compress it!)
+
  - create core package to support chroot builds
    - coreutils
    - make
