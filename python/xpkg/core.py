@@ -1166,9 +1166,9 @@ class BinaryPackageBuilder(object):
             package_name = self._get_package_name()
             package_tar = os.path.join(self._work_dir, package_name)
 
-            with tarfile.open(package_tar, "w:gz") as tar:
-                tar.add(file_tar, arcname=os.path.basename(file_tar))
+            with tarfile.open(package_tar, "w") as tar:
                 tar.add(meta_file, arcname=os.path.basename(meta_file))
+                tar.add(file_tar, arcname=os.path.basename(file_tar))
 
             # Move to the desired location
             dest_path = os.path.join(storage_dir, package_name)
