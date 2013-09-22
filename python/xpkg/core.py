@@ -996,7 +996,7 @@ class PackageBuilder(object):
         # Run each command in turn
         for raw_cmd in cmds:
             # Make sure we have env_root when needed
-            if ram_cmd.count('%(env_root)s') and len(self._env_dir) == 0:
+            if raw_cmd.count('%(env_root)s') and len(self._env_dir) == 0:
                 raise Exception('Package references environment root, '
                                 'must be built in an environment')
 

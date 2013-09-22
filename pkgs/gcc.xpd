@@ -11,8 +11,19 @@ files:
   md5-3b2386c114cd74185aa3754b58a79304:
     url: http://gcc.petsads.us/releases/gcc-4.8.1/gcc-4.8.1.tar.bz2
 
-configure:
-  ./configure --prefix=%(prefix)s --disable-multilib --enable-threads=posix --with-system-zlib --enable-checking=release --enable-libstdcxx-time=yes --libdir=%(prefix)s/lib --libexecdir=%(prefix)s/lib --with-sysroot=%(prefix)s
+configure: >-
+  ./configure --prefix=%(prefix)s
+  --disable-multilib
+  --enable-threads=posix
+  --with-system-zlib
+  --enable-checking=release
+  --enable-libstdcxx-time=yes
+  --libdir=%(prefix)s/lib
+  --libexecdir=%(prefix)s/lib
+  --enable-languages=c,c++
+  --with-gmp=%(env_root)s
+  --with-mpfr=%(env_root)s
+  --with-mpc=%(env_root)s
 
 build:
   # The configure script fails if this isn't present
