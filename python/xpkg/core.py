@@ -211,7 +211,7 @@ class Environment(object):
         if not os.path.exists(self._env_dir) and not create:
             raise Exception('No Xpkg package DB found in root "%s"' % self._env_dir)
 
-        # If needed this will setup the empty enviornment
+        # If needed this will setup the empty environment
         self._pdb = InstallDatabase(self._env_dir)
 
         # Setup the package tree to either load from the given path or return
@@ -884,8 +884,13 @@ class PackageBuilder(object):
             # Store the current environment
             env_vars = util.EnvStorage(store = True)
 
+            # If we have an environment apply it's variables so the build can
+            # reference the libraries installed in it
             if environment:
                 environment.apply_env_variables()
+                self._env_dir = environment._env_dir
+            else:
+                self._env_dir = ''
 
             # Fetches and unpacks all the required sources for the package
             self._get_sources()
@@ -907,6 +912,8 @@ class PackageBuilder(object):
         finally:
             # Put back our environment
             env_vars.restore()
+
+            self._env_dir = ''
 
             # Make sure we cleanup after we are done
             shutil.rmtree(self._work_dir)
@@ -980,14 +987,27 @@ class PackageBuilder(object):
         needed for each command.
         """
 
+        # If don't have a list of cmds make a single cmd list
         if isinstance(raw, list):
             cmds = raw
         else:
             cmds = [raw]
 
+        # Run each command in turn
         for raw_cmd in cmds:
-            cmd = raw_cmd % {'jobs' : '8', 'prefix' : self._target_dir}
+            # Make sure we have env_root when needed
+            if ram_cmd.count('%(env_root)s') and len(self._env_dir) == 0:
+                raise Exception('Package references environment root, '
+                                'must be built in an environment')
 
+            # Sub in our variables into the commands
+            cmd = raw_cmd % {
+                'jobs' : '8',
+                'prefix' : self._target_dir,
+                'env_root' : self._env_dir,
+            }
+
+            # Run our command
             util.shellcmd(cmd)
 
 
@@ -1161,8 +1181,7 @@ class BinaryPackageBuilder(object):
         finally:
             # Make sure we cleanup after we are done
             # Don't do this right now
-            #shutil.rmtree(self._work_dir)
-            pass
+            shutil.rmtree(self._work_dir)
 
         return dest_path
 
