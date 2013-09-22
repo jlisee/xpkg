@@ -241,9 +241,21 @@ class FullTests(unittest.TestCase):
 
         self._xpkg_cmd(['install', self.hello_xpd])
 
+        # Normal output
         output = self._xpkg_cmd(['info', 'hello'], use_var=False)
 
-        self.assertEqual('Package hello at version 1.0.0\n', output)
+        data = yaml.load(output)
+
+        expected = {'name' : 'hello', 'version' : '1.0.0'}
+        self.assertEqual(expected, data)
+
+        # Full output
+        output = self._xpkg_cmd(['info', 'hello', '--verbose'], use_var=False)
+
+        data = yaml.load(output)
+
+        expected['files'] = ['bin', 'bin/hello']
+        self.assertEqual(expected, data)
 
 
     def test_info_root_args(self):
@@ -256,7 +268,9 @@ class FullTests(unittest.TestCase):
         # Make sure the info command returns the right data
         output = self._xpkg_cmd(['info', 'hello'], )
 
-        self.assertEqual('Package hello at version 1.0.0\n', output)
+        data = yaml.load(output)
+        expected = {'name' : 'hello', 'version' : '1.0.0'}
+        self.assertEqual(expected, data)
 
 
     def test_remove(self):
@@ -323,7 +337,10 @@ class FullTests(unittest.TestCase):
         # Make sure the package is in the info
         output = self._xpkg_cmd(['info', 'hello'], )
 
-        self.assertEqual('Package hello at version 1.0.0\n', output)
+        data = yaml.load(output)
+
+        expected = {'name' : 'hello', 'version' : '1.0.0'}
+        self.assertEqual(expected, data)
 
         # Make sure the actual binary exists
         self.assertTrue(os.path.exists(self.hello_bin))
