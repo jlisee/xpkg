@@ -393,7 +393,7 @@ class Environment(object):
         # have a different version installed
         if installed and version_match:
             args = (name, current_version)
-            raise Exception('Package %s already at version: %s')
+            raise Exception('Package %s already at version: %s' % args)
 
         elif installed:
             args = (name, current_version, version)
