@@ -1,0 +1,16 @@
+name: libgmp
+description: The GNU Multiple Precision Arithmetic Library
+version: 5.1.2
+
+files:
+  md5-7e3516128487956cd825fef01aafe4bc:
+    url: ftp://ftp.gmplib.org/pub/gmp-5.1.2/gmp-5.1.2.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
