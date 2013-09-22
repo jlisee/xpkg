@@ -947,11 +947,7 @@ class PackageBuilder(object):
 
         # Configure if needed
         if 'configure' in self._xpd:
-            raw_cmd = self._xpd['configure']
-
-            cmd = raw_cmd % {'prefix' : self._target_dir}
-
-            util.shellcmd(cmd)
+            self._run_cmds(self._xpd['configure'])
 
 
     def _build(self):
@@ -959,11 +955,7 @@ class PackageBuilder(object):
         Builds the desired package.
         """
 
-        raw_cmd = self._xpd['build']
-
-        cmd = raw_cmd % {'jobs' : '8'}
-
-        util.shellcmd(cmd)
+        self._run_cmds(self._xpd['build'])
 
 
     def _install(self):
@@ -973,13 +965,30 @@ class PackageBuilder(object):
 
         pre_files = set(util.list_files(self._target_dir))
 
-        util.shellcmd(self._xpd['install'])
+        self._run_cmds(self._xpd['install'])
 
         post_files = set(util.list_files(self._target_dir))
 
         new_files = post_files - pre_files
 
         return new_files
+
+
+    def _run_cmds(self, raw):
+        """
+        Runs either a single or list of commands, subbing in all variables as
+        needed for each command.
+        """
+
+        if isinstance(raw, list):
+            cmds = raw
+        else:
+            cmds = [raw]
+
+        for raw_cmd in cmds:
+            cmd = raw_cmd % {'jobs' : '8', 'prefix' : self._target_dir}
+
+            util.shellcmd(cmd)
 
 
     def _create_info(self, new_files):
