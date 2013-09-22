@@ -1,0 +1,24 @@
+name: gcc
+description: Full GCC
+version: 4.8.1
+
+dependencies:
+ - libmpfr==3.1.2
+ - libgmp==5.1.2
+ - libmpc==1.0.1
+
+files:
+  md5-3b2386c114cd74185aa3754b58a79304:
+    url: http://gcc.petsads.us/releases/gcc-4.8.1/gcc-4.8.1.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s --disable-multilib --enable-threads=posix --with-system-zlib --enable-checking=release --enable-libstdcxx-time=yes --libdir=%(prefix)s/lib --libexecdir=%(prefix)s/lib --with-sysroot=%(prefix)s
+
+build:
+  # The configure script fails if this isn't present
+  - mkdir -p %(prefix)s/usr/include
+  # Do the normal build
+  - make -j%(jobs)s
+
+install:
+  make install
