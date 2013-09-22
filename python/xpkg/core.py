@@ -770,7 +770,7 @@ class FilePackageRepo(object):
     """
 
     def __init__(self, path):
-        print 'Build package repo from dir:',path
+        #print 'Build package repo from dir:',path
 
         # Holds are information
         self._db = PackageDatabase()
@@ -792,7 +792,7 @@ class FilePackageRepo(object):
             version = info.get('version', '')
 
             # Store the path to the file in the package DB
-            print 'Storing "%s" as %s version: %s' % (full_path, name, version)
+            #print 'Storing "%s" as %s version: %s' % (full_path, name, version)
 
             self._db.store(name=name, version=version, data=full_path)
 
