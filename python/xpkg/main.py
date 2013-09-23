@@ -106,6 +106,8 @@ def info(args):
     if info:
         print '  name:',info['name']
         print '  version:',info['version']
+        if info.get('dependencies', None):
+            print '  dependencies:',info['dependencies']
 
         if args.verbose:
             print '  files:'

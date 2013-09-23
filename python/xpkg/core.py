@@ -544,6 +544,7 @@ class XPA(object):
         {
           'name' : 'hello',
           'version' : '1.0.0',
+          'dependencies' : ['libgreet'],
           'files' : [
             'bin',
             'bin/hello'
@@ -1035,6 +1036,7 @@ class PackageBuilder(object):
         info = {
             'name' : self._xpd['name'],
             'version' : self._xpd['version'],
+            'dependencies' : self._xpd.get('dependencies', []),
             'files' : list(new_files),
             'install_path_offsets' : install_path_offsets,
         }
