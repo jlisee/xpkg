@@ -4,11 +4,13 @@ greet.o:
 	g++ -fPIC -c greet.cpp ${EXTRA_FLAGS} -DINSTALL_DIR="${DESTDIR}"
 
 libgreet.so: greet.o
-	g++ -shared -o libgreet.so greet.o
+	g++ -shared -o libgreet.so.1 greet.o
 
-install: libgreet.so
+install: libgreet.so.1
 	mkdir -p ${DESTDIR}/lib
-	install -m 744 libgreet.so ${DESTDIR}/lib
+	install -m 744 libgreet.so.1 ${DESTDIR}/lib
+
+	ln -s libgreet.so.1 ${DESTDIR}/lib/libgreet.so
 
 	mkdir -p ${DESTDIR}/include/greet
 	install -m 644 greet.h ${DESTDIR}/include/greet

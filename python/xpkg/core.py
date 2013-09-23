@@ -449,7 +449,11 @@ class Environment(object):
             # directories
             for f in sorted(info['files'], reverse=True):
                 full_path = os.path.join(self._env_dir, f)
-                if os.path.exists(full_path):
+
+                # We use lexists to test for existence here, because we don't
+                # want to de-reference symbolic links, we want to know if the
+                # link file itself is present.
+                if os.path.lexists(full_path):
                     if os.path.isdir(full_path):
                         os.rmdir(full_path)
                     else:
@@ -1070,7 +1074,8 @@ class PackageBuilder(object):
         # Get just our files
         install_dir = self._target_dir
         full_paths = [(os.path.join(install_dir, p),p) for p in paths]
-        files = [p for p in full_paths if os.path.isfile(p[0])]
+        files = [p for p in full_paths
+                 if os.path.isfile(p[0]) and not os.path.islink(p[0])]
 
         # State we are finding
         binary_files = {}
