@@ -455,7 +455,10 @@ class Environment(object):
                 # link file itself is present.
                 if os.path.lexists(full_path):
                     if os.path.isdir(full_path):
-                        os.rmdir(full_path)
+                        if len(os.listdir(full_path)) == 0:
+                            os.rmdir(full_path)
+                        else:
+                            print 'WARNING: not removing dir, has files:',full_path
                     else:
                         os.remove(full_path)
                 else:

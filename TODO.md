@@ -1,22 +1,26 @@
 TODO
 =====
 
- - create much better tracing functionality
-
  - build package before installing it
 
- - support for long multiline configure commands
+ - support descriptions describing multiple packages
+
+ - don't let a user remove a package that has dependencies
+
+ - support proper CPU detection for job count
 
  - repos and packages:
    - make sure we can specify multiple source locations
 
- - don't let a user remove a package that has dependencies
+ - create much better tracing functionality
 
  - add support for a check/test step (libgmp, libmpfr have "make check")
 
  - add some way to easily check/configure environment variables
 
- - support proper CPU detection for job count
+ - environment audit function which checks for:
+   - files that don't belong
+   - files which are owned by two packages
 
  - create core package to support chroot builds
    - coreutils
