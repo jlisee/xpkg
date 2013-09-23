@@ -422,6 +422,17 @@ class FullTests(unittest.TestCase):
         self.assertEqual(1, len(binary_offsets))
         self.assertIn('lib/libgreet.so', binary_offsets)
 
+        sub_binary_offsets = info['install_path_offsets']['sub_binary_files']
+        self.assertEqual(1, len(sub_binary_offsets))
+        self.assertIn('lib/libgreet.so', sub_binary_offsets)
+
+        # Make sure that one of those sub-strings is multipart
+        greet_offsets = sub_binary_offsets['lib/libgreet.so']
+        min_l = min(map(len, greet_offsets))
+        max_l = max(map(len, greet_offsets))
+
+        self.assertEqual(2, min_l)
+        self.assertEqual(3, max_l)
 
     # TODO: test that if a dep is installed it would be-installed
     # TODO: test that install the same package twice will return and error
@@ -469,6 +480,14 @@ class FullTests(unittest.TestCase):
         expected = 'Hello conf (%s/share/libgreet/settings.conf): %s\n' % args
 
         self.assertEqual(expected, output)
+
+        # Now test with binary strings that in their twice
+        output = self._xpkg_cmd(['jump', '-c', 'greeter -d'])
+
+        args = (self.env_dir, self.env_dir)
+        expected = 'Str: ./configure --prefix=%s --libdir=%s/lib --fast\n' % args
+        self.assertEqual(expected, output)
+
 
 
 if __name__ == '__main__':
