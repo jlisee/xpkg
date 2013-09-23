@@ -393,6 +393,38 @@ class FullTests(unittest.TestCase):
         self._xpkg_cmd(['build', xpd_path, '--dest', self.repo_dir])
 
 
+    def test_install_xpa_deps(self):
+        """
+        Make sure that when install a binary package it's dependencies are
+        installed first.
+        """
+
+        # Setup environment
+        self._make_empty_db()
+
+        # Make sure we can access the package tree for building
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Build the package
+        xpd_path = os.path.join(self.tree_dir, 'greeter.xpd')
+        self._xpkg_cmd(['build', xpd_path, '--dest', self.repo_dir])
+
+        # Purge the environment and re-setup
+        shutil.rmtree(self.env_dir)
+        self._make_empty_db()
+
+        # Get the path to the generated package
+        pkg_path = os.path.join(self.repo_dir, os.listdir(self.repo_dir)[0])
+
+        # Install the binary
+        self._xpkg_cmd(['install', pkg_path])
+
+        # Make sure that we can run the program (and the deps are there)
+        output = self._xpkg_cmd(['jump', '-c', 'greeter'])
+
+        self.assertEqual('Hello!\n', output)
+
+
     def test_for_path_offsets(self):
 
         # Make sure we can access the package tree for building
