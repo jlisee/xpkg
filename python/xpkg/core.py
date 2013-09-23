@@ -552,7 +552,7 @@ class XPA(object):
                'bin/hello' : [12947, 57290]
             },
             'sub_binary_files' : {
-               'bin/hello' : [(1000,50), (7562,30)]
+               'bin/hello' : [[1000,1050), [7562,7590,7610]]
             },
             'text_files' : {
                'share/hello/msg.txt' : [5, 100]
@@ -678,19 +678,30 @@ class XPA(object):
 
             offsets = offset_info['sub_binary_files'][file_path]
 
-            for offset, null_offset in offsets:
-                # Calculate the offset at which are install_dir ends
-                dir_offset = offset + install_len
+            for offset_list in offsets:
+                # Get the start of our all our install strings and the location
+                # of the null terminator
+                first_offset = offset_list[0]
+                null_offset = offset_list[-1]
 
-                # Grab the suffix after the install dir
-                suffix = contents[dir_offset:null_offset]
+                # Grab the original string
+                input_str = contents[first_offset:null_offset]
 
-                # Build a replacement string with needed padding so it matches
-                # in length
-                replacer = dest_path + suffix +  ('\0' * (install_len - dest_len))
+                # Find and replace all the install strings
+                output_str = input_str.replace(install_dir, dest_path)
+
+                # Length of string we are editing
+                initial_len = len(input_str)
+
+                # Length of the string we are replacing it with
+                replace_len = len(output_str)
+
+                # Build a full replacement string null padding to make up the
+                # difference
+                replacer = output_str +  ('\0' * (initial_len - replace_len))
 
                 # Now lets replace that
-                results = contents[0:offset] + replacer + contents[null_offset:]
+                results = contents[0:first_offset] + replacer + contents[null_offset:]
 
                 # Make sure we haven't effected length before moving on
                 assert len(contents) == len(results)
@@ -1043,7 +1054,7 @@ class PackageBuilder(object):
             # The location of the install string and the null of the string
             # it's located in
             'sub_binary_files' : {
-               'bin/hello' : [(1000, 1015), (12947, 12965)]
+               'bin/hello' : [[1000, 1015], [12947, 12965]]
             }
             # The location in each file of the string we have to replace
             'text_files' : {
@@ -1078,6 +1089,7 @@ class PackageBuilder(object):
                 if zeros > 0:
                     binary_offsets = []
                     sub_binary_offsets = []
+                    prev_null_term = None
 
                     # Stores each offset as full or a binary substring
                     for offset in offsets:
@@ -1088,14 +1100,22 @@ class PackageBuilder(object):
                             # Record strings that are just null terminated
                             binary_offsets.append(offset)
                         else:
-                            # If not record the offset and null location
-                            sub_binary_offsets.append((offset, null_term))
+                            if null_term == prev_null_term:
+                                # This is part of the same string as the previous
+                                # instance, add to that list
+                                sub_binary_offsets[-1].insert(-1, offset)
+                            else:
+                                # If not record the offset and null location
+                                sub_binary_offsets.append([offset, null_term])
+
+                            prev_null_term = null_term
 
                     # Store our results for this file path if needed
                     if len(binary_offsets) > 0:
                         binary_files[filepath] = binary_offsets
 
                     if len(sub_binary_offsets) > 0:
+                        # Store the results
                         sub_binary_files[filepath] = sub_binary_offsets
 
                 else:
