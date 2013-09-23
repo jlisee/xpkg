@@ -289,6 +289,30 @@ class FullTests(unittest.TestCase):
         self.assertFalse(os.path.exists(self.hello_bin))
 
 
+    def test_symlink_remove(self):
+        """
+        Make sure removal with symlink works properly.
+        """
+
+        # Make this visible so we can pull in fake tools
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Install the package
+        self._xpkg_cmd(['install', os.path.join(self.tree_dir, 'libgreet.xpd')])
+
+        # Make sure the file is there
+        libpath = os.path.join(self.env_dir, 'lib', 'libgreet.so')
+        self.assertTrue(os.path.exists(libpath))
+        self.assertTrue(os.path.exists(libpath + '.1'))
+
+        # Remove the package
+        self._xpkg_cmd(['remove', 'libgreet'])
+
+        # Make sure everything is done
+        self.assertFalse(os.path.exists(libpath + '.1'))
+        self.assertFalse(os.path.lexists(libpath))
+
+
     def test_jump(self):
         # Setup environment
         self._make_empty_db()
@@ -452,14 +476,14 @@ class FullTests(unittest.TestCase):
         binary_offsets = info['install_path_offsets']['binary_files']
 
         self.assertEqual(1, len(binary_offsets))
-        self.assertIn('lib/libgreet.so', binary_offsets)
+        self.assertIn('lib/libgreet.so.1', binary_offsets)
 
         sub_binary_offsets = info['install_path_offsets']['sub_binary_files']
         self.assertEqual(1, len(sub_binary_offsets))
-        self.assertIn('lib/libgreet.so', sub_binary_offsets)
+        self.assertIn('lib/libgreet.so.1', sub_binary_offsets)
 
         # Make sure that one of those sub-strings is multipart
-        greet_offsets = sub_binary_offsets['lib/libgreet.so']
+        greet_offsets = sub_binary_offsets['lib/libgreet.so.1']
         min_l = min(map(len, greet_offsets))
         max_l = max(map(len, greet_offsets))
 
