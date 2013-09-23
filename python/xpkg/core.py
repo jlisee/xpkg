@@ -289,6 +289,8 @@ class Environment(object):
     def build_xpd(self, data, dest_path):
         """
         Builds the given package from it's package description (XPD) data.
+
+        Returns the path to the package.
         """
 
         # Make sure all dependencies are properly installed
@@ -459,7 +461,7 @@ class Environment(object):
             # Remove the package from the database
             self._pdb.mark_removed(name)
         else:
-            print 'Package %s not installed.' % package_name
+            print 'Package %s not installed.' % name
 
 
     def jump(self, program='bash', args=[]):
