@@ -231,6 +231,10 @@ class Environment(object):
         else:
             self._repo = EmptyPackageRepo()
 
+        # Make sure the package cache is created
+        self._xpa_cache_dir = self.xpa_cache_dir(self._env_dir)
+
+        util.ensure_dir(self._xpa_cache_dir)
 
 
     def install(self, input_val):
@@ -304,7 +308,7 @@ class Environment(object):
         return res
 
 
-    def _install_xpd(self, data):
+    def _install_xpd(self, data, build_into_env=False):
         """
         Builds package and directly installs it into the given environment.
         """
@@ -312,13 +316,23 @@ class Environment(object):
         # Make sure all dependencies are properly installed
         self._install_deps(data)
 
-        print 'INSTALLING(XPD): %s-%s' % (data['name'], data['version'])
-        # Build and install the package
-        builder = PackageBuilder(data)
+        if not build_into_env:
+            # Build the package as XPD and place it into our cache
+            print 'BUILDING(XPD): %s-%s' % (data['name'], data['version'])
 
-        info = builder.build(self._env_dir, self)
+            xpa_path = self.build_xpd(data, self._xpa_cache_dir)
 
-        self._pdb.mark_installed(data['name'], info)
+            # Now install from the xpa package in our cache
+            print 'INSTALLING(XPD from XPA): %s' % xpa_path
+
+            self._install_xpa(xpa_path)
+        else:
+            # Build the package and install directly into our enviornment
+            builder = PackageBuilder(data)
+
+            info = builder.build(self._env_dir, self)
+
+            self._pdb.mark_installed(data['name'], info)
 
 
     def _install_xpa(self, path):
@@ -542,6 +556,14 @@ class Environment(object):
             raise Exception('Invalid package expression: "%s"' % value)
 
         return (name, version)
+
+
+    @staticmethod
+    def xpa_cache_dir(root):
+        """
+        The directory we hold current built packages.
+        """
+        return os.path.join(root, 'var', 'xpkg', 'cache')
 
 
 class XPA(object):
