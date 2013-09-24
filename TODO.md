@@ -5,6 +5,8 @@ TODO
 
  - support descriptions describing multiple packages
 
+ - add the concept of build only dependencies
+
  - don't let a user remove a package that has dependencies
 
  - support proper CPU detection for job count
@@ -16,11 +18,17 @@ TODO
 
  - add support for a check/test step (libgmp, libmpfr have "make check")
 
+ - add the concept of package input hashing (commands and files, to make
+   the file cache more reliable)
+
  - add some way to easily check/configure environment variables
 
  - environment audit function which checks for:
    - files that don't belong
    - files which are owned by two packages
+
+ - only warn about a directory having files (on removal) if no other
+   package has files in that directory
 
  - create core package to support chroot builds
    - coreutils
@@ -40,8 +48,9 @@ TODO
  - decide on system packages:
    - opengl, x11, and eventually wayland, xmir
    - can't build opengl, it comes from the vendor
-   - need a way to install these in chroot, need a way to create these header
-     only packages, and pull in the needed binaries into the chroot
+   - need a way to install these in chroot, need a way to create these
+     header only packages, and pull in the needed binaries into the
+     chroot
 
  - Document file formats:
    - package-name.xpd - format
