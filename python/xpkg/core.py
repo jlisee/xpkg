@@ -320,19 +320,21 @@ class Environment(object):
             # Build the package as XPD and place it into our cache
             print 'BUILDING(XPD): %s-%s' % (data['name'], data['version'])
 
-            xpa_path = self.build_xpd(data, self._xpa_cache_dir)
+            xpa_paths = self.build_xpd(data, self._xpa_cache_dir)
 
-            # Now install from the xpa package in our cache
-            print 'INSTALLING(XPD from XPA): %s' % xpa_path
+            # Now install from the xpa package(s) in our cache
+            for xpa_path in xpa_paths:
+                print 'INSTALLING(XPD from XPA): %s' % xpa_path
 
-            self._install_xpa(xpa_path)
+                self._install_xpa(xpa_path)
         else:
-            # Build the package and install directly into our enviornment
+            # Build the package(s) and install directly into our enviornment
             builder = PackageBuilder(data)
 
-            info = builder.build(self._env_dir, self)
+            infos = builder.build(self._env_dir, self)
 
-            self._pdb.mark_installed(data['name'], info)
+            for info in infos:
+                self._pdb.mark_installed(info['name'], info)
 
 
     def _install_xpa(self, path):
@@ -371,7 +373,11 @@ class Environment(object):
 
         # Install or report a version conflict for each dependency as needed
         for dep in deps:
-            installed, version_match, depname, version = self._is_package_installed(dep)
+            # Parse the name and version out of the dependency expression
+            depname, version = self._parse_install_input(dep)
+
+            # Check whether the package is installed
+            installed, version_match = self._is_package_installed(depname, version)
 
             if not installed:
                 # Not installed so install the package
@@ -398,34 +404,40 @@ class Environment(object):
         conflicting version installed.
         """
 
-        # Check to see if we already have a version of that package
-        # installed and if so what version
-        installed, version_match, name, version = self._is_package_installed(input_val)
+        # Get all the different packages that could be in an input (and XPD can
+        # describe multiple packages)
+        package_infos = self._load_package_info(input_val)
 
-        if installed:
-            current_version = self._pdb.get_info(name)['version']
+        for name, version in package_infos:
+            # Check to see if we already have a version of that package
+            # installed and if so what version
+            installed, version_match = self._is_package_installed(name, version)
 
-        # Bail out if we already have the package installed, or we already
-        # have a different version installed
-        if installed and version_match:
-            args = (name, current_version)
-            raise Exception('Package %s already at version: %s' % args)
+            if installed:
+                current_version = self._pdb.get_info(name)['version']
 
-        elif installed:
-            args = (name, current_version, version)
+            # Bail out if we already have the package installed, or we already
+            # have a different version installed
+            if installed and version_match:
+                args = (name, current_version)
+                raise Exception('Package %s already at version: %s' % args)
 
-            msg = 'Package %s already at version: %s conflicts with: %s'
+            elif installed:
+                args = (name, current_version, version)
 
-            raise Exception(msg % args)
+                msg = 'Package %s already at version: %s conflicts with: %s'
+
+                raise Exception(msg % args)
 
 
-    def _is_package_installed(self, input_val):
+    def _load_package_info(self, input_val):
         """
-        Returns a tuple saying whether the package is installed, and if so
-        it's the proper version, example:
-
-          (installed, version_match, pkgname, version)
+        Gets all the package info based on the input value, which can be an
+        the path to a XPD, or XPA file, or package==version string.
         """
+
+        # Get all name version pairs from the input
+        packages = []
 
         if input_val.endswith('.xpa'):
             # Grab the name out of the XPA metadata
@@ -433,21 +445,42 @@ class Environment(object):
 
             name = xpa.info['name']
             version = xpa.info['version']
+
+            packages.append((name, version))
         elif input_val.endswith('.xpd'):
             # Path is an xpd file load that then install
             xpd_data = util.load_xpd(input_val)
 
-            name = xpd_data['name']
-            version = xpd_data['version']
+            # Check for all those package combinations
+            if 'packages' in xpd_data:
+                for name, data in xpd_data['packages'].iteritems():
+                    # Default to main version if one doesn't exist
+                    version = data.get('version', xpd_data['version'])
+                    packages.append((name, version))
+            else:
+                packages.append((xpd_data['name'], xpd_data['version']))
         else:
             # The input_val must be a package name so try to find the xpd
             # so first try to find the package in a pre-compile manner
             name, version = self._parse_install_input(input_val)
 
+            packages.append((name, version))
+
+        return packages
+
+
+    def _is_package_installed(self, name, version):
+        """
+        Returns a tuple saying whether the package is installed, and if so
+        it's the proper version, example:
+
+          (installed, version_match, pkgname, version)
+        """
+
         installed = self._pdb.installed(name)
         version_match = self._pdb.installed(name, version)
 
-        return (installed, version_match, name, version)
+        return (installed, version_match)
 
 
     def remove(self, name):
@@ -774,13 +807,8 @@ class FilePackageTree(object):
 
         # Get information on all the dicts found in the directory
         for full_path in util.match_files(path, '*.xpd'):
-            # Load the description
-            data = util.load_xpd(full_path)
+            self._load_xpd(full_path)
 
-            # Store the path in the index
-            self._db.store(name=data['name'],
-                           version = data.get('version', ''),
-                           data=full_path)
 
     def lookup(self, package, version=None):
         """
@@ -795,6 +823,36 @@ class FilePackageTree(object):
             result = None
 
         return result
+
+    def _load_xpd(self, xpd_path):
+        """
+        Loads the packages found in the given XPD
+
+        @todo - Handle erroneous input more robustly
+        """
+
+        # Load the description
+        data = util.load_xpd(xpd_path)
+
+        results = []
+
+        # # Get the descriptions out of the package
+        if 'packages' in data:
+            # Multiple package description
+            pass
+        else:
+            results = [data]
+
+        # Store the descriptions in our index
+        for package_data in results:
+            # Read the version, defaulting the full description version if there
+            # is none for this package
+
+            version = package_data.get('version', data['version'])
+
+            self._db.store(name=package_data['name'],
+                           version=version,
+                           data=xpd_path)
 
 
 class EmptyPackageRepo(object):
@@ -1062,15 +1120,102 @@ class PackageBuilder(object):
         # Find all instances of our install path in our data
         install_path_offsets = self._find_path_offsets(new_files)
 
-        info = {
-            'name' : self._xpd['name'],
-            'version' : self._xpd['version'],
-            'dependencies' : self._xpd.get('dependencies', []),
-            'files' : list(new_files),
-            'install_path_offsets' : install_path_offsets,
-        }
+        if not 'packages' in self._xpd:
+            # Single package path
+            infos = [{
+                'name' : self._xpd['name'],
+                'version' : self._xpd['version'],
+                'dependencies' : self._xpd.get('dependencies', []),
+                'files' : list(new_files),
+                'install_path_offsets' : install_path_offsets,
+            }]
+        else:
+            # Find the catch all package if there is one, and make sure there is
+            # only one
+            packages = []
+            catch_all = None
 
-        return info
+            for name, data in self._xpd['packages'].iteritems():
+                if 'files' in data:
+                    packages.append((name, data))
+                elif catch_all is None:
+                    catch_all = (name, data)
+                else:
+                    # Throw an error if we already have a package with that
+                    # pattern
+                    args = (name, catch_all[0])
+                    msg = 'Package %s cannot be grab all files, %s already does'
+                    raise Exception(msg % args)
+
+            # TODO: go through and check if expressions from different packages
+            # match all the files and print out a warning
+            file_set = set(new_files)
+            infos = []
+
+            # Go through the non catch all package gathering up files
+            for name, data in packages:
+                # Go through and match files
+                used_files = set()
+
+                for pattern in data['files']:
+                    # Build our pattern
+                    regex = re.compile(pattern)
+
+                    # Match against files
+                    for f in file_set:
+                        match = regex.match(f)
+
+                        # Mark file as used
+                        if match and match.span()[1] == len(f):
+                            used_files.add(f)
+
+                # Create default empty offset list section
+                offset_names = ['binary_files', 'sub_binary_files', 'text_files']
+                package_offsets = dict(zip(offset_names, [[]] * 3))
+                package_offsets['install_dir'] = install_path_offsets['install_dir']
+
+                # Search the offset list and make sure to include any the
+                # offsets for any files found in this package
+                for offset_name in offset_names:
+                    offset_files = install_path_offsets[offset_name]
+
+                    for f in used_files:
+                        if f in offset_files:
+                            package_offsets[offset_name].append(f)
+
+                # Lookup dependencies, defaulting to the ones of the main
+                # package if there are none specified for this package
+                deps = data.get('dependencies', self._xpd.get('dependencies', []))
+
+                # Lookup the version falling back on the main one if it doesn't
+                version = data.get('version', self._xpd['version'])
+
+                # Build final info object
+                new_info = {
+                    'name' : name,
+                    'version' : version,
+                    'dependencies' : deps,
+                    'files' : list(used_files),
+                    'install_path_offsets' : package_offsets,
+                }
+                # print "INFO>>>>>>>>>>>>>>>>"
+                # import pprint
+                # pprint.pprint(new_info)
+                infos.append(new_info)
+
+
+                # Remove the used_files from our file set
+                file_set = file_set - used_files
+
+            # If we have a catch all
+
+               # Warn if we don't have any files
+
+               # Otherwise build our info object
+
+            # If we don't have a catch all warn we do have files
+
+        return infos
 
 
     def _find_path_offsets(self, paths):
@@ -1190,56 +1335,72 @@ class BinaryPackageBuilder(object):
         """
 
         # Create our temporary directory
-        self._work_dir = tempfile.mkdtemp(suffix = '-xpkg-install-' + self._xpd['name'])
+        name = self._xpd['name']
+        self._work_dir = tempfile.mkdtemp(suffix = '-xpkg-install-' + name)
 
-        # TODO: pad with a large hash so we have enough space to replace this
-        install_dir = os.path.join(self._work_dir, 'install')
+        # TODO: make this a hash of something meaning, full
+        pad_hash = util.hash_string(name)
+        install_dir = os.path.join(self._work_dir, 'install-' + pad_hash)
 
         # TODO: LOG THIS
         print 'Binary working in:',self._work_dir
 
         try:
-            # Build the package
+            # Build the package(s)
             builder = PackageBuilder(self._xpd)
-            info = builder.build(install_dir, environment)
+            infos = builder.build(install_dir, environment)
 
-            # Tar up the files
-            file_tar = os.path.join(self._work_dir, 'files.tar.gz')
-
-            with tarfile.open(file_tar, "w:gz") as tar:
-                for entry_name in os.listdir(install_dir):
-                    full_path = os.path.join(install_dir, entry_name)
-                    tar.add(full_path, arcname=entry_name)
-
-            # Create our metadata file
-            meta_file = os.path.join(self._work_dir, 'xpkg.yml')
-            with open(meta_file, 'w') as f:
-                yaml.dump(info, f)
-
-            # Create our package
-            package_name = self._get_package_name()
-            package_tar = os.path.join(self._work_dir, package_name)
-
-            with tarfile.open(package_tar, "w") as tar:
-                tar.add(meta_file, arcname=os.path.basename(meta_file))
-                tar.add(file_tar, arcname=os.path.basename(file_tar))
-
-            # Move to the desired location
-            dest_path = os.path.join(storage_dir, package_name)
-
-            if os.path.exists(dest_path):
-                os.remove(dest_path)
-
-            shutil.move(package_tar, storage_dir)
+            # Build packages and get their paths
+            dest_paths = [self._create_package(install_dir, storage_dir, info)
+                          for info in infos]
 
         finally:
             # Make sure we cleanup after we are done
             # Don't do this right now
             shutil.rmtree(self._work_dir)
 
+        return dest_paths
+
+    def _create_package(self, install_dir, storage_dir, info):
+        """
+        Creates a package from the given package info.
+
+        The path to that archive is returned.
+        """
+
+        # Tar up the files
+        file_tar = os.path.join(self._work_dir, 'files.tar.gz')
+
+        with tarfile.open(file_tar, "w:gz") as tar:
+            for entry_name in info['files']:
+                full_path = os.path.join(install_dir, entry_name)
+                tar.add(full_path, arcname=entry_name)
+
+        # Create our metadata file
+        meta_file = os.path.join(self._work_dir, 'xpkg.yml')
+        with open(meta_file, 'w') as f:
+            yaml.dump(info, f)
+
+        # Create our package
+        package_name = self._get_package_name(info)
+        package_tar = os.path.join(self._work_dir, package_name)
+
+        with tarfile.open(package_tar, "w") as tar:
+            tar.add(meta_file, arcname=os.path.basename(meta_file))
+            tar.add(file_tar, arcname=os.path.basename(file_tar))
+
+        # Move to the desired location
+        dest_path = os.path.join(storage_dir, package_name)
+
+        if os.path.exists(dest_path):
+            os.remove(dest_path)
+
+        shutil.move(package_tar, storage_dir)
+
         return dest_path
 
-    def _get_package_name(self):
+
+    def _get_package_name(self, info):
         """
         Gets the platform name in the following format:
 
@@ -1255,8 +1416,8 @@ class BinaryPackageBuilder(object):
 
         # Build our arguments
         args = {
-            'name' : self._xpd['name'],
-            'version' : self._xpd['version'],
+            'name' : info['name'],
+            'version' : info['version'],
             'arch' : arch,
             'linkage' : linkage.lower(),
             'kernel' : kernel.lower(),

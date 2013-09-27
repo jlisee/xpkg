@@ -561,6 +561,39 @@ class FullTests(unittest.TestCase):
         self.assertEqual(expected, output)
 
 
+    def test_multipkg_xpd_install(self):
+        """
+        Make sure that install the a multiple package XPD installs all parts.
+        """
+
+        # Make sure we can access the package tree for building
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Run the install
+        self._xpkg_cmd(['install', os.path.join(self.tree_dir, 'multipkg.xpd')])
+
+        # Run our program to make sure it works
+        #output = util.shellcmd(self.hello_bin, echo=False)
+
+        # Make sure our programs exist
+        bin_dir = os.path.join(self.env_dir, 'bin')
+        self.assertPathExists(os.path.join(bin_dir, 'toola'))
+        self.assertPathExists(os.path.join(bin_dir, 'toolb'))
+
+        # Run the list command and parse it to get our list of installed
+        # packages (maybe we should just read the DB directly?)
+        output = self._xpkg_cmd(['list'], )
+
+        install_info = [l.strip().split(' - ')
+                        for l in output.split('\n')
+                        if len(l.strip()) > 0]
+
+        # Check the contents of the install info
+        self.assertIn(['multi-toola', '1.0.0'], install_info)
+        self.assertIn(['multi-toolb', '2.0.0'], install_info)
+        self.assertEqual(3, len(install_info))
+
+
 
 if __name__ == '__main__':
     unittest.main()
