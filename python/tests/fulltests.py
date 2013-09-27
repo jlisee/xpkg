@@ -84,6 +84,22 @@ class FullTests(unittest.TestCase):
         self._envStorage.restore()
 
 
+    def assertPathExists(self, path):
+        """
+        Checks if the desired path exists
+        """
+        if not os.path.exists(path):
+            self.fail('Path: "%s" does not exist' % path)
+
+
+    def assertNoPathExists(self, path):
+        """
+        Checks to make sure the desired path does *not* exist
+        """
+        if os.path.exists(path):
+            self.fail('Path: "%s" exists' % path)
+
+
     def _xpkg_cmd(self, args, env_dir=None, use_var=True, should_fail=False):
         """
         Run Xpkg command and return the output.
@@ -198,7 +214,7 @@ class FullTests(unittest.TestCase):
         self._xpkg_cmd(['install', 'hello', '--tree', self.tree_dir])
 
         # Run our program to make sure it works
-        self.assertTrue(os.path.exists(self.hello_bin))
+        self.assertPathExists(self.hello_bin)
 
 
     def test_install_with_tree_var(self):
@@ -213,7 +229,7 @@ class FullTests(unittest.TestCase):
         self._xpkg_cmd(['install', 'hello'])
 
         # Run our program to make sure it works
-        self.assertTrue(os.path.exists(self.hello_bin))
+        self.assertPathExists(self.hello_bin)
 
 
     def test_install_with_tree_repo(self):
@@ -230,7 +246,7 @@ class FullTests(unittest.TestCase):
         self._xpkg_cmd(['install', 'hello'])
 
         # Run our program to make sure it works
-        self.assertTrue(os.path.exists(self.hello_bin))
+        self.assertPathExists(self.hello_bin)
 
 
     def test_info(self):
@@ -286,7 +302,7 @@ class FullTests(unittest.TestCase):
         # Un-install the package
         self._xpkg_cmd(['remove', 'hello'])
 
-        self.assertFalse(os.path.exists(self.hello_bin))
+        self.assertNoPathExists(self.hello_bin)
 
 
     def test_symlink_remove(self):
@@ -302,14 +318,14 @@ class FullTests(unittest.TestCase):
 
         # Make sure the file is there
         libpath = os.path.join(self.env_dir, 'lib', 'libgreet.so')
-        self.assertTrue(os.path.exists(libpath))
-        self.assertTrue(os.path.exists(libpath + '.1'))
+        self.assertPathExists(libpath)
+        self.assertPathExists(libpath + '.1')
 
         # Remove the package
         self._xpkg_cmd(['remove', 'libgreet'])
 
         # Make sure everything is done
-        self.assertFalse(os.path.exists(libpath + '.1'))
+        self.assertNoPathExists(libpath + '.1')
         self.assertFalse(os.path.lexists(libpath))
 
 
@@ -367,7 +383,7 @@ class FullTests(unittest.TestCase):
         self.assertEqual(expected, data)
 
         # Make sure the actual binary exists
-        self.assertTrue(os.path.exists(self.hello_bin))
+        self.assertPathExists(self.hello_bin)
 
 
     def test_dependencies(self):
@@ -464,7 +480,7 @@ class FullTests(unittest.TestCase):
         db_dir = core.InstallDatabase.db_dir(self.env_dir)
         db_path = os.path.join(db_dir, 'db.yml')
 
-        self.assertTrue(os.path.exists(db_path))
+        self.assertPathExists(db_path)
 
         # Make sure our package is in it
         db = yaml.load(open(db_path))
