@@ -72,6 +72,18 @@ def fetch_url(url, local_path):
     return filename
 
 
+def hash_string(string, hash_type=hashlib.md5):
+    """
+    Hashes the given string with the desired type, defaults to MD5.
+    """
+
+    hash_state = hash_type()
+
+    hash_state.update(string)
+
+    return hash_state.hexdigest()
+
+
 def hash_file(f, hash_type, block_size=2**20):
     """
     Computes the hash sum for a file
