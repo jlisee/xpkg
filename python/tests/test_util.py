@@ -161,5 +161,49 @@ class UtilTests(unittest.TestCase):
         for a, b, comparator in inputs:
             comparator(a, b)
 
+
+class SortTests(unittest.TestCase):
+
+    def test_topological_sort(self):
+        """
+        Test basic topological sort
+        """
+
+        # Basic dependency graph
+        graph = {
+            'libmulti' : [],
+            'libmulti-dev' : ['libmulti'],
+            'multi-tools' : ['libmulti'],
+        }
+
+        actual = sorted(util.topological_sort(graph))
+        expected = ['libmulti', 'libmulti-dev', 'multi-tools']
+        self.assertEqual(expected, actual)
+
+
+    def test_robust_topological_sort(self):
+        """
+        Test that we can sort properly even with loops!
+        """
+
+        # A graph with cycles:
+        #
+        #         <-        <-
+        #        /   \     /  /
+        #  0 -> 1 -> 2 -> 3 --
+        graph = {
+            0 : [1],
+            1 : [2],
+            2 : [1,3],
+            3 : [3],
+        }
+
+        # Do our sort
+        topo_graph = util.robust_topological_sort(graph)
+        expected = [(0,), (2, 1), (3,)]
+
+        self.assertEqual(expected, topo_graph)
+
+
 if __name__ == '__main__':
     unittest.main()
