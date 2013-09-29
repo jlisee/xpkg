@@ -12,9 +12,11 @@ import subprocess
 import sys
 import tarfile
 import urllib
-import yaml
 
 from contextlib import contextmanager
+
+# Library Imports
+import yaml
 
 
 def shellcmd(cmd, echo=True, stream=True, shell=True):
@@ -207,6 +209,22 @@ def touch(path, times=None):
 
     with file(path, 'a'):
         os.utime(path, times)
+
+
+def yaml_load(stream):
+    """
+    Safely load untrusted YAML data from a stream into a python dict.
+    """
+
+    return yaml.safe_load(stream)
+
+
+def yaml_dump(data, stream=None):
+    """
+    Dump the python dict to the stream or standard out.
+    """
+
+    return yaml.safe_dump(data, stream)
 
 
 def load_xpd(path):
