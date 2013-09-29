@@ -4,6 +4,7 @@
 import copy
 import fnmatch
 import hashlib
+import multiprocessing
 import os
 import re
 import string
@@ -503,6 +504,16 @@ def version_string_cmp(a_s, b_s):
                 return c
 
     return 0
+
+
+def cpu_count():
+    """
+    Returns the CPU count of the local system. (This includes hyperthreaded
+    cores)
+
+    """
+
+    return multiprocessing.cpu_count()
 
 
 def strongly_connected_components(graph):
