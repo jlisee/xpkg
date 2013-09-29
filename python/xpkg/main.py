@@ -106,6 +106,14 @@ def info(args):
     if info:
         print '  name:',info['name']
         print '  version:',info['version']
+        if info.get('description'):
+            description = info['description'].strip()
+
+            # Process extra long descriptions
+            if (80 - len('  description: ')) < len(description):
+                description = util.wrap_yaml_string(description)
+
+            print '  description:',description
         if info.get('dependencies', None):
             print '  dependencies:',info['dependencies']
 

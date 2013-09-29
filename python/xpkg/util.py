@@ -173,6 +173,29 @@ def template_file(source_path, dest_path, args):
         f.write(output)
 
 
+def wrap_yaml_string(string, width=80, tab=4):
+    """
+    Lets us take a long string and properly wrap it in yaml format.
+    """
+
+    # Determine are needed lengths
+    str_len = len(string)
+    line_length = width - tab
+
+    # Generate the tab for each line
+    tab_str = ' ' * tab
+
+    # Generate our output
+    output = ' >\n'
+
+    locs = list(range(0, str_len, line_length)) + [str_len]
+    for idx,start in enumerate(locs[:-1]):
+        sub_str = string[start:locs[idx+1]].strip()
+        output += tab_str + sub_str + '\n'
+
+    return output.strip()
+
+
 def list_files(path):
     """
     Return a list of all files and directories in the given path, recursively.

@@ -268,7 +268,11 @@ class FullTests(unittest.TestCase):
 
         data = yaml.load(output)
 
-        expected = {'name' : 'hello', 'version' : '1.0.0'}
+        expected = {
+            'name' : 'hello',
+            'version' : '1.0.0',
+            'description' : 'Says hello'
+        }
         self.assertEqual(expected, data)
 
         # Full output
@@ -292,7 +296,11 @@ class FullTests(unittest.TestCase):
         output = self._xpkg_cmd(['info', 'hello'], )
 
         data = yaml.load(output)
-        expected = {'name' : 'hello', 'version' : '1.0.0'}
+        expected = {
+            'name' : 'hello',
+            'version' : '1.0.0',
+            'description' : 'Says hello'
+        }
         self.assertEqual(expected, data)
 
 
@@ -413,7 +421,11 @@ class FullTests(unittest.TestCase):
 
         data = yaml.load(output)
 
-        expected = {'name' : 'hello', 'version' : '1.0.0'}
+        expected = {
+            'name' : 'hello',
+            'version' : '1.0.0',
+            'description' : 'Says hello'
+        }
         self.assertEqual(expected, data)
 
         # Make sure the actual binary exists

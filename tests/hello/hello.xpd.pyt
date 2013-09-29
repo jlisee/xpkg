@@ -1,5 +1,6 @@
 name: hello
 version: 1.0.0
+description: Says hello
 
 files:
   md5-%(filehash)s:
