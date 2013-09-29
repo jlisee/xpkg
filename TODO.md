@@ -5,8 +5,6 @@ TODO
 
  - don't let a user remove a package that has dependencies
 
- - support proper CPU detection for job count
-
  - repos and packages:
    - make sure we can specify multiple source locations
 

@@ -1197,7 +1197,7 @@ class PackageBuilder(object):
 
             # Sub in our variables into the commands
             cmd = raw_cmd % {
-                'jobs' : '8',
+                'jobs' : str(util.cpu_count()),
                 'prefix' : self._target_dir,
                 'env_root' : self._env_dir,
             }
