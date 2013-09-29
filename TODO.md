@@ -1,14 +1,37 @@
 TODO
 =====
 
- - add the concept of build only dependencies
+Showstoppers
+-------------
+
+Things a package manager must have
 
  - don't let a user remove a package that has dependencies
+
+ - handle dependencies with versions somehow properly with multipkgs
 
  - repos and packages:
    - make sure we can specify multiple source locations
 
+ - file hashing:
+   - store the hash of the files in a package
+   - handle the has of files with install path offsets
+
  - create much better tracing functionality
+   - log build output somewhere in the environment itself
+
+ - create core package to support chroot builds
+   - coreutils
+   - make
+   - gcc
+   - cmake
+   - ld (part of gcc?)
+
+
+Nice to haves
+--------------
+
+ - add the concept of build only dependencies
 
  - add support for a check/test step (libgmp, libmpfr have "make check")
 
@@ -23,13 +46,6 @@ TODO
 
  - only warn about a directory having files (on removal) if no other
    package has files in that directory
-
- - create core package to support chroot builds
-   - coreutils
-   - make
-   - gcc
-   - cmake
-   - ld (part of gcc?)
 
  - chroot builds
    - other utils?
