@@ -9,9 +9,6 @@ import shutil
 import tarfile
 import tempfile
 
-# Library Imports
-import yaml
-
 # Project Imports
 from xpkg import util
 
@@ -61,7 +58,7 @@ class InstallDatabase(object):
         Write DB to disk.
         """
 
-        self._db = yaml.load(open(self._db_path))
+        self._db = util.yaml_load(open(self._db_path))
 
         # Handle the empty database case
         if self._db is None:
@@ -74,7 +71,7 @@ class InstallDatabase(object):
         """
 
         with open(self._db_path, 'w') as f:
-            yaml.dump(self._db, f)
+            util.yaml_dump(self._db, f)
 
 
     def mark_installed(self, name, info):
@@ -643,7 +640,7 @@ class XPA(object):
         with tarfile.open(xpa_path) as tar:
 
             # Pull out and parse the metadata
-            self.info = yaml.load(tar.extractfile('xpkg.yml'))
+            self.info = util.yaml_load(tar.extractfile('xpkg.yml'))
 
         self.dependencies = self.info.get('dependencies', [])
 
@@ -974,7 +971,7 @@ class FilePackageRepo(object):
             with tarfile.open(full_path) as tar:
 
                 # Pull out and parse the metadata
-                info = yaml.load(tar.extractfile('xpkg.yml'))
+                info = util.yaml_load(tar.extractfile('xpkg.yml'))
 
             # Get the name and version of the package from the internal info
             name = info['name']
@@ -1499,7 +1496,7 @@ class BinaryPackageBuilder(object):
         # Create our metadata file
         meta_file = os.path.join(self._work_dir, 'xpkg.yml')
         with open(meta_file, 'w') as f:
-            yaml.dump(info, f)
+            util.yaml_dump(info, f)
 
         # Create our package
         package_name = self._get_package_name(info)
