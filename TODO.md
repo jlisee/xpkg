@@ -1,10 +1,6 @@
 TODO
 =====
 
- - build package before installing it
-
- - support descriptions describing multiple packages
-
  - add the concept of build only dependencies
 
  - don't let a user remove a package that has dependencies
@@ -51,6 +47,14 @@ TODO
    - need a way to install these in chroot, need a way to create these
      header only packages, and pull in the needed binaries into the
      chroot
+
+Docs
+------
+
+ - Document use cases:
+   - package a set of pre-existing files
+   - package an existing library
+   - package an existing command line program
 
  - Document file formats:
    - package-name.xpd - format
