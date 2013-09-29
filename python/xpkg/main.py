@@ -42,12 +42,12 @@ def build(args):
     """
 
     # Load the description from th file
-    package_description = util.load_xpd(args.path)
+    package_description = core.XPD(args.path)
 
     dest_path = args.dest
 
 
-    if 'dependencies' in package_description:
+    if len(package_description.dependencies) > 0:
         # If we have dependencies build within the enviornemnt
         env = core.Environment(_get_env_dir(args.root))
 
