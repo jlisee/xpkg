@@ -650,6 +650,7 @@ class XPA(object):
         {
           'name' : 'hello',
           'version' : '1.0.0',
+          'description' : 'My hello world package',
           'dependencies' : ['libgreet'],
           'dirs' : [
             'bin'
@@ -855,15 +856,16 @@ class XPD(object):
         self.name = self._data['name']
         self.version = self._data['version']
         self.dependencies = self._data.get('dependencies', [])
-
+        self.description = self._data.get('description', '')
 
     def packages(self):
         """
         Return a list of all the packages in this file, each item contains:
 
           {
-            'name' : 'packag-name',
+            'name' : 'package-name',
             'version' : '1.2.4',
+            'description' : 'My awesome package',
             'dirs' : ['dir'],
             'files' : ['dir/a'],
             'dependencies' : ['another-pkg'],
@@ -878,6 +880,7 @@ class XPD(object):
             results.append({
                 'name' : self.name,
                 'version' : self.version,
+                'description' : self.description,
                 'files' : [],
                 'dependencies' : self.dependencies,
                 })
@@ -921,6 +924,7 @@ class XPD(object):
             results.append({
                 'name' : pkg_name,
                 'version' : pkg_data.get('version', self.version),
+                'description' : pkg_data.get('description', self.description),
                 'dirs' : pkg_data.get('dirs', []),
                 'files' : pkg_data.get('files', []),
                 'dependencies' : pkg_data.get('dependencies', self.dependencies),
@@ -1277,6 +1281,7 @@ class PackageBuilder(object):
             infos = [{
                 'name' : self._xpd.name,
                 'version' : self._xpd.version,
+                'description' : self._xpd.description,
                 'dependencies' : self._xpd.dependencies,
                 'dirs' : list(new_dirs),
                 'files' : list(new_files),
@@ -1377,6 +1382,7 @@ class PackageBuilder(object):
                 new_info = {
                     'name' : name,
                     'version' : data['version'],
+                    'description' : data['description'],
                     'dependencies' : data['dependencies'],
                     'dirs' : dirs,
                     'files' : list(used_files),
@@ -1412,6 +1418,7 @@ class PackageBuilder(object):
                     new_info = {
                         'name' : name,
                         'version' : data['version'],
+                        'description' : data['description'],
                         'dependencies' : data['dependencies'],
                         'dirs' : dirs + list(unused_dirs),
                         'files' : list(file_set),

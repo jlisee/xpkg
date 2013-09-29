@@ -162,6 +162,20 @@ class UtilTests(unittest.TestCase):
             comparator(a, b)
 
 
+    def test_wrap_yaml_string(self):
+        long_string = "Tool which controls the generation of executables " \
+                      "and other non-source files of a program from the" \
+                      " program's source files."
+
+        wrapped = util.wrap_yaml_string(long_string,tab=4)
+        expected = ">\n" \
+                   "    Tool which controls the generation of executables and"\
+                   " other non-source files\n" \
+                   "    of a program from the program's source files."
+
+        self.assertEqual(expected, wrapped)
+
+
 class SortTests(unittest.TestCase):
 
     def test_topological_sort(self):
