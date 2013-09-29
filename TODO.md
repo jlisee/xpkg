@@ -41,6 +41,10 @@ Things a package manager must have
 Nice to haves
 --------------
 
+ - search all package descriptions
+
+ - long form package descriptions
+
  - handle dependencies with versions somehow properly with multipkgs
 
  - add the concept of build only dependencies
@@ -65,6 +69,11 @@ Nice to haves
    - need a way to install these in chroot, need a way to create these
      header only packages, and pull in the needed binaries into the
      chroot
+
+ - info support for XPD files
+
+ - support for multiple download sources for the same file, allowing for
+   slightly more robust file fetching
 
 Docs
 ------

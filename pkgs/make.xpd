@@ -1,0 +1,20 @@
+name: make
+description: >
+  Tool which controls the generation of executables and other non-source
+  files of a program from the program's source files.
+version: 3.82
+
+files:
+  md5-1a11100f3c63fcf5753818e59d63088f:
+    url: http://mirrors.kernel.org/gnu/make/make-3.82.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+# Since we are building make directly, we don't have make so run the shell
+# script
+build:
+  sh build.sh
+
+install:
+  ./make install
