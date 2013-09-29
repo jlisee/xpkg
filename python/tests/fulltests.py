@@ -104,6 +104,8 @@ class FullTests(unittest.TestCase):
         """
         Run Xpkg command and return the output.
 
+          should_fail - if true, don't error out if the command returns != 0
+
         This sets the XPKG_ROOT environment var commands are executed with
         respected to self.env_dir directory.
         """
@@ -122,6 +124,10 @@ class FullTests(unittest.TestCase):
 
             # Set out args
             env_args = ['--root',env_dir]
+
+        # Have the tool return the full stack trace in debug mode
+        if not should_fail:
+            args.insert(0, '--debug')
 
         # Run the command directly calling the python xpkg implementation
         cmd = [sys.executable, '-m', 'xpkg.main'] + args + env_args

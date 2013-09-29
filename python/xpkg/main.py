@@ -149,6 +149,8 @@ def main(argv = None):
 
     # Set up argument parsers
     parser = argparse.ArgumentParser(prog=argv[0])
+    parser.add_argument('-d', '--debug', default=False, action='store_true',
+                        help="Don't catch internal exception")
     subparsers = parser.add_subparsers(help='sub-commands')
 
     # Common arguments for environment root argument
@@ -194,12 +196,18 @@ def main(argv = None):
 
     # parse some argument lists
     args = parser.parse_args(argv[1:])
-    args.func(args)
+
+    if args.debug:
+        args.func(args)
+    else:
+        try:
+            args.func(args)
+        except core.Exception as e:
+            print e
+            return 1
+
+    return 0
 
 
 if __name__ == '__main__':
-    try:
-        sys.exit(main())
-    except core.Exception as e:
-        print e
-        sys.exit(1)
+    sys.exit(main())
