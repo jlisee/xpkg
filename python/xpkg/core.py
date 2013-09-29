@@ -256,9 +256,9 @@ class Environment(object):
 
         elif input_val.endswith('.xpd'):
             # Path is an xpd file load that then install
-            xpd_data = util.load_xpd(input_val)
+            xpd = XPD(input_val)
 
-            self._install_xpd(xpd_data)
+            self._install_xpd(xpd)
         else:
             # The input_val is a package name so parse out the desired version
             # and name
@@ -290,7 +290,7 @@ class Environment(object):
                 self._install_xpd(xpd_data)
 
 
-    def build_xpd(self, data, dest_path):
+    def build_xpd(self, xpd, dest_path):
         """
         Builds the given package from it's package description (XPD) data.
 
@@ -298,29 +298,29 @@ class Environment(object):
         """
 
         # Make sure all dependencies are properly installed
-        self._install_deps(data)
+        self._install_deps(xpd)
 
         # Build the package and return the path
-        builder = BinaryPackageBuilder(data)
+        builder = BinaryPackageBuilder(xpd)
 
         res = builder.build(dest_path, environment = self)
 
         return res
 
 
-    def _install_xpd(self, data, build_into_env=False):
+    def _install_xpd(self, xpd, build_into_env=False):
         """
         Builds package and directly installs it into the given environment.
         """
 
         # Make sure all dependencies are properly installed
-        self._install_deps(data)
+        self._install_deps(xpd)
 
         if not build_into_env:
             # Build the package as XPD and place it into our cache
-            print 'BUILDING(XPD): %s-%s' % (data['name'], data['version'])
+            print 'BUILDING(XPD): %s-%s' % (xpd.name, xpd.version)
 
-            xpa_paths = self.build_xpd(data, self._xpa_cache_dir)
+            xpa_paths = self.build_xpd(xpd, self._xpa_cache_dir)
 
             # Now install from the xpa package(s) in our cache
             for xpa_path in xpa_paths:
@@ -329,7 +329,7 @@ class Environment(object):
                 self._install_xpa(xpa_path)
         else:
             # Build the package(s) and install directly into our enviornment
-            builder = PackageBuilder(data)
+            builder = PackageBuilder(xpd)
 
             infos = builder.build(self._env_dir, self)
 
@@ -349,7 +349,7 @@ class Environment(object):
         info = xpa.info
 
         # Make sure all dependencies are properly installed
-        self._install_deps(info)
+        self._install_deps(xpa)
 
         print 'INSTALLING(XPA): %s-%s' % (info['name'], info['version'])
 
@@ -360,19 +360,19 @@ class Environment(object):
         self._pdb.mark_installed(info['name'], info)
 
 
-    def _install_deps(self, data):
+    def _install_deps(self, info):
         """
         Makes sure all the dependencies for the given package are properly
         installed.
 
+        The object should have a property 'dependencies' which is a list of the
+        following form: ['package', 'package==1.2.2']
+
         TODO: handle proper version checks someday
         """
 
-        # Get the list of deps in the form of ['package', 'package==1.2.2']
-        deps = data.get('dependencies', [])
-
         # Install or report a version conflict for each dependency as needed
-        for dep in deps:
+        for dep in info.dependencies:
             # Parse the name and version out of the dependency expression
             depname, version = self._parse_install_input(dep)
 
@@ -642,6 +642,7 @@ class XPA(object):
             # Pull out and parse the metadata
             self.info = yaml.load(tar.extractfile('xpkg.yml'))
 
+        self.dependencies = self.info.get('dependencies', [])
 
     def install(self, path):
         """
@@ -913,7 +914,7 @@ class FilePackageTree(object):
 
         xpd_path = self._db.lookup(name=package, version=version)
         if xpd_path:
-            result = util.load_xpd(xpd_path)
+            result = XPD(xpd_path)
         else:
             result = None
 
@@ -927,26 +928,15 @@ class FilePackageTree(object):
         """
 
         # Load the description
-        data = util.load_xpd(xpd_path)
+        xpd = XPD(xpd_path)
 
-        results = []
-
-        # # Get the descriptions out of the package
-        if 'packages' in data:
-            # Multiple package description
-            pass
-        else:
-            results = [data]
-
-        # Store the descriptions in our index
-        for package_data in results:
+        # Store each package in for the description in our index
+        for package_data in xpd.packages():
             # Read the version, defaulting the full description version if there
             # is none for this package
 
-            version = package_data.get('version', data['version'])
-
             self._db.store(name=package_data['name'],
-                           version=version,
+                           version=package_data['version'],
                            data=xpd_path)
 
 
@@ -1054,7 +1044,11 @@ class PackageBuilder(object):
     """
 
     def __init__(self, package_xpd):
-        self._xpd = package_xpd
+        if not isinstance(package_xpd, XPD):
+            self._xpd = XPD(package_xpd)
+        else:
+            self._xpd = package_xpd
+
         self._work_dir = None
         self._target_dir = None
 
@@ -1069,7 +1063,7 @@ class PackageBuilder(object):
         """
 
         # Create our temporary directory
-        self._work_dir = tempfile.mkdtemp(suffix = '-xpkg-' + self._xpd['name'])
+        self._work_dir = tempfile.mkdtemp(suffix = '-xpkg-' + self._xpd.name)
 
         # TODO: LOG THIS
         print 'Working in:',self._work_dir
@@ -1123,7 +1117,7 @@ class PackageBuilder(object):
         """
 
         # Download and unpack our files
-        for filehash, info in self._xpd['files'].iteritems():
+        for filehash, info in self._xpd._data['files'].iteritems():
 
             # Fetch our file
             download_path = fetch_file(filehash, info['url'])
@@ -1149,8 +1143,8 @@ class PackageBuilder(object):
         """
 
         # Configure if needed
-        if 'configure' in self._xpd:
-            self._run_cmds(self._xpd['configure'])
+        if 'configure' in self._xpd._data:
+            self._run_cmds(self._xpd._data['configure'])
 
 
     def _build(self):
@@ -1158,7 +1152,7 @@ class PackageBuilder(object):
         Builds the desired package.
         """
 
-        self._run_cmds(self._xpd['build'])
+        self._run_cmds(self._xpd._data['build'])
 
 
     def _install(self):
@@ -1168,7 +1162,7 @@ class PackageBuilder(object):
 
         pre_files = set(util.list_files(self._target_dir))
 
-        self._run_cmds(self._xpd['install'])
+        self._run_cmds(self._xpd._data['install'])
 
         post_files = set(util.list_files(self._target_dir))
 
@@ -1215,12 +1209,12 @@ class PackageBuilder(object):
         # Find all instances of our install path in our data
         install_path_offsets = self._find_path_offsets(new_files)
 
-        if not 'packages' in self._xpd:
+        if len(self._xpd.packages()) == 1:
             # Single package path
             infos = [{
-                'name' : self._xpd['name'],
-                'version' : self._xpd['version'],
-                'dependencies' : self._xpd.get('dependencies', []),
+                'name' : self._xpd.name,
+                'version' : self._xpd.version,
+                'dependencies' : self._xpd.dependencies,
                 'files' : list(new_files),
                 'install_path_offsets' : install_path_offsets,
             }]
@@ -1230,9 +1224,7 @@ class PackageBuilder(object):
             packages = []
             catch_all = None
 
-            xpd = XPD(self._xpd)
-
-            for data in xpd.packages():
+            for data in self._xpd.packages():
                 name = data['name']
 
                 if 'files' in data:
@@ -1267,21 +1259,6 @@ class PackageBuilder(object):
 
                 return package_offsets
 
-            def get_deps_version(pkg_data):
-                """
-                Lookup the dependencies and version of package data, falling
-                back on the dependencies main package values as needed.
-                """
-
-                # Lookup dependencies, defaulting to the ones of the main
-                # package if there are none specified for this package
-                deps = pkg_data.get('dependencies', self._xpd.get('dependencies', []))
-
-                # Lookup the version falling back on the main one if it doesn't
-                version = pkg_data.get('version', self._xpd['version'])
-
-                return deps, version
-
             # TODO: go through and check if expressions from different packages
             # match all the files and print out a warning
             file_set = set(new_files)
@@ -1309,14 +1286,11 @@ class PackageBuilder(object):
                 # Get the install path offsets for this package
                 package_offsets = get_offsets_for_files(used_files)
 
-                # Lookup the dependencies and version
-                deps, version = get_deps_version(data)
-
                 # Build final info object
                 new_info = {
                     'name' : name,
-                    'version' : version,
-                    'dependencies' : deps,
+                    'version' : data['version'],
+                    'dependencies' : data['dependencies'],
                     'files' : list(used_files),
                     'install_path_offsets' : package_offsets,
                 }
@@ -1338,12 +1312,11 @@ class PackageBuilder(object):
 
                     # Otherwise build our info object
                     package_offsets = get_offsets_for_files(file_set)
-                    deps, version = get_deps_version(data)
 
                     new_info = {
                         'name' : name,
-                        'version' : version,
-                        'dependencies' : deps,
+                        'version' : data['version'],
+                        'dependencies' : data['dependencies'],
                         'files' : list(file_set),
                         'install_path_offsets' : package_offsets,
                     }
@@ -1463,7 +1436,10 @@ class BinaryPackageBuilder(object):
     """
 
     def __init__(self,  package_xpd):
-        self._xpd = package_xpd
+        if not isinstance(package_xpd, XPD):
+            self._xpd = XPD(package_xpd)
+        else:
+            self._xpd = package_xpd
         self._work_dir = None
         self._target_dir = None
 
@@ -1474,7 +1450,7 @@ class BinaryPackageBuilder(object):
         """
 
         # Create our temporary directory
-        name = self._xpd['name']
+        name = self._xpd.name
         self._work_dir = tempfile.mkdtemp(suffix = '-xpkg-install-' + name)
 
         # TODO: make this a hash of something meaning, full
