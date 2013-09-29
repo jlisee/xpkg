@@ -4,12 +4,17 @@ version: 1.0.0
 
 # This is a package description which installs multiple files
 packages:
-  multi-toola:
-    files: ['bin/toola']
-  multi-toolb:
-    # This version version provided
-    version: 2.0.0
-    files: ['bin/toolb']
+  # All files
+  libmulti:
+  # Development headers
+  libmulti-dev:
+    files: ['include/multi/.*']
+    dependencies: ['libmulti']
+  # All the tools
+  multi-tools:
+    version: 1.5.0
+    files: ['bin/tool.*']
+    dependencies: ['libmulti']
 
 # Depends here are applied to all projects
 dependencies:
