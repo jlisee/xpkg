@@ -21,9 +21,6 @@ Showstoppers
 Things a package manager must have
 
  - create core package to support chroot builds
-   - coreutils
-   - make
-   - gcc
    - cmake
    - ld (part of gcc?)
 
@@ -69,6 +66,9 @@ Nice to haves
    - need a way to install these in chroot, need a way to create these
      header only packages, and pull in the needed binaries into the
      chroot
+
+ - xz compression support, see: https://github.com/peterjc/backports.lzma
+   - then we can support newer coreutils version
 
  - info support for XPD files
 
