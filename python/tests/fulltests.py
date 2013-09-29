@@ -595,9 +595,10 @@ class FullTests(unittest.TestCase):
                         if len(l.strip()) > 0]
 
         # Check the contents of the install info
-        self.assertIn(['multi-toola', '1.0.0'], install_info)
-        self.assertIn(['multi-toolb', '2.0.0'], install_info)
-        self.assertEqual(3, len(install_info))
+        self.assertIn(['multi-tools', '1.5.0'], install_info)
+        self.assertIn(['libmulti', '1.0.0'], install_info)
+        self.assertIn(['libmulti-dev', '1.0.0'], install_info)
+        self.assertEqual(4, len(install_info))
 
 
 

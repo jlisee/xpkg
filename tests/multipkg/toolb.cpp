@@ -1,7 +1,7 @@
-#include <iostream>
+#include "multilib.h"
 
 int main(int argc, char** argv)
 {
-  std::cout << "Tool B" << std::endl;
+  multi::print("Tool B");
   return 0;
 }

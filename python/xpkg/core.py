@@ -455,7 +455,10 @@ class Environment(object):
             if 'packages' in xpd_data:
                 for name, data in xpd_data['packages'].iteritems():
                     # Default to main version if one doesn't exist
-                    version = data.get('version', xpd_data['version'])
+                    if data:
+                        version = data.get('version', xpd_data['version'])
+                    else:
+                        version = xpd_data['version']
                     packages.append((name, version))
             else:
                 packages.append((xpd_data['name'], xpd_data['version']))
@@ -780,6 +783,98 @@ class XPA(object):
                              new = dest_path,
                              len_check = True,
                              replace=binary_sub_replace)
+
+
+class XPD(object):
+    """
+    A Xpkg description file, it explains how to build one or more packages.
+    """
+
+    def __init__(self, path):
+        """
+        Load and parse the given XPD
+        """
+
+        # Load our data
+        if isinstance(path, basestring):
+            self._data = util.load_xpd(path)
+        else:
+            self._data = path
+
+        # Read fields and define properties
+        self.name = self._data['name']
+        self.version = self._data['version']
+        self.dependencies = self._data.get('dependencies', [])
+
+
+    def packages(self):
+        """
+        Return a list of all the packages in this file, each item contains:
+
+          {
+            'name' : 'packag-name',
+            'version' : '1.2.4',
+            'files' : ['file/a'],
+            'dependencies' : ['another-pkg'],
+          }
+        """
+
+        results = []
+
+        if 'packages' in self._data:
+            results = self._get_multi_packages()
+        else:
+            results.append({
+                'name' : self.name,
+                'version' : self.version,
+                'files' : [],
+                'dependencies' : self.dependencies,
+                })
+
+        return results
+
+
+    def _get_multi_packages(self):
+        """
+        Get the package info for each sub package, sorted in a order such that
+        you don't need to install different ones.
+        """
+
+        # Get all the internal packages
+        packages = self._data['packages']
+        pkg_names = set(packages.keys())
+
+        # Build a graph of the dependencies amongst the packages in this XPD
+        dep_graph = {}
+        for name, data in self._data['packages'].iteritems():
+            if data:
+                for dep in data.get('dependencies', []):
+                    if dep in pkg_names:
+                        dep_graph.setdefault(name, []).append(dep)
+            else:
+                dep_graph[name] = []
+
+        # Topologically sort them so we start with the package that has no
+        # dependencies
+        sorted_names = sorted(util.topological_sort(dep_graph))
+
+        # Produce the package data in sorted form
+        results = []
+        for pkg_name in sorted_names:
+            pkg_data = packages.get(pkg_name)
+            if pkg_data is None:
+                pkg_data = {}
+
+            # Lookup the version and dependencies, for this package, but fall
+            # back full package version
+            results.append({
+                'name' : pkg_name,
+                'version' : pkg_data.get('version', self.version),
+                'files' : pkg_data.get('files', []),
+                'dependencies' : pkg_data.get('dependencies', self.dependencies),
+            })
+
+        return results
 
 
 class EmptyPackageTree(object):
@@ -1135,7 +1230,11 @@ class PackageBuilder(object):
             packages = []
             catch_all = None
 
-            for name, data in self._xpd['packages'].iteritems():
+            xpd = XPD(self._xpd)
+
+            for data in xpd.packages():
+                name = data['name']
+
                 if 'files' in data:
                     packages.append((name, data))
                 elif catch_all is None:
@@ -1147,10 +1246,48 @@ class PackageBuilder(object):
                     msg = 'Package %s cannot be grab all files, %s already does'
                     raise Exception(msg % args)
 
+            def get_offsets_for_files(files):
+                """
+                Get the subset of path offsets needed for these files.
+                """
+
+                # Create default empty offset list section
+                offset_names = ['binary_files', 'sub_binary_files', 'text_files']
+                package_offsets = dict(zip(offset_names, [[]] * 3))
+                package_offsets['install_dir'] = install_path_offsets['install_dir']
+
+                # Search the offset list and make sure to include any the
+                # offsets for any files found in this package
+                for offset_name in offset_names:
+                    offset_files = install_path_offsets[offset_name]
+
+                    for f in files:
+                        if f in offset_files:
+                            package_offsets[offset_name].append(f)
+
+                return package_offsets
+
+            def get_deps_version(pkg_data):
+                """
+                Lookup the dependencies and version of package data, falling
+                back on the dependencies main package values as needed.
+                """
+
+                # Lookup dependencies, defaulting to the ones of the main
+                # package if there are none specified for this package
+                deps = pkg_data.get('dependencies', self._xpd.get('dependencies', []))
+
+                # Lookup the version falling back on the main one if it doesn't
+                version = pkg_data.get('version', self._xpd['version'])
+
+                return deps, version
+
             # TODO: go through and check if expressions from different packages
             # match all the files and print out a warning
             file_set = set(new_files)
             infos = []
+
+            # TODO: handle directories
 
             # Go through the non catch all package gathering up files
             for name, data in packages:
@@ -1169,26 +1306,11 @@ class PackageBuilder(object):
                         if match and match.span()[1] == len(f):
                             used_files.add(f)
 
-                # Create default empty offset list section
-                offset_names = ['binary_files', 'sub_binary_files', 'text_files']
-                package_offsets = dict(zip(offset_names, [[]] * 3))
-                package_offsets['install_dir'] = install_path_offsets['install_dir']
+                # Get the install path offsets for this package
+                package_offsets = get_offsets_for_files(used_files)
 
-                # Search the offset list and make sure to include any the
-                # offsets for any files found in this package
-                for offset_name in offset_names:
-                    offset_files = install_path_offsets[offset_name]
-
-                    for f in used_files:
-                        if f in offset_files:
-                            package_offsets[offset_name].append(f)
-
-                # Lookup dependencies, defaulting to the ones of the main
-                # package if there are none specified for this package
-                deps = data.get('dependencies', self._xpd.get('dependencies', []))
-
-                # Lookup the version falling back on the main one if it doesn't
-                version = data.get('version', self._xpd['version'])
+                # Lookup the dependencies and version
+                deps, version = get_deps_version(data)
 
                 # Build final info object
                 new_info = {
@@ -1198,22 +1320,39 @@ class PackageBuilder(object):
                     'files' : list(used_files),
                     'install_path_offsets' : package_offsets,
                 }
-                # print "INFO>>>>>>>>>>>>>>>>"
-                # import pprint
-                # pprint.pprint(new_info)
-                infos.append(new_info)
 
+                infos.append(new_info)
 
                 # Remove the used_files from our file set
                 file_set = file_set - used_files
 
             # If we have a catch all
+            num_files_left = len(file_set)
 
-               # Warn if we don't have any files
+            if catch_all:
+                if num_files_left == 0:
+                    # Warn if we don't have any files
+                    print 'WARNING: %d files left un-packaged' % num_files_left
+                else:
+                    name, data = catch_all
 
-               # Otherwise build our info object
+                    # Otherwise build our info object
+                    package_offsets = get_offsets_for_files(file_set)
+                    deps, version = get_deps_version(data)
 
-            # If we don't have a catch all warn we do have files
+                    new_info = {
+                        'name' : name,
+                        'version' : version,
+                        'dependencies' : deps,
+                        'files' : list(file_set),
+                        'install_path_offsets' : package_offsets,
+                    }
+
+                    infos.append(new_info)
+            else:
+                # If we don't have a catch all warn we do have files
+                if num_files_left > 0:
+                     print 'WARNING: %d files left un-packaged' % num_files_left
 
         return infos
 
