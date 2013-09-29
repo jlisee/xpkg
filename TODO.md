@@ -1,14 +1,31 @@
 TODO
 =====
 
+Game changers
+--------------
+
+Things that are considered and advantage vs. other package managers.
+
+ - chroot builds
+   - other utils?
+   - manually map bash because we need a shell
+   - setup system to create a "build env"
+   - install build deps into the env
+   - run the build in there
+   - figure out if we need python in there
+
+
 Showstoppers
 -------------
 
 Things a package manager must have
 
- - don't let a user remove a package that has dependencies
-
- - handle dependencies with versions somehow properly with multipkgs
+ - create core package to support chroot builds
+   - coreutils
+   - make
+   - gcc
+   - cmake
+   - ld (part of gcc?)
 
  - repos and packages:
    - make sure we can specify multiple source locations
@@ -20,16 +37,11 @@ Things a package manager must have
  - create much better tracing functionality
    - log build output somewhere in the environment itself
 
- - create core package to support chroot builds
-   - coreutils
-   - make
-   - gcc
-   - cmake
-   - ld (part of gcc?)
-
 
 Nice to haves
 --------------
+
+ - handle dependencies with versions somehow properly with multipkgs
 
  - add the concept of build only dependencies
 
@@ -46,14 +58,6 @@ Nice to haves
 
  - only warn about a directory having files (on removal) if no other
    package has files in that directory
-
- - chroot builds
-   - other utils?
-   - manually map bash because we need a shell
-   - setup system to create a "build env"
-   - install build deps into the env
-   - run the build in there
-   - figure out if we need python in there
 
  - decide on system packages:
    - opengl, x11, and eventually wayland, xmir
