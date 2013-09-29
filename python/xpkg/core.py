@@ -489,25 +489,37 @@ class Environment(object):
         info = self._pdb.get_info(name)
 
         if info:
-            # Iterate in reverse order so that we get the files before the
-            # directories
-            for f in sorted(info['files'], reverse=True):
+            # First we remove the files
+            for f in sorted(info['files']):
                 full_path = os.path.join(self._env_dir, f)
 
                 # We use lexists to test for existence here, because we don't
                 # want to de-reference symbolic links, we want to know if the
                 # link file itself is present.
                 if os.path.lexists(full_path):
-                    if os.path.isdir(full_path):
-                        if len(os.listdir(full_path)) == 0:
-                            os.rmdir(full_path)
-                        else:
-                            print 'WARNING: not removing dir, has files:',full_path
-                    else:
-                        os.remove(full_path)
+                    os.remove(full_path)
                 else:
                     # TODO: Log a warning here
                     print 'WARNING: package %s file not found: %s' % (name, full_path)
+
+            # Now remove the directories (reverse so we remove the deeper,
+            # dirs first)
+            # TODO: don't try remove directories that are owned by other
+            # packages
+            for d in sorted(info['dirs'], reverse=True):
+                full_path = os.path.join(self._env_dir, d)
+
+                # We use lexists to test for existence here, because we don't
+                # want to de-reference symbolic links, we want to know if the
+                # link file itself is present.
+                if os.path.lexists(full_path):
+                    if len(os.listdir(full_path)) == 0:
+                        os.rmdir(full_path)
+                    else:
+                        print 'WARNING: not removing dir, has files:',full_path
+                else:
+                    # TODO: Log a warning here
+                    print 'WARNING: package %s directory not found: %s' % (name, full_path)
 
             # Remove the package from the database
             self._pdb.mark_removed(name)
@@ -604,8 +616,10 @@ class XPA(object):
           'name' : 'hello',
           'version' : '1.0.0',
           'dependencies' : ['libgreet'],
+          'dirs' : [
+            'bin'
+          ],
           'files' : [
-            'bin',
             'bin/hello'
           ],
           'install_path_offsets' : {
@@ -815,7 +829,8 @@ class XPD(object):
           {
             'name' : 'packag-name',
             'version' : '1.2.4',
-            'files' : ['file/a'],
+            'dirs' : ['dir'],
+            'files' : ['dir/a'],
             'dependencies' : ['another-pkg'],
           }
         """
@@ -871,6 +886,7 @@ class XPD(object):
             results.append({
                 'name' : pkg_name,
                 'version' : pkg_data.get('version', self.version),
+                'dirs' : pkg_data.get('dirs', []),
                 'files' : pkg_data.get('files', []),
                 'dependencies' : pkg_data.get('dependencies', self.dependencies),
             })
@@ -1100,7 +1116,7 @@ class PackageBuilder(object):
 
                 self._build()
 
-                new_files = self._install()
+                new_paths = self._install()
         finally:
             # Put back our environment
             env_vars.restore()
@@ -1110,7 +1126,7 @@ class PackageBuilder(object):
             # Make sure we cleanup after we are done
             shutil.rmtree(self._work_dir)
 
-        return self._create_info(new_files)
+        return self._create_info(new_paths)
 
 
     def _get_sources(self):
@@ -1162,15 +1178,15 @@ class PackageBuilder(object):
         Installs the package, keeping track of what files it creates.
         """
 
-        pre_files = set(util.list_files(self._target_dir))
+        pre_paths = set(util.list_files(self._target_dir))
 
         self._run_cmds(self._xpd._data['install'])
 
-        post_files = set(util.list_files(self._target_dir))
+        post_paths = set(util.list_files(self._target_dir))
 
-        new_files = post_files - pre_files
+        new_paths = post_paths - pre_paths
 
-        return new_files
+        return new_paths
 
 
     def _run_cmds(self, raw):
@@ -1203,10 +1219,20 @@ class PackageBuilder(object):
             util.shellcmd(cmd)
 
 
-    def _create_info(self, new_files):
+    def _create_info(self, new_paths):
         """
         Creates the info structure from the new files and the package XPD info.
         """
+
+        # Split paths by files and directories
+        new_dirs = set()
+        new_files = set()
+
+        for path in new_paths:
+            if os.path.isdir(os.path.join(self._target_dir, path)):
+                new_dirs.add(path)
+            else:
+                new_files.add(path)
 
         # Find all instances of our install path in our data
         install_path_offsets = self._find_path_offsets(new_files)
@@ -1217,6 +1243,7 @@ class PackageBuilder(object):
                 'name' : self._xpd.name,
                 'version' : self._xpd.version,
                 'dependencies' : self._xpd.dependencies,
+                'dirs' : list(new_dirs),
                 'files' : list(new_files),
                 'install_path_offsets' : install_path_offsets,
             }]
@@ -1261,9 +1288,27 @@ class PackageBuilder(object):
 
                 return package_offsets
 
+
+            def get_needed_dirs(files):
+                """
+                Get the set of directories needed (this is O(n^2) in the
+                number of files, would be fast with a trie made of the files
+                or dirs)
+                """
+                dirs = []
+
+                for f in files:
+                    for d in new_dirs:
+                        if f.startswith(d):
+                            dirs.append(d)
+
+                return dirs
+
+
             # TODO: go through and check if expressions from different packages
             # match all the files and print out a warning
             file_set = set(new_files)
+            used_dirs = set()
             infos = []
 
             # TODO: handle directories
@@ -1285,6 +1330,11 @@ class PackageBuilder(object):
                         if match and match.span()[1] == len(f):
                             used_files.add(f)
 
+                # Grab the directories needed by this package, and mark them
+                # as used
+                dirs = get_needed_dirs(used_files)
+                used_dirs.update(dirs)
+
                 # Get the install path offsets for this package
                 package_offsets = get_offsets_for_files(used_files)
 
@@ -1293,6 +1343,7 @@ class PackageBuilder(object):
                     'name' : name,
                     'version' : data['version'],
                     'dependencies' : data['dependencies'],
+                    'dirs' : dirs,
                     'files' : list(used_files),
                     'install_path_offsets' : package_offsets,
                 }
@@ -1310,15 +1361,24 @@ class PackageBuilder(object):
                     # Warn if we don't have any files
                     print 'WARNING: %d files left un-packaged' % num_files_left
                 else:
+                    # Otherwise build our info object
                     name, data = catch_all
 
-                    # Otherwise build our info object
+                    # Get the offsets needed for the files left
                     package_offsets = get_offsets_for_files(file_set)
+
+                    # Get all the directories needed for our files
+                    dirs = get_needed_dirs(used_files)
+                    used_dirs.update(dirs)
+
+                    # Find out what directories are left
+                    unused_dirs = new_dirs - used_dirs
 
                     new_info = {
                         'name' : name,
                         'version' : data['version'],
                         'dependencies' : data['dependencies'],
+                        'dirs' : dirs + list(unused_dirs),
                         'files' : list(file_set),
                         'install_path_offsets' : package_offsets,
                     }

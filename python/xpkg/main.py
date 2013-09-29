@@ -110,6 +110,9 @@ def info(args):
             print '  dependencies:',info['dependencies']
 
         if args.verbose:
+            print '  dirs:'
+            for f in sorted(info['dirs']):
+                print '    -',f
             print '  files:'
             for f in sorted(info['files']):
                 print '    -',f

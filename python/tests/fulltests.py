@@ -276,7 +276,8 @@ class FullTests(unittest.TestCase):
 
         data = yaml.load(output)
 
-        expected['files'] = ['bin', 'bin/hello']
+        expected['files'] = ['bin/hello']
+        expected['dirs'] = ['bin']
         self.assertEqual(expected, data)
 
 
@@ -309,6 +310,10 @@ class FullTests(unittest.TestCase):
         self._xpkg_cmd(['remove', 'hello'])
 
         self.assertNoPathExists(self.hello_bin)
+
+        # Make the directory contain that package is empty
+        hello_dir, _ = os.path.split(self.hello_bin)
+        self.assertNoPathExists(hello_dir)
 
 
     def test_symlink_remove(self):
