@@ -16,6 +16,30 @@ xpkg_root_var = 'XPKG_ROOT'
 xpkg_tree_var = 'XPKG_TREE'
 xpkg_repo_var = 'XPKG_REPO'
 
+def parse_dependency(value):
+    """
+    Basic support for version expression.  Right now it just parses
+      mypackage==1.0.0 -> ('mypackage', '1.0.0')
+      mypackage -> ('mypackage', None)
+    """
+
+    # Split into parts
+    parts = value.split('==')
+
+    # We always have name
+    name = parts[0]
+
+    # Pull out the version, or report an error
+    if len(parts) == 1:
+        version = None
+    elif len(parts) == 2:
+        version = parts[1]
+    else:
+        raise Exception('Invalid package expression: "%s"' % value)
+
+    return (name, version)
+
+
 class Exception(BaseException):
     pass
 
@@ -55,7 +79,7 @@ class InstallDatabase(object):
 
     def _load_db(self):
         """
-        Write DB to disk.
+        Load DB from disk.
         """
 
         self._db = util.yaml_load(open(self._db_path))
@@ -131,6 +155,24 @@ class InstallDatabase(object):
                 return True
         else:
             return False
+
+
+    def get_rdepends(self, name):
+        """
+        Get all the packages which depend on this package
+        """
+
+        rdepends = []
+
+        for pkg_name, info in self._db.iteritems():
+            deps = info.get('dependencies', [])
+
+            for dep in deps:
+                dep_name, version = parse_dependency(dep)
+                if dep_name == name:
+                    rdepends.append(pkg_name)
+
+        return rdepends
 
 
     @staticmethod
@@ -485,6 +527,13 @@ class Environment(object):
         Removes the given package from the environment.
         """
 
+        # Determine if another package depends on this one
+        rdepends = self._pdb.get_rdepends(name)
+
+        if len(rdepends) > 0:
+            args = (name, ', '.join(rdepends))
+            raise Exception("Can't remove %s required by: %s" % args)
+
         # Remove all the files from the db
         info = self._pdb.get_info(name)
 
@@ -583,21 +632,7 @@ class Environment(object):
            mypackage -> ('mypackage', None)
         """
 
-        # Split into parts
-        parts = value.split('==')
-
-        # We always have name
-        name = parts[0]
-
-        # Pull out the version, or report an error
-        if len(parts) == 1:
-            version = None
-        elif len(parts) == 2:
-            version = parts[1]
-        else:
-            raise Exception('Invalid package expression: "%s"' % value)
-
-        return (name, version)
+        return parse_dependency(value)
 
 
     @staticmethod

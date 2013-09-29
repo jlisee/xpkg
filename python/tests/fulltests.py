@@ -340,6 +340,29 @@ class FullTests(unittest.TestCase):
         self.assertFalse(os.path.lexists(libpath))
 
 
+    def test_remove_with_deps(self):
+
+        # Make sure we can access the package tree for building
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Install greet
+        self._xpkg_cmd(['install', 'greeter'])
+
+        # Test that greeter works
+        greeter_bin = os.path.join(self.env_dir, 'bin', 'greeter')
+        def greet_test():
+            output = self._xpkg_cmd(['jump', '-c', 'greeter'])
+            self.assertEqual('Welcome to a better world!\n', output)
+
+        greet_test()
+
+        # Try and remove libgreet
+        self._xpkg_cmd(['remove', 'libgreet'], should_fail=True)
+
+        # Make sure that didn't work and we can still greet
+        greet_test()
+
+
     def test_jump(self):
         # Setup environment
         self._make_empty_db()
