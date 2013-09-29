@@ -268,13 +268,10 @@ class Environment(object):
             xpa_path = self._repo.lookup(name, version)
 
             if xpa_path:
-                # Verify XPA path
-                if not os.path.exists(xpa_path):
-                    args = (input_val, xpa_path)
-                    msg = 'XPA path for package "%s" does not exist: "%s"' % args
-                    raise Exception(msg)
+                # Load up the XPA
+                xpa = XPA(xpa_path, input_name=input_val)
 
-                # Install the XPD
+                # Install the XPA
                 self._install_xpa(xpa_path)
 
             else:
@@ -629,10 +626,16 @@ class XPA(object):
         }
     """
 
-    def __init__(self, xpa_path):
+    def __init__(self, xpa_path, input_name=None):
         """
         Parses the metadata out of the XPA file.
         """
+
+        # Ensure that the package exists before we open it
+        if not os.path.exists(xpa_path):
+            args = (input_name, xpa_path)
+            msg = 'XPA path for package "%s" does not exist: "%s"' % args
+            raise Exception(msg)
 
         # Only save the XPA path so we don't keep the tarfile itself open
         self._xpa_path = xpa_path
@@ -1014,6 +1017,8 @@ class PackageDatabase(object):
         """
         Grabs the data for the specific packages, returning either the specific
         package, of the most recent version.
+
+        Current the data is the path to the archive itself.
         """
 
         # Get all versions of a package
