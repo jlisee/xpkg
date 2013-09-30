@@ -1,0 +1,20 @@
+name: binutils
+description: A collection of binary tools (linker, assembler, etc.)
+version: 2.23.2
+
+files:
+  md5-4f8fa651e35ef262edc01d60fb45702e:
+    url: http://ftp.gnu.org/gnu/binutils/binutils-2.23.2.tar.bz2
+
+# Note on gold options:
+#   --enable-gold=default -> build both but ld is ld.gold
+configure: >-
+  ./configure --prefix=%(prefix)s
+  --exec-prefix=%(prefix)s
+  --enable-gold=default
+
+build:
+  make
+
+install:
+  make install
