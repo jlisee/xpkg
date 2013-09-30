@@ -1,5 +1,5 @@
 name: gcc
-description: Full GCC
+description: GNU Compiler Collection
 version: 4.8.1
 
 dependencies:
