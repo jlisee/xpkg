@@ -1,0 +1,18 @@
+name: dash
+description: Debian Almquist shell (DASH) POSIX-compliant implementation of /bin/sh
+version: 0.5.7
+
+files:
+  md5-f6cedb10ae7258adb5ab17a10ae80d51:
+    url: http://gondor.apana.org.au/~herbert/dash/files/dash-0.5.7.tar.gz
+
+configure: >-
+  ./configure --prefix=%(prefix)s
+
+build:
+  make
+
+# Manually symlink bin/dash to bin/sh
+install:
+  - make install
+  - ln -s dash %(prefix)s/bin/sh
