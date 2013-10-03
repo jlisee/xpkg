@@ -119,7 +119,17 @@ def unpack_tarball(tar_url, extract_path='.'):
         filenames = tar.getnames()
 
     # Get root (the shortest path will be the root if there is one)
-    unpack_dir = sorted(filenames)[0]
+    unpack_path = sorted(filenames)[0]
+
+    # Sometimes that is a path, so work until we get the directory
+    split_dir = unpack_path
+    while True:
+        split_dir, split_file = os.path.split(split_dir)
+
+        if len(split_dir) == 0:
+            break
+
+    unpack_dir = split_file
 
     return os.path.join(extract_path, unpack_dir)
 
