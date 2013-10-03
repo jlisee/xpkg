@@ -1,0 +1,21 @@
+name: libc
+description: Embedded GNU C Library
+version: 2.18-svnr23787
+
+files:
+  # SVN repository path: svn://svn.eglibc.org/branches/eglibc-2_18
+  md5-b395b021422a027d89884992e91734fc:
+    url: http://downloads.yoctoproject.org/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2
+    location: eglibc-source
+
+# We have to build outside the source tree
+build-dir: eglibc-build
+
+configure:
+  ../eglibc-source/libc/configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
