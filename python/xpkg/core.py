@@ -1144,7 +1144,15 @@ class PackageBuilder(object):
 
             # Determine what directory we have to do the build in
             dirs = os.listdir(self._work_dir)
-            if len(dirs) == 1:
+
+            if 'build-dir' in self._xpd._data:
+                # If the user specifies a build directory use it
+                rel_build_dir = self._xpd._data['build-dir']
+                build_dir = os.path.join(self._work_dir, rel_build_dir)
+
+                # Make sure the directory exists
+                util.ensure_dir(build_dir)
+            elif len(dirs) == 1:
                 build_dir = os.path.join(self._work_dir, dirs[0])
             else:
                 build_dir = self._work_dir
