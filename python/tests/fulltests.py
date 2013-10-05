@@ -462,6 +462,23 @@ class FullTests(unittest.TestCase):
         self.assertEqual('Hello!\n', output)
 
 
+    def test_install_most_recent(self):
+        """
+        Make sure that when install a package with multiple versions the newest
+        version is installed.
+        """
+
+        # Make sure we can access the package tree for building
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Install libgreet and make sure we have the most recent version
+        self._xpkg_cmd(['install', 'libgreet'])
+
+        output = self._xpkg_cmd(['list'])
+
+        self.assertRegexpMatches(output, '.*libgreet - 2.0.0.*')
+
+
     def test_build_with_deps(self):
         """
         Make sure that when we build an XPD package it's dependencies are
