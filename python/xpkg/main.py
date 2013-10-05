@@ -42,19 +42,19 @@ def build(args):
     """
 
     # Load the description from th file
-    package_description = core.XPD(args.path)
+    xpd = core.XPD(args.path)
 
     dest_path = args.dest
 
 
-    if len(package_description.dependencies) > 0:
+    if (len(xpd.dependencies) + len(xpd.build_dependencies)) > 0:
         # If we have dependencies build within the enviornemnt
         env = core.Environment(_get_env_dir(args.root))
 
-        res = env.build_xpd(package_description, dest_path)
+        res = env.build_xpd(xpd, dest_path)
     else:
         # If there are no dependencies, preform a free standing build
-        builder = core.BinaryPackageBuilder(package_description)
+        builder = core.BinaryPackageBuilder(xpd)
 
         res = builder.build(dest_path)
 
