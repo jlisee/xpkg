@@ -1,6 +1,7 @@
 name: libgreet
 version: 2.0.0
-dependencies:
+
+build-dependencies:
  - faketools # Needed for configuration
 
 files:

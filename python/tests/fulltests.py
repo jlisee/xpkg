@@ -524,8 +524,45 @@ class FullTests(unittest.TestCase):
 
         # Make sure that we can run the program (and the deps are there)
         output = self._xpkg_cmd(['jump', '-c', 'greeter'])
-
         self.assertEqual('Hello!\n', output)
+
+
+    def test_install_build_deps(self):
+        """
+        Make sure that when we install the hello world package from an
+        XPA we only get the hello package and not the fake tools package.
+        """
+
+        # Build the hello package
+        self._make_empty_db()
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        self._xpkg_cmd(['build',
+                        os.path.join(self.tree_dir, 'libgreet2.xpd'),
+                        '--dest', self.repo_dir])
+
+        # Check the package
+        new_files = os.listdir(self.repo_dir)
+        pkg_path = os.path.join(self.repo_dir, new_files[0])
+
+        output = self._xpkg_cmd(['info',pkg_path])
+        info = yaml.load(output)
+
+        self.assertNotIn('dependencies', info)
+
+        # Clean up the environment
+        shutil.rmtree(self.env_dir)
+        self._make_empty_db()
+
+        # Install the hello package from the XPA
+        os.environ[core.xpkg_repo_var] = self.repo_dir
+
+        self._xpkg_cmd(['install', 'libgreet'])
+
+        # Make sure it's the only package install
+        output = self._xpkg_cmd(['list'])
+
+        self.assertEqual('  libgreet - 2.0.0\n', output)
 
 
     def test_for_path_offsets(self):

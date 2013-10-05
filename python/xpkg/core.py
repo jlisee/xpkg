@@ -334,7 +334,7 @@ class Environment(object):
         """
 
         # Make sure all dependencies are properly installed
-        self._install_deps(xpd)
+        self._install_deps(xpd, build=True)
 
         # Build the package and return the path
         builder = BinaryPackageBuilder(xpd)
@@ -396,7 +396,7 @@ class Environment(object):
         self._pdb.mark_installed(info['name'], info)
 
 
-    def _install_deps(self, info):
+    def _install_deps(self, info, build=False):
         """
         Makes sure all the dependencies for the given package are properly
         installed.
@@ -407,8 +407,13 @@ class Environment(object):
         TODO: handle proper version checks someday
         """
 
+        # Get the full dep list based on whether we need the build dependencies
+        deps = info.dependencies
+
+        if build:
+            deps = info.dependencies + info.build_dependencies
         # Install or report a version conflict for each dependency as needed
-        for dep in info.dependencies:
+        for dep in deps:
             # Parse the name and version out of the dependency expression
             depname, version = self._parse_install_input(dep)
 
@@ -714,7 +719,13 @@ class XPA(object):
             # Pull out and parse the metadata
             self.info = util.yaml_load(tar.extractfile('xpkg.yml'))
 
+        self.name = self.info['name']
+        self.version = self.info['version']
         self.dependencies = self.info.get('dependencies', [])
+
+        # We have no build deps, because were already built, but we want to
+        # maintain a similar interface
+        self.build_dependencies = []
 
     def install(self, path):
         """
@@ -878,6 +889,7 @@ class XPD(object):
         self.name = self._data['name']
         self.version = self._data['version']
         self.dependencies = self._data.get('dependencies', [])
+        self.build_dependencies = self._data.get('build-dependencies', [])
         self.description = self._data.get('description', '')
 
     def packages(self):
