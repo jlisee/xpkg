@@ -14,7 +14,7 @@ from xpkg import util
 
 def install(args):
     """
-    Installs a given package.
+    Install the given package (name, archive, or xpd).
     """
 
     if args.tree:
@@ -79,7 +79,8 @@ def jump(args):
 
 def info(args):
     """
-    Get information on the given package.
+    Get information about the environment, an installed package, or package
+    archive.
     """
 
     # Parse argument
@@ -174,13 +175,13 @@ def main(argv = None):
     root_kwargs = {'type' : str, 'help' : 'Root directory', 'default' : None}
 
     # Create command parsers
-    parser_j = subparsers.add_parser('jump', help='Jump into environment')
+    parser_j = subparsers.add_parser('jump', help=jump.__doc__)
     parser_j.add_argument(*root_args, **root_kwargs)
     parser_j.add_argument('-c','--command', type=str, help='Command to run',
                           default='bash', dest='command')
     parser_j.set_defaults(func=jump)
 
-    parser_i = subparsers.add_parser('install', help='Install from YAML file')
+    parser_i = subparsers.add_parser('install', help=install.__doc__)
     parser_i.add_argument('path', type=str, help='YAML install file')
     parser_i.add_argument('-t', '--tree', type=str, default=None,
                           help='Package description tree')
