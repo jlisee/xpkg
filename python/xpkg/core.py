@@ -595,12 +595,17 @@ class Environment(object):
         """
         Change the current environment variables so that we can use the things
         are in that environment.
+
+        TODO: make this plugable so we can easily port this to multiple
+        platforms.
         """
 
         # Set our path vars, defining different separators based on whether we
         # are directly lists of compiler flags
         cflags = '-I%s' % os.path.join(self._env_dir, 'include')
-        ldflags = '-L%s' % os.path.join(self._env_dir, 'lib')
+
+        lib_dir = os.path.join(self._env_dir, 'lib')
+        ldflags = '-L%s' % lib_dir
 
         env_paths = {
             'PATH' : (os.path.join(self._env_dir, 'bin'), os.pathsep),
@@ -611,6 +616,23 @@ class Environment(object):
             'LDFLAGS' : (ldflags, ' '),
            }
 
+        # Check for the presence of a custom ld-linux.so, we need to use
+        # LD_PRELOAD so this overloads the hard coded version in binaries
+        if os.path.exists(lib_dir):
+            ld_linux = [f for f in os.listdir(lib_dir) if f.startswith('ld-linux')]
+        else:
+            ld_linux = []
+
+        if len(ld_linux):
+            ld_interp = sorted(ld_linux)[0]
+
+            if len(ld_linux) > 1:
+                print 'WARNING: multiple ld-linux loaders found, using:',ld_interp
+
+            preload_path = os.path.join(lib_dir, ld_interp)
+            env_paths['LD_PRELOAD'] = (preload_path, ':')
+
+        # Place the paths into our enviornment
         for varname, pathinfo in env_paths.iteritems():
             varpath, sep = pathinfo
 
