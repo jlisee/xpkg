@@ -22,8 +22,7 @@ def install(args):
     else:
         tree_path = None
 
-    env = core.Environment(_get_env_dir(args.root), create=True,
-                           tree_path=tree_path)
+    env = _create_env(args.root, create=True, tree_path=tree_path)
     env.install(args.path)
 
 
@@ -32,7 +31,7 @@ def remove(args):
     Remove the desired package.
     """
 
-    env = core.Environment(_get_env_dir(args.root))
+    env = _create_env(args.root)
     env.remove(args.name)
 
 
@@ -49,7 +48,7 @@ def build(args):
 
     if (len(xpd.dependencies) + len(xpd.build_dependencies)) > 0:
         # If we have dependencies build within the enviornemnt
-        env = core.Environment(_get_env_dir(args.root))
+        env = _create_env(args.root)
 
         res = env.build_xpd(xpd, dest_path)
     else:
@@ -66,7 +65,7 @@ def jump(args):
     Jumps into an activated environment.
     """
 
-    env = core.Environment(_get_env_dir(args.root))
+    env = _create_env(args.root)
 
     # Parse the executable and it's arguments apart
     parts = shlex.split(args.command)
@@ -92,12 +91,10 @@ def info(args):
         xpa = core.XPA(input_val)
 
         info = xpa.info
-    else:
-        # Package name lookup info from our environment
-        env_dir = _get_env_dir(args.root)
 
+    else:
         # Load the package database
-        env = core.Environment(env_dir)
+        env = _create_env(args.root)
 
         # Grab the information
         info = env._pdb.get_info(input_val)
@@ -133,11 +130,10 @@ def list_packages(args):
     Lists all packages installed in environment
     """
 
-    # Parse argument
-    env_dir = _get_env_dir(args.root)
+    # Create environment
+    env = _create_env(args.root)
 
     # List packages
-    env = core.Environment(env_dir)
 
     for package, info in env._pdb.iter_packages():
         print '  %s - %s' % (package, info['version'])
@@ -152,6 +148,15 @@ def _get_env_dir(env_dir):
         return os.path.abspath(env_dir)
     else:
         None
+
+
+def _create_env(env_dir, **kwargs):
+    """
+    Create an environment object with a path that might be None.
+    """
+
+    return core.Environment(_get_env_dir(env_dir), **kwargs)
+
 
 
 def main(argv = None):
