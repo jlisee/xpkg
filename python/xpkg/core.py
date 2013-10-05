@@ -245,6 +245,8 @@ class Environment(object):
         else:
             self._env_dir = env_dir
 
+        self.root = self._env_dir
+
         # Error out if we are not creating and environment and this one does
         # not exist
         if not os.path.exists(self._env_dir) and not create:
@@ -253,20 +255,30 @@ class Environment(object):
         # If needed this will setup the empty environment
         self._pdb = InstallDatabase(self._env_dir)
 
+        def get_path(base_path, env_var):
+            """
+            Parse class argument and environment variables to get path.
+            """
+            if base_path:
+                return base_path
+            elif env_var in os.environ:
+                return os.environ[env_var]
+            return None
+
         # Setup the package tree to either load from the given path or return
         # no packages
-        if tree_path:
-            self._tree = FilePackageTree(tree_path)
-        elif xpkg_tree_var in os.environ:
-            self._tree = FilePackageTree(os.environ[xpkg_tree_var])
+        self.tree_path = get_path(tree_path, xpkg_tree_var)
+
+        if self.tree_path:
+            self._tree = FilePackageTree(self.tree_path)
         else:
             self._tree = EmptyPackageTree()
 
         # Setup the package repository so we can install pre-compiled packages
-        if repo_path:
-            self._repo = FilePackageRepo(repo_path)
-        elif xpkg_repo_var in os.environ:
-            self._repo = FilePackageRepo(os.environ[xpkg_repo_var])
+        self.repo_path = get_path(repo_path, xpkg_repo_var)
+
+        if self.repo_path:
+            self._repo = FilePackageRepo(self.repo_path)
         else:
             self._repo = EmptyPackageRepo()
 
@@ -364,7 +376,7 @@ class Environment(object):
 
                 self._install_xpa(xpa_path)
         else:
-            # Build the package(s) and install directly into our enviornment
+            # Build the package(s) and install directly into our environment
             builder = PackageBuilder(xpd)
 
             infos = builder.build(self._env_dir, self)
@@ -637,7 +649,7 @@ class Environment(object):
             preload_path = os.path.join(lib_dir, ld_interp)
             env_paths['LD_PRELOAD'] = (preload_path, ':')
 
-        # Place the paths into our enviornment
+        # Place the paths into our environment
         for varname, pathinfo in env_paths.iteritems():
             varpath, sep = pathinfo
 

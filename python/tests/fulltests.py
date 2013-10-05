@@ -285,6 +285,32 @@ class FullTests(unittest.TestCase):
         self.assertEqual(expected, data)
 
 
+    def test_environment_info(self):
+        """
+        Make sure we can get the basic information about our environment.
+        """
+
+        self._make_empty_db()
+
+        # Set up our environment variables
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[core.xpkg_repo_var] = self.repo_dir
+
+        # Our expected results
+        expected = {
+            'root' : self.env_dir,
+            'tree' : self.tree_dir,
+            'repo' : self.repo_dir
+        }
+
+        # Run output and compare the results
+        output = self._xpkg_cmd(['info'])
+
+        data = yaml.load(output)
+
+        self.assertEqual(expected, data)
+
+
     def test_info_root_args(self):
         """
         Make sure we can pass the root with the command line flag.
