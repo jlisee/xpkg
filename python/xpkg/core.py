@@ -222,7 +222,7 @@ class Environment(object):
         if self.tree_path:
             self._tree = FilePackageTree(self.tree_path)
         else:
-            self._tree = EmptyPackageTree()
+            self._tree = EmptyPackageSource()
 
         # Setup the package repository so we can install pre-compiled packages
         self.repo_path = get_path(repo_path, xpkg_repo_var)
@@ -230,7 +230,7 @@ class Environment(object):
         if self.repo_path:
             self._repo = FilePackageRepo(self.repo_path)
         else:
-            self._repo = EmptyPackageRepo()
+            self._repo = EmptyPackageSource()
 
         # Make sure the package cache is created
         self._xpa_cache_dir = self.xpa_cache_dir(self._env_dir)
@@ -266,14 +266,11 @@ class Environment(object):
             name, version = self._parse_install_input(input_val)
 
             # First try and find the xpa (pre-compiled) version of the package
-            xpa_path = self._repo.lookup(name, version)
+            xpa = self._repo.lookup(name, version)
 
-            if xpa_path:
-                # Load up the XPA
-                xpa = XPA(xpa_path, input_name=input_val)
-
+            if xpa:
                 # Install the XPA
-                self._install_xpa(xpa_path)
+                self._install_xpa(xpa)
 
             else:
                 # No binary package try, so lets try and find a description in
@@ -309,6 +306,8 @@ class Environment(object):
     def _install_xpd(self, xpd, build_into_env=False):
         """
         Builds package and directly installs it into the given environment.
+
+          xpd - an XPD describing the package to install.
         """
 
         # Make sure all dependencies are properly installed
@@ -341,7 +340,10 @@ class Environment(object):
         """
 
         # Open up the package
-        xpa = XPA(path)
+        if isinstance(path, XPA):
+            xpa = path
+        else:
+            xpa = XPA(path)
 
         # Grab the meta data
         info = xpa.info
@@ -933,9 +935,9 @@ class XPD(object):
         return results
 
 
-class EmptyPackageTree(object):
+class EmptyPackageSource(object):
     """
-    Package tree which has no packages in it.
+    A source of package descriptions or binary packages with nothing in it.
     """
 
     def lookup(self, package, version=None):
@@ -944,8 +946,8 @@ class EmptyPackageTree(object):
 
 class FilePackageTree(object):
     """
-    Allows for named (and eventually versioned) lookup of packages from a
-    directory full of description.
+    Allows for named and versioned lookup of packages from a directory full of
+    description.
     """
 
     def __init__(self, path):
@@ -995,19 +997,10 @@ class FilePackageTree(object):
                            data=xpd_path)
 
 
-class EmptyPackageRepo(object):
-    """
-    Package repository which has no packages in it
-    """
-
-    def lookup(self, package, version=None):
-        return None
-
-
 class FilePackageRepo(object):
     """
-    Allows for named (and eventually versioned) lookup of pre-built binary
-    packages from a directory full of them.
+    Allows for named and versioned lookup of pre-built binary packages from a
+    directory full of them.
     """
 
     def __init__(self, path):
@@ -1022,25 +1015,16 @@ class FilePackageRepo(object):
 
         # Get information on all the dicts found in the directory
         for full_path in util.match_files(path, '*.xpa'):
-            # Open up the package file
-            with tarfile.open(full_path) as tar:
+            # Load the XPA object
+            xpa = XPA(full_path)
 
-                # Pull out and parse the metadata
-                info = util.yaml_load(tar.extractfile('xpkg.yml'))
-
-            # Get the name and version of the package from the internal info
-            name = info['name']
-            version = info.get('version', '')
-
-            # Store the path to the file in the package DB
-            #print 'Storing "%s" as %s version: %s' % (full_path, name, version)
-
-            self._db.store(name=name, version=version, data=full_path)
+            # Store the object in our repo
+            self._db.store(name=xpa.name, version=xpa.version, data=xpa)
 
 
     def lookup(self, package, version=None):
         """
-        Returns the path the binary package, if it doesn't exist None is
+        Returns the XPA representing binary package, if it doesn't exist None is
         returned.
         """
 
@@ -1068,7 +1052,7 @@ class PackageDatabase(object):
     def lookup(self, name, version=None):
         """
         Grabs the data for the specific packages, returning either the specific
-        package, of the most recent version.
+        package, or the most recent version.
 
         Current the data is the path to the archive itself.
         """
