@@ -22,7 +22,6 @@ Things a package manager must have
 
  - create core package to support chroot builds
    - cmake
-   - ld (part of gcc?)
 
  - repos and packages:
    - make sure we can specify multiple source locations
@@ -43,8 +42,6 @@ Nice to haves
  - long form package descriptions
 
  - handle dependencies with versions somehow properly with multipkgs
-
- - add the concept of build only dependencies
 
  - add support for a check/test step (libgmp, libmpfr have "make check")
 
