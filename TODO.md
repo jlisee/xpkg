@@ -20,8 +20,9 @@ Showstoppers
 
 Things a package manager must have
 
- - create core package to support chroot builds
-   - cmake
+ - create much better tracing functionality
+   - log build output somewhere in the environment itself
+   - switch to using the python logger in the tool itself
 
  - repos and packages:
    - make sure we can specify multiple source locations
@@ -30,8 +31,6 @@ Things a package manager must have
    - store the hash of the files in a package
    - handle the has of files with install path offsets
 
- - create much better tracing functionality
-   - log build output somewhere in the environment itself
 
 
 Nice to haves

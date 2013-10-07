@@ -149,8 +149,14 @@ def _environment_info(env):
     """
 
     print '  root:',env.root
-    print '  tree:',env.tree_path
-    print '  repo:',env.repo_path
+
+    def print_path(name, paths):
+        print '  %s:' % name
+        for p in paths:
+            print '   - ',p
+
+    print_path('trees', env.tree_paths)
+    print_path('repos', env.repo_paths)
 
 
 def list_packages(args):

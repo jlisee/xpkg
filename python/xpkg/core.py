@@ -205,30 +205,49 @@ class Environment(object):
         # If needed this will setup the empty environment
         self._pdb = InstallDatabase(self._env_dir)
 
-        def get_path(base_path, env_var):
+        def get_paths(base_path, env_var):
             """
             Parse class argument and environment variables to get path.
             """
+
+            # Get the raw path from our given value, or the environment variable
+            raw_path = None
+
             if base_path:
-                return base_path
+                raw_path = base_path
             elif env_var in os.environ:
-                return os.environ[env_var]
-            return None
+                raw_path = os.environ[env_var]
+            else:
+                raw_path = None
+
+            # Turn that raw path into a list
+            if raw_path:
+                paths = raw_path.split(':')
+            else:
+                paths = []
+
+            return paths
 
         # Setup the package tree to either load from the given path or return
         # no packages
-        self.tree_path = get_path(tree_path, xpkg_tree_var)
+        self.tree_paths = get_paths(tree_path, xpkg_tree_var)
 
-        if self.tree_path:
-            self._tree = FilePackageTree(self.tree_path)
+        if len(self.tree_paths) == 1:
+            self._tree = FilePackageTree(self.tree_paths[0])
+        elif len(self.tree_paths) > 0:
+            trees = [FilePackageTree(t) for t in self.tree_paths]
+            self._tree = CombinePackageSource(trees)
         else:
             self._tree = EmptyPackageSource()
 
         # Setup the package repository so we can install pre-compiled packages
-        self.repo_path = get_path(repo_path, xpkg_repo_var)
+        self.repo_paths = get_paths(repo_path, xpkg_repo_var)
 
-        if self.repo_path:
-            self._repo = FilePackageRepo(self.repo_path)
+        if len(self.repo_paths) == 1:
+            self._repo = FilePackageRepo(self.repo_paths[0])
+        elif len(self.repo_paths) > 0:
+            repos = [FilePackageRepo(t) for t in self.repo_paths]
+            self._repo = CombinePackageSource(repos)
         else:
             self._repo = EmptyPackageSource()
 
@@ -395,7 +414,7 @@ class Environment(object):
 
                 current_version = self._pdb.get_info(depname)['version']
 
-                args = (data['name'], data['version'], depname, current_version,
+                args = (info.name, info.version, depname, current_version,
                         version)
 
                 msg = '%s-%s requires package %s at version: %s, but: %s ' \
@@ -944,6 +963,53 @@ class EmptyPackageSource(object):
         return None
 
 
+class CombinePackageSource(object):
+    """
+    A simple way to query multiple package sources (trees, or repos).
+    """
+
+    def __init__(self, sources):
+        self._sources = sources
+
+    def lookup(self, package, version=None):
+        """
+        Get the most recent version of the package in any source, or the
+        version specified if it exists in any.
+        """
+
+        if version:
+            # We have a version so search our trees in order until we find it
+            for source in self._sources:
+                result = source.lookup(package, version)
+
+                # Bail out if we have found the package
+                if result:
+                    break
+        else:
+            # With no version we grab all version of the package then get the
+            # most recent
+
+            # Grab all the package versions
+            pkgs = []
+
+            for source in self._sources:
+                result = source.lookup(package)
+                if result:
+                    pkgs.append(result)
+
+            # If we have any packages sort by the version
+            if len(pkgs) > 0:
+                sorter = lambda a,b: util.compare_versions(a.version, b.version)
+                sorted_pkgs = sorted(pkgs, cmp=sorter)
+
+                # Get the data for the most recent version
+                result = sorted_pkgs[-1]
+            else:
+                result = None
+
+        return result
+
+
 class FilePackageTree(object):
     """
     Allows for named and versioned lookup of packages from a directory full of
@@ -1052,9 +1118,10 @@ class PackageDatabase(object):
     def lookup(self, name, version=None):
         """
         Grabs the data for the specific packages, returning either the specific
-        package, or the most recent version.
+        package, or the most recent version.  If the version can't be found,
+        None is returned.
 
-        Current the data is the path to the archive itself.
+        Currently the data is the path to the archive itself.
         """
 
         # Get all versions of a package
@@ -1066,7 +1133,7 @@ class PackageDatabase(object):
             if version and (version in versions):
                 # Version specified and we have it
                 res = versions[version]
-            else:
+            elif version is None:
                 # Sorted the version data pairs
                 sorted_versions = sorted(
                     versions.items(),
