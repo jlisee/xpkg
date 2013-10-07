@@ -299,8 +299,8 @@ class FullTests(unittest.TestCase):
         # Our expected results
         expected = {
             'root' : self.env_dir,
-            'tree' : self.tree_dir,
-            'repo' : self.repo_dir
+            'trees' : [self.tree_dir],
+            'repos' : [self.repo_dir],
         }
 
         # Run output and compare the results
@@ -689,7 +689,7 @@ class FullTests(unittest.TestCase):
 
     def test_multipkg_xpd_install(self):
         """
-        Make sure that install the a multiple package XPD installs all parts.
+        Make sure that install the a of multiple package XPD installs all parts.
         """
 
         # Make sure we can access the package tree for building
@@ -720,6 +720,41 @@ class FullTests(unittest.TestCase):
         self.assertIn(['libmulti-dev', '1.0.0'], install_info)
         self.assertEqual(4, len(install_info))
 
+
+    def test_multi_tree(self):
+        """
+        Test that we can properly work with multiple package trees.
+        """
+
+        # Paths to our two trees
+        primary_tree = os.path.join(self.work_dir, 'primary-tree')
+        secondary_tree = os.path.join(self.work_dir, 'secondary-tree')
+
+        # Copy the contents of our main tree primary local tree
+        shutil.copytree(self.tree_dir, primary_tree)
+
+        # Move libgreet-2 and hello packages to the secondary tree
+        util.ensure_dir(secondary_tree)
+
+        for move_file in ['libgreet2.xpd', 'hello.xpd']:
+            shutil.move(os.path.join(primary_tree, move_file),
+                        secondary_tree)
+
+        # Set the tree environment variable to include both the primary and
+        # the secondary tree
+        os.environ[core.xpkg_tree_var] = '%s:%s' % (primary_tree, secondary_tree)
+
+        # Make sure we can install hello package
+        self._xpkg_cmd(['install', 'hello'])
+
+        self.assertPathExists(self.hello_bin)
+
+        # Install greeter2, and make sure we have libgreet installed
+        self._xpkg_cmd(['install', 'greeter==2.0.0'])
+
+        output = self._xpkg_cmd(['list'])
+
+        self.assertRegexpMatches(output, '.*libgreet - 2.0.0.*')
 
 
 if __name__ == '__main__':
