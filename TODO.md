@@ -14,6 +14,15 @@ Things that are considered and advantage vs. other package managers.
    - run the build in there
    - figure out if we need python in there
 
+ - toolsets
+   - defines a set of build depenencies
+   - name -> list of deps, example:
+
+     shell: dash
+     base: coreutils
+     bin: binutils
+     compiler: gcc
+
 
 Showstoppers
 -------------
@@ -24,9 +33,6 @@ Things a package manager must have
    - log build output somewhere in the environment itself
    - switch to using the python logger in the tool itself
 
- - repos and packages:
-   - make sure we can specify multiple source locations
-
  - file hashing:
    - store the hash of the files in a package
    - handle the has of files with install path offsets
@@ -35,6 +41,9 @@ Things a package manager must have
 
 Nice to haves
 --------------
+
+ - output to stdout/stderr and to a log file for builds:
+     http://stackoverflow.com/a/4985080/138948
 
  - search all package descriptions
 
@@ -82,8 +91,6 @@ Docs
  - Document file formats:
    - package-name.xpd - format
    - xpkg.yml - format (see PackageBuilder.build method)
-
- - Create the concept of a toolset
 
  - Steps in building a package:
    - Install build deps

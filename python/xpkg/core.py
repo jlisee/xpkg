@@ -185,7 +185,14 @@ class Environment(object):
     """
 
     def __init__(self, env_dir=None, create=False, tree_path=None,
-                 repo_path=None):
+                 repo_path=None, verbose=False):
+        """
+          env_dir - path to the environment dir
+          create - create the environment if it does exist
+          tree_path - URL for a XPD tree
+          repo_path - URL for a XPA package archive
+          verbose - print all build commands to screen
+        """
 
         if env_dir is None:
             if xpkg_root_var in os.environ:
@@ -196,6 +203,8 @@ class Environment(object):
             self._env_dir = env_dir
 
         self.root = self._env_dir
+
+        self.verbose = verbose
 
         # Error out if we are not creating and environment and this one does
         # not exist
@@ -304,12 +313,15 @@ class Environment(object):
                 self._install_xpd(xpd_data)
 
 
-    def build_xpd(self, xpd, dest_path):
+    def build_xpd(self, xpd, dest_path, verbose=False):
         """
         Builds the given package from it's package description (XPD) data.
 
         Returns the path to the package.
         """
+
+        # Determine if we are doing a verbose build
+        verbose_build = verbose or self.verbose
 
         # Make sure all dependencies are properly installed
         self._install_deps(xpd, build=True)
@@ -317,7 +329,8 @@ class Environment(object):
         # Build the package and return the path
         builder = BinaryPackageBuilder(xpd)
 
-        res = builder.build(dest_path, environment = self)
+        res = builder.build(dest_path, environment=self,
+                            output_to_file=not verbose_build)
 
         return res
 
@@ -347,7 +360,8 @@ class Environment(object):
             # Build the package(s) and install directly into our environment
             builder = PackageBuilder(xpd)
 
-            infos = builder.build(self._env_dir, self)
+            infos = builder.build(self._env_dir, environment=self,
+                            output_to_file=not self.verbose)
 
             for info in infos:
                 self._pdb.mark_installed(info['name'], info)
@@ -652,6 +666,14 @@ class Environment(object):
         The directory we hold current built packages.
         """
         return os.path.join(root, 'var', 'xpkg', 'cache')
+
+
+    @staticmethod
+    def log_dir(root):
+        """
+        The directory we place build logs
+        """
+        return os.path.join(root, 'var', 'xpkg', 'log')
 
 
 class XPA(object):
