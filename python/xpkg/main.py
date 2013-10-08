@@ -150,13 +150,35 @@ def _environment_info(env):
 
     print '  root:',env.root
 
-    def print_path(name, paths):
-        print '  %s:' % name
+    def print_path(name, paths, depth=2):
+        padding = ' ' * depth
+
+        print '%s%s:' % (padding, name)
         for p in paths:
-            print '   - ',p
+            print '%s  - %s' % (padding, p)
 
     print_path('trees', env.tree_paths)
     print_path('repos', env.repo_paths)
+
+    # Now print the environment variables
+    print '  env:'
+    env_vars = env.get_env_variables()
+
+    for varname, value in env_vars.iteritems():
+        # Unpack the variable and it's separator
+        variable, sep = value
+
+        # Attempt to split into parts
+        if sep == ' ':
+            parts = shlex.split(variable)
+        else:
+            parts = variable.split(sep)
+
+        # Print it out
+        if len(parts) > 1:
+            print_path(varname, parts, depth=4)
+        else:
+            print '    %s: %s' % (varname, variable)
 
 
 def list_packages(args):

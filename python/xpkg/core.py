@@ -594,11 +594,8 @@ class Environment(object):
         os.execvp(program, [program] + args)
 
 
-    def apply_env_variables(self):
+    def get_env_variables(self):
         """
-        Change the current environment variables so that we can use the things
-        are in that environment.
-
         TODO: make this plugable so we can easily port this to multiple
         platforms.
         """
@@ -608,7 +605,7 @@ class Environment(object):
         cflags = '-I%s' % os.path.join(self._env_dir, 'include')
 
         lib_dir = os.path.join(self._env_dir, 'lib')
-        ldflags = '-L%s' % lib_dir
+        ldflags = '-L%s -L%s' % (lib_dir, '"/home/with space"')
 
         env_paths = {
             'PATH' : (os.path.join(self._env_dir, 'bin'), os.pathsep),
@@ -634,6 +631,17 @@ class Environment(object):
 
             preload_path = os.path.join(lib_dir, ld_interp)
             env_paths['LD_PRELOAD'] = (preload_path, ':')
+
+        return env_paths
+
+
+    def apply_env_variables(self):
+        """
+        Change the current environment variables so that we can use the things
+        are in that environment.
+        """
+
+        env_paths = self.get_env_variables()
 
         # Place the paths into our environment
         for varname, pathinfo in env_paths.iteritems():
