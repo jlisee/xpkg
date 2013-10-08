@@ -308,7 +308,13 @@ class FullTests(unittest.TestCase):
 
         data = yaml.load(output)
 
+        # Remove the env section
+        env_section = data.pop('env')
+
         self.assertEqual(expected, data)
+
+        # Now do a basic check on the env data
+        self.assertIn('PATH', env_section)
 
 
     def test_info_root_args(self):
