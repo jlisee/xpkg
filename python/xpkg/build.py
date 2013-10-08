@@ -6,6 +6,8 @@ import os
 import platform
 import re
 import shutil
+import subprocess
+import sys
 import tarfile
 import tempfile
 
@@ -74,9 +76,10 @@ class PackageBuilder(object):
         self._xpd = package_xpd
         self._work_dir = None
         self._target_dir = None
+        self._output = None
 
 
-    def build(self, target_dir, environment = None):
+    def build(self, target_dir, environment = None, output_to_file=True):
         """
         Right now this just executes instructions inside the XPD, but in the
         future we can make this a little smarter.
@@ -91,6 +94,35 @@ class PackageBuilder(object):
         # TODO: LOG THIS
         print 'Working in:',self._work_dir
 
+        # Create our output
+        if output_to_file:
+            # Form a hopefully unique name for the output file
+            args = (self._xpd.name, self._xpd.version)
+            output_file = '%s-%s_build.log' % args
+
+            # Put the file in our environment if we have, or the current
+            # directory
+            if environment:
+                # Find out log dir
+                log_dir = environment.log_dir(environment.root)
+
+                # Make sure it exists
+                util.ensure_dir(log_dir)
+
+                # Now finally commit to our path
+                output_path = os.path.join(log_dir, output_file)
+            else:
+                output_path = os.path.abspath(os.path.join('.', output_file))
+
+            # TODO: LOG THIS
+            print 'Log file:',output_path
+
+            # Open our file for writing
+            self._output = open(output_path, 'w')
+        else:
+            self._output = None
+
+        # Store our target dir
         self._target_dir = target_dir
 
         try:
@@ -136,8 +168,14 @@ class PackageBuilder(object):
 
             self._env_dir = ''
 
+            # Close our output file if it exists
+            if self._output:
+                self._output.close()
+                self._output = None
+
             # Make sure we cleanup after we are done
             shutil.rmtree(self._work_dir)
+
 
         return self._create_info(new_paths)
 
@@ -175,6 +213,8 @@ class PackageBuilder(object):
 
         # Configure if needed
         if 'configure' in self._xpd._data:
+            # TODO: log this
+            print 'Configuring...'
             self._run_cmds(self._xpd._data['configure'])
 
 
@@ -183,6 +223,8 @@ class PackageBuilder(object):
         Builds the desired package.
         """
 
+        # TODO: log this
+        print 'Building...'
         self._run_cmds(self._xpd._data['build'])
 
 
@@ -190,6 +232,9 @@ class PackageBuilder(object):
         """
         Installs the package, keeping track of what files it creates.
         """
+
+        # TODO: log this
+        print 'Installing...'
 
         pre_paths = set(util.list_files(self._target_dir))
 
@@ -229,7 +274,36 @@ class PackageBuilder(object):
             }
 
             # Run our command
-            util.shellcmd(cmd)
+            self._shellcmd(cmd, self._output)
+
+
+    def _shellcmd(self, cmd, output=None):
+        """
+        Runs the given shell command, either output to stderr/stdout or
+        the given file object.
+
+        It will throw a CallProcessError if the process fails.
+        """
+
+        # Determine where our output goes
+        if output:
+            stdout = output
+            stderr = output
+        else:
+            stdout = sys.stdout
+            stderr = sys.stderr
+
+        # Describe our command
+        stdout.write('[cmd] {0}\n'.format(cmd))
+
+        # Flush everything before running our process so that we make sure our
+        # command appears in the proper ordering
+        stdout.flush()
+        stderr.flush()
+
+        # Now lets get writing
+        subprocess.check_call(cmd, stderr=stderr, stdout=stdout, shell=True)
+
 
 
     def _create_info(self, new_paths):
@@ -519,7 +593,7 @@ class BinaryPackageBuilder(object):
         self._target_dir = None
 
 
-    def build(self, storage_dir, environment = None):
+    def build(self, storage_dir, environment=None, output_to_file=True):
         """
         Run the standard PackageBuilder then pack up the results in a package.
         """
@@ -538,7 +612,7 @@ class BinaryPackageBuilder(object):
         try:
             # Build the package(s)
             builder = PackageBuilder(self._xpd)
-            infos = builder.build(install_dir, environment)
+            infos = builder.build(install_dir, environment, output_to_file)
 
             # Build packages and get their paths
             dest_paths = [self._create_package(install_dir, storage_dir, info)
@@ -617,4 +691,3 @@ class BinaryPackageBuilder(object):
         fmt_str = '%(name)s_%(version)s_%(arch)s_%(linkage)s_%(kernel)s.xpa'
 
         return fmt_str % args
-

@@ -50,12 +50,12 @@ def build(args):
         # If we have dependencies build within the enviornemnt
         env = _create_env(args.root)
 
-        res = env.build_xpd(xpd, dest_path)
+        res = env.build_xpd(xpd, dest_path, verbose=args.verbose)
     else:
         # If there are no dependencies, preform a free standing build
         builder = core.BinaryPackageBuilder(xpd)
 
-        res = builder.build(dest_path)
+        res = builder.build(dest_path, output_to_file=not args.verbose)
 
     print 'Package in:', res
 
@@ -225,6 +225,8 @@ def main(argv = None):
     parser_i.add_argument('path', type=str, help='YAML install file')
     parser_i.add_argument('-d','--dest', type=str, default='.',
                           help='Where to place the package')
+    parser_i.add_argument('-v','--verbose', action='store_true', default=False,
+                          help='Print build output to screen')
     parser_i.set_defaults(func=build)
 
     parser_i = subparsers.add_parser('remove', help=remove.__doc__)

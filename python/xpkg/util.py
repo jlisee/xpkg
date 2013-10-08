@@ -111,7 +111,7 @@ def unpack_tarball(tar_url, extract_path='.'):
     there is one).
     """
 
-    print 'Unpacking',tar_url
+    print 'Unpacking:',tar_url
 
     # Open and extract
     with tarfile.open(tar_url, 'r') as tar:
