@@ -1,0 +1,16 @@
+name: tcc
+description: A small but hyper fast C compiler
+version: 0.9.26
+
+files:
+  md5-5fb28e4abc830c46a7f54c1f637fb25d:
+    url: http://download.savannah.gnu.org/releases/tinycc/tcc-0.9.26.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make
+
+install:
+  make install
