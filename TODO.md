@@ -6,14 +6,6 @@ Game changers
 
 Things that are considered and advantage vs. other package managers.
 
- - chroot builds
-   - other utils?
-   - manually map bash because we need a shell
-   - setup system to create a "build env"
-   - install build deps into the env
-   - run the build in there
-   - figure out if we need python in there
-
  - toolsets
    - defines a set of build depenencies
    - name -> list of deps, example:
@@ -23,14 +15,32 @@ Things that are considered and advantage vs. other package managers.
      bin: binutils
      compiler: gcc
 
+ - chroot builds
+   - other utils?
+   - manually map bash because we need a shell
+   - setup system to create a "build env"
+   - install build deps into the env
+   - run the build in there
+   - figure out if we need python in there
 
 Showstoppers
 -------------
 
 Things a package manager must have
 
+ - support for running with another libc!
+   - plan:
+     - add a pure which sets environment up explicitly to make builds more reliable,
+       half way to chroot basically
+     - compile all binaries po
+   - notes:
+     - see: http://stackoverflow.com/a/851229/138948
+     - hope that are standard null termination binary patch overwrite technique
+     will work
+     - If not see here for tips on ELF patching: http://siddhesh.in/journal/2011/03/27/changing-the-default-loader-for-a-program-in-its-elf/
+     - Also see this relocatable patch: http://git.yoctoproject.org/cgit.cgi/poky/plain/meta/recipes-core/eglibc/eglibc-2.17/relocatable_sdk.patch
+
  - create much better tracing functionality
-   - log build output somewhere in the environment itself
    - switch to using the python logger in the tool itself
 
  - file hashing:
@@ -41,6 +51,11 @@ Things a package manager must have
 
 Nice to haves
 --------------
+
+ - mini-toolset to test toolset support on:
+   - busybox - replaces coreutils (maybe toybox)
+   - uclibc - replaces glibc (or maybe musl it's smaller)
+   - tcc - replaces gcc + binutils
 
  - output to stdout/stderr and to a log file for builds:
      http://stackoverflow.com/a/4985080/138948

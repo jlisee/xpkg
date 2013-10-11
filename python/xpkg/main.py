@@ -22,7 +22,8 @@ def install(args):
     else:
         tree_path = None
 
-    env = _create_env(args.root, create=True, tree_path=tree_path)
+    env = _create_env(args.root, create=True, tree_path=tree_path,
+                      verbose=args.verbose)
     env.install(args.path)
 
 
@@ -239,6 +240,8 @@ def main(argv = None):
     parser_i.add_argument('path', type=str, help='YAML install file')
     parser_i.add_argument('-t', '--tree', type=str, default=None,
                           help='Package description tree')
+    parser_i.add_argument('-v','--verbose', action='store_true', default=False,
+                          help='Print build output to screen')
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=install)
 
