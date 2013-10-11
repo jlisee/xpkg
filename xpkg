@@ -3,6 +3,8 @@
 import os
 import sys
 
+EXECUTE_MODULE=False
+
 # Get current directory
 cur_dir, _ = os.path.split(__file__)
 
@@ -25,4 +27,13 @@ for var_name, directory in var_info.iteritems():
         os.environ[var_name] = os.path.abspath(os.path.join(cur_dir, directory))
 
 # Run our python program
-os.execvp(sys.executable, [sys.executable, '-m', 'xpkg.main'] + sys.argv[1:])
+if not EXECUTE_MODULE:
+    # Call out to the python program
+    os.execvp(sys.executable,
+              [sys.executable, '-m', 'xpkg.main'] + sys.argv[1:])
+else:
+    # Put our module on the path and run the main method
+    sys.path.insert(0, python_dir)
+
+    from xpkg import main
+    main.main(sys.argv)
