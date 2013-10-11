@@ -46,15 +46,16 @@ def build(args):
 
     dest_path = args.dest
 
+    have_deps = (len(xpd.dependencies) + len(xpd.build_dependencies)) > 0
 
-    if (len(xpd.dependencies) + len(xpd.build_dependencies)) > 0:
+    if args.use_env or have_deps:
         # If we have dependencies build within the enviornemnt
         env = _create_env(args.root)
 
         res = env.build_xpd(xpd, dest_path, verbose=args.verbose)
     else:
         # If there are no dependencies, preform a free standing build
-        builder = core.BinaryPackageBuilder(xpd)
+        builder = core.build.BinaryPackageBuilder(xpd)
 
         res = builder.build(dest_path, output_to_file=not args.verbose)
 
@@ -250,6 +251,8 @@ def main(argv = None):
     parser_i.add_argument('path', type=str, help='YAML install file')
     parser_i.add_argument('-d','--dest', type=str, default='.',
                           help='Where to place the package')
+    parser_i.add_argument('-e','--use-env', action='store_true', default=False,
+                          help='Force environment usage')
     parser_i.add_argument('-v','--verbose', action='store_true', default=False,
                           help='Print build output to screen')
     parser_i.set_defaults(func=build)
