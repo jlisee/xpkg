@@ -6,6 +6,7 @@ dependencies:
  - libmpfr==3.1.2
  - libgmp==5.1.2
  - libmpc==1.0.1
+ - zlib==1.2.8
 
 files:
   md5-3b2386c114cd74185aa3754b58a79304:
