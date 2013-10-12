@@ -6,7 +6,8 @@ import tarfile
 
 # Project Imports
 from xpkg import util
-from xpkg.build import PackageBuilder, BinaryPackageBuilder
+from xpkg import build
+
 
 xpkg_root_var = 'XPKG_ROOT'
 xpkg_tree_var = 'XPKG_TREE'
@@ -327,7 +328,7 @@ class Environment(object):
         self._install_deps(xpd, build=True)
 
         # Build the package and return the path
-        builder = BinaryPackageBuilder(xpd)
+        builder = build.BinaryPackageBuilder(xpd)
 
         res = builder.build(dest_path, environment=self,
                             output_to_file=not verbose_build)
@@ -358,7 +359,7 @@ class Environment(object):
                 self._install_xpa(xpa_path)
         else:
             # Build the package(s) and install directly into our environment
-            builder = PackageBuilder(xpd)
+            builder = build.PackageBuilder(xpd)
 
             infos = builder.build(self._env_dir, environment=self,
                             output_to_file=not self.verbose)
