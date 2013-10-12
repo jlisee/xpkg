@@ -10,7 +10,7 @@ configure: >-
   ./configure --prefix=%(prefix)s
 
 build:
-  make
+  make -j%(jobs)s
 
 # Manually symlink bin/dash to bin/sh
 install:

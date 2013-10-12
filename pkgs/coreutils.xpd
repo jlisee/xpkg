@@ -11,7 +11,7 @@ configure:
   ./configure --prefix=%(prefix)s
 
 build:
-  make
+  make -j%(jobs)s
 
 install:
   make install
