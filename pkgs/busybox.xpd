@@ -1,0 +1,26 @@
+name: busybox
+description: >
+  Combines tiny versions of many common UNIX utilities into a single small
+  executable.
+version: 1.21.1
+
+# build-dependencies:
+#   - make
+#   - sed
+
+files:
+  md5-795394f83903b5eec6567d51eebb417e:
+    url: http://www.busybox.net/downloads/busybox-1.21.1.tar.bz2
+
+# Build in static stand alone mode
+configure:
+  - make defconfig
+  - sed -e 's/.*FEATURE_PREFER_APPLETS.*/CONFIG_FEATURE_PREFER_APPLETS=y/' -i .config
+  - sed -e 's/.*FEATURE_SH_STANDALONE.*/CONFIG_FEATURE_SH_STANDALONE=y/' -i .config
+  - sed -e 's/.*CONFIG_STATIC.*/CONFIG_STATIC=y/' -i .config
+
+build:
+  make -j%(jobs)s
+
+install:
+  make CONFIG_PREFIX=%(prefix)s install
