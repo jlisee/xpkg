@@ -611,8 +611,19 @@ class Environment(object):
         lib_dir = os.path.join(self._env_dir, 'lib')
         ldflags = '-L%s -L%s' % (lib_dir, '"/home/with space"')
 
+        # Default list of bin paths
+        bin_paths = [os.path.join(self._env_dir, 'bin')]
+
+        # Extra directories which we want on the path if they exist
+        extra_bin_dirs = ['usr/bin', 'usr/sbin', 'sbin']
+
+        for d in extra_bin_dirs:
+            full_path = os.path.join(self._env_dir, d)
+            if os.path.exists(full_path):
+                bin_paths.append(full_path)
+
         env_paths = {
-            'PATH' : (os.path.join(self._env_dir, 'bin'), os.pathsep),
+            'PATH' : (os.pathsep.join(bin_paths), os.pathsep),
             'LD_LIBRARY_PATH' : (os.path.join(self._env_dir, 'lib'), os.pathsep),
             'CFLAGS' : (cflags, ' '),
             'CCFLAGS' : (cflags, ' '),
