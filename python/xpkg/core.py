@@ -796,7 +796,9 @@ class XPA(object):
         """
 
         offset_info = self.info['install_path_offsets']
-        install_dir = offset_info['install_dir']
+        # Make sure the type is a string, incase it because unicode somehow
+        # TODO: see if our caching layer is giving us unicode strings
+        install_dir = str(offset_info['install_dir'])
 
         # Make sure we have enough space in binary files to replace the string
         install_len = len(install_dir)
