@@ -18,6 +18,19 @@ from contextlib import contextmanager
 # Library Imports
 import yaml
 
+try:
+    # Try and use CLoader/CDumper, then use libyaml, and are about 5-10
+    # times faster than the pure C version.
+    from yaml import CLoader as Loader
+    from yaml import CDumper as Dumper
+
+except ImportError:
+    # Use the safe loader, because we want to avoid the security issues
+    # of loader arbitary python types, as well as maintain compatibility
+    # with C loader/dumper.
+    from yaml import SafeLoader as Loader
+    from yaml import SafeDumper as Dumper
+
 
 def shellcmd(cmd, echo=True, stream=True, shell=True):
     """
@@ -249,7 +262,7 @@ def yaml_load(stream):
     Safely load untrusted YAML data from a stream into a python dict.
     """
 
-    return yaml.safe_load(stream)
+    return yaml.load(stream, Loader=Loader)
 
 
 def yaml_dump(data, stream=None):
@@ -257,7 +270,7 @@ def yaml_dump(data, stream=None):
     Dump the python dict to the stream or standard out.
     """
 
-    return yaml.safe_dump(data, stream)
+    return yaml.dump(data, stream, Dumper=Dumper)
 
 
 def load_xpd(path):
@@ -265,7 +278,7 @@ def load_xpd(path):
     Loads the desired yaml file.
     """
 
-    return yaml.load(open(path))
+    return yaml_load(open(path))
 
 
 def match_files(path, pattern):
