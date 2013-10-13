@@ -13,6 +13,8 @@ from xpkg import build
 xpkg_root_var = 'XPKG_ROOT'
 xpkg_tree_var = 'XPKG_TREE'
 xpkg_repo_var = 'XPKG_REPO'
+xpkg_local_cache_var = 'XPKG_LOCAL_CACHE'
+
 
 def parse_dependency(value):
     """
@@ -680,7 +682,14 @@ class Environment(object):
 
     @staticmethod
     def local_cache_dir():
-        return os.path.expanduser(os.path.join('~', '.xpkg', 'cache'))
+        """
+        Local user cache directory.
+        """
+
+        if xpkg_local_cache_var in os.environ:
+            return os.environ[xpkg_local_cache_var]
+        else:
+            return os.path.expanduser(os.path.join('~', '.xpkg', 'cache'))
 
 
     @staticmethod
@@ -1132,31 +1141,72 @@ class FilePackageRepo(object):
         if not os.path.exists(path):
             raise Exception('Package repo path "%s" does not exist' % path)
 
-        # Load to cached XPA info
-        self._load_cache(path)
+        # Create our cache
+        self._cache = FileParseCache(path, 'repo')
 
         # Get information on all the dicts found in the directory
         for full_path in util.match_files(path, '*.xpa'):
-            # Load the XPA object, using the cache if possible
-            xpa = self._cached_load(full_path)
+            # Load the data through the cache
+            info = self._cache.load(full_path, lambda p: XPA(p).info)
+
+            xpa = XPA(full_path, info=info)
 
             # Store the object in our repo
             self._db.store(name=xpa.name, version=xpa.version, data=xpa)
 
         # Save cached info
-        self._save_cache(path)
+        self._cache.save_to_disk()
 
-    def _cached_load(self, path):
+
+    def lookup(self, package, version=None):
+        """
+        Returns the XPA representing binary package, if it doesn't exist None is
+        returned.
+        """
+
+        return self._db.lookup(name=package, version=version)
+
+
+class FileParseCache(object):
+    """
+    Cache for the tree and file parser.  This takes advantage of the
+    speed advantage of the JSON parser (and maybe some better future
+    optimized format)
+    """
+
+    def __init__(self, path, name):
+        self._path = path
+
+        # Determine the path to our cache
+        cache_root = Environment.local_cache_dir()
+
+        hash_key = self._path + name
+        hash_file = 'md5-%s.json' % util.hash_string(hash_key)
+
+        self._cache_path = os.path.join(cache_root, name, hash_file)
+
+        # Load the cache from disk
+        self.load_from_disk()
+
+
+    def load(self, path, load_func):
         """
         Loads data from a cache of this structure:
         {
           'full/path/to/repo/file.xpa' : {
             'mtime' : 1339007845.0,
-            'info' : {
+            'data' : {
               ....
             }
           }
         }
+
+        Arguments:
+
+          path - we are loading
+          load_func - takes path, returns dict we are caching
+
+        Return None if nothing is found in the cache for this path.
         """
 
         load = False
@@ -1174,65 +1224,43 @@ class FilePackageRepo(object):
 
         if load:
             # Load data
-            xpa = XPA(path)
+            data = load_func(path)
 
             # Update the cache
             self._cache[path] = {
                 'mtime' : mtime,
-                'info' : xpa.info,
+                'data' : data,
                 }
         else:
             # Load from cache
-            xpa_info = self._cache[path]['info']
-
-            # Create XPA object
-            xpa = XPA(path, info=xpa_info)
+            data = self._cache[path]['data']
 
         # Return XPA
-        return xpa
+        return data
 
 
-    def _load_cache(self, path):
+    def load_from_disk(self):
         """
         Load the cached JSON file.
         """
 
-        cache_path = self._cache_path(path)
-
-        if os.path.exists(cache_path):
-            self._cache = json.load(open(cache_path))
+        if os.path.exists(self._cache_path):
+            self._cache = json.load(open(self._cache_path))
         else:
             self._cache = {}
 
 
-    def _save_cache(self, path):
+    def save_to_disk(self):
         """
         Saves XPA info manifests to JSON cache file.
         """
 
-        cache_path = self._cache_path(path)
+        cache_dir, _ = os.path.split(self._cache_path)
 
-        util.ensure_dir(Environment.local_cache_dir())
+        util.ensure_dir(cache_dir)
 
-        with open(cache_path, 'w') as f:
+        with open(self._cache_path, 'w') as f:
             json.dump(self._cache, f)
-
-
-    def _cache_path(self, repo_dir):
-        """
-        Returns the path to the cache file for this repository.
-        """
-        cache_root = Environment.local_cache_dir()
-        return os.path.join(cache_root, util.hash_string(repo_dir) + '.json')
-
-
-    def lookup(self, package, version=None):
-        """
-        Returns the XPA representing binary package, if it doesn't exist None is
-        returned.
-        """
-
-        return self._db.lookup(name=package, version=version)
 
 
 class PackageDatabase(object):

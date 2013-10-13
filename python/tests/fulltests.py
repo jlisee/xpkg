@@ -62,6 +62,12 @@ class FullTests(unittest.TestCase):
         self.work_dir = tempfile.mkdtemp(suffix = '-testing-xpkg')
         print self.work_dir
 
+        # Create the user cache dir
+        self.user_cache_dir = os.path.join(self.work_dir, 'user_cache')
+
+        # Mock the user dir
+        os.environ[core.xpkg_local_cache_var] = self.user_cache_dir
+
         # Create the env_dir
         self.env_dir = os.path.join(self.work_dir, 'env')
 
