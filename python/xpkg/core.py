@@ -1083,9 +1083,15 @@ class FilePackageTree(object):
         if not os.path.exists(path):
             raise Exception('Package tree path "%s" does not exist' % path)
 
+        # Create our cache
+        self._cache = FileParseCache(path, 'tree')
+
         # Get information on all the dicts found in the directory
         for full_path in util.match_files(path, '*.xpd'):
             self._load_xpd(full_path)
+
+        # Save cached info
+        self._cache.save_to_disk()
 
 
     def lookup(self, package, version=None):
@@ -1102,6 +1108,7 @@ class FilePackageTree(object):
 
         return result
 
+
     def _load_xpd(self, xpd_path):
         """
         Loads the packages found in the given XPD
@@ -1109,8 +1116,11 @@ class FilePackageTree(object):
         @todo - Handle erroneous input more robustly
         """
 
-        # Load the description
-        xpd = XPD(xpd_path)
+        # Load the data through the cache
+        data = self._cache.load(xpd_path, lambda p: XPD(p)._data)
+
+        # Create the description
+        xpd = XPD(data)
 
         # Store each package in for the description in our index
         for package_data in xpd.packages():
@@ -1142,12 +1152,12 @@ class FilePackageRepo(object):
             raise Exception('Package repo path "%s" does not exist' % path)
 
         # Create our cache
-        self._cache = FileParseCache(path, 'repo')
+        cache = FileParseCache(path, 'repo')
 
         # Get information on all the dicts found in the directory
         for full_path in util.match_files(path, '*.xpa'):
             # Load the data through the cache
-            info = self._cache.load(full_path, lambda p: XPA(p).info)
+            info = cache.load(full_path, lambda p: XPA(p).info)
 
             xpa = XPA(full_path, info=info)
 
@@ -1155,7 +1165,7 @@ class FilePackageRepo(object):
             self._db.store(name=xpa.name, version=xpa.version, data=xpa)
 
         # Save cached info
-        self._cache.save_to_disk()
+        cache.save_to_disk()
 
 
     def lookup(self, package, version=None):
