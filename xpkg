@@ -4,6 +4,8 @@ import os
 import sys
 
 EXECUTE_MODULE=False
+PROFILE=False
+PROFILE_COUNT=30
 
 # Get current directory
 cur_dir, _ = os.path.split(__file__)
@@ -36,4 +38,16 @@ else:
     sys.path.insert(0, python_dir)
 
     from xpkg import main
-    main.main(sys.argv)
+
+    if not PROFILE:
+        main.main(sys.argv)
+    else:
+        import statprof
+
+        statprof.start()
+        try:
+            for i in xrange(0, PROFILE_COUNT):
+                main.main(sys.argv)
+        finally:
+            statprof.stop()
+            statprof.display()
