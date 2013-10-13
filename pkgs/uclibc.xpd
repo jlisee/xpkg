@@ -1,0 +1,23 @@
+name: uclibc
+description: C library for developing embedded Linux systems
+version: 0.9.33
+
+# build-dependencies:
+#   - make
+#   - sed
+
+files:
+  md5-cf9d25e4b3c87af1a99d33a6b959fbf1:
+    url: http://www.uclibc.org/downloads/uClibc-0.9.33.tar.bz2
+
+# Installs everything to the root instead of architecture specific directory    
+configure:
+  - make defconfig
+  - sed -e 's/.*RUNTIME_PREFIX.*/RUNTIME_PREFIX="\/"/' -i .config
+  - sed -e 's/.*DEVEL_PREFIX.*/DEVEL_PREFIX="\/"/' -i .config
+
+build:
+  make -j%(jobs)s
+
+install:
+  make PREFIX=%(prefix)s install
