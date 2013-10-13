@@ -3,6 +3,7 @@
 # Python Imports
 import os
 import tarfile
+import json
 
 # Project Imports
 from xpkg import util
@@ -678,6 +679,11 @@ class Environment(object):
 
 
     @staticmethod
+    def local_cache_dir():
+        return os.path.expanduser(os.path.join('~', '.xpkg', 'cache'))
+
+
+    @staticmethod
     def log_dir(root):
         """
         The directory we place build logs
@@ -715,7 +721,7 @@ class XPA(object):
         }
     """
 
-    def __init__(self, xpa_path, input_name=None):
+    def __init__(self, xpa_path, input_name=None, info=None):
         """
         Parses the metadata out of the XPA file.
         """
@@ -729,10 +735,12 @@ class XPA(object):
         # Only save the XPA path so we don't keep the tarfile itself open
         self._xpa_path = xpa_path
 
-        with tarfile.open(xpa_path) as tar:
-
-            # Pull out and parse the metadata
-            self.info = util.yaml_load(tar.extractfile('xpkg.yml'))
+        # If not given the manifest info, read it out of the XPA
+        if info is None:
+            # Read the manifest out of the XPA
+            self.info = self._read_info(xpa_path)
+        else:
+            self.info = info
 
         self.name = self.info['name']
         self.version = self.info['version']
@@ -759,6 +767,17 @@ class XPA(object):
 
         # Fix up the install paths
         self._fix_install_paths(path)
+
+
+    def _read_info(self, xpa_path):
+        """
+        Read the manifest data out of the xpa_path.
+        """
+
+        with tarfile.open(xpa_path) as tar:
+
+            # Pull out and parse the metadata
+            return util.yaml_load(tar.extractfile('xpkg.yml'))
 
 
     def _fix_install_paths(self, dest_path):
@@ -1098,6 +1117,9 @@ class FilePackageRepo(object):
     """
     Allows for named and versioned lookup of pre-built binary packages from a
     directory full of them.
+
+    The JSON caching results is about 4 times faster than PyYAML using
+    the C loader.
     """
 
     def __init__(self, path):
@@ -1110,13 +1132,98 @@ class FilePackageRepo(object):
         if not os.path.exists(path):
             raise Exception('Package repo path "%s" does not exist' % path)
 
+        # Load to cached XPA info
+        self._load_cache(path)
+
         # Get information on all the dicts found in the directory
         for full_path in util.match_files(path, '*.xpa'):
-            # Load the XPA object
-            xpa = XPA(full_path)
+            # Load the XPA object, using the cache if possible
+            xpa = self._cached_load(full_path)
 
             # Store the object in our repo
             self._db.store(name=xpa.name, version=xpa.version, data=xpa)
+
+        # Save cached info
+        self._save_cache(path)
+
+    def _cached_load(self, path):
+        """
+        Loads data from a cache of this structure:
+        {
+          'full/path/to/repo/file.xpa' : {
+            'mtime' : 1339007845.0,
+            'info' : {
+              ....
+            }
+          }
+        }
+        """
+
+        load = False
+
+        # Stat the desired file
+        mtime = os.stat(path).st_mtime
+
+        # Check for file in cache
+        if path in self._cache:
+          # If the current file is newer than the cache, load it
+          if mtime > self._cache[path]['mtime']:
+              load = True
+        else:
+            load = True
+
+        if load:
+            # Load data
+            xpa = XPA(path)
+
+            # Update the cache
+            self._cache[path] = {
+                'mtime' : mtime,
+                'info' : xpa.info,
+                }
+        else:
+            # Load from cache
+            xpa_info = self._cache[path]['info']
+
+            # Create XPA object
+            xpa = XPA(path, info=xpa_info)
+
+        # Return XPA
+        return xpa
+
+
+    def _load_cache(self, path):
+        """
+        Load the cached JSON file.
+        """
+
+        cache_path = self._cache_path(path)
+
+        if os.path.exists(cache_path):
+            self._cache = json.load(open(cache_path))
+        else:
+            self._cache = {}
+
+
+    def _save_cache(self, path):
+        """
+        Saves XPA info manifests to JSON cache file.
+        """
+
+        cache_path = self._cache_path(path)
+
+        util.ensure_dir(Environment.local_cache_dir())
+
+        with open(cache_path, 'w') as f:
+            json.dump(self._cache, f)
+
+
+    def _cache_path(self, repo_dir):
+        """
+        Returns the path to the cache file for this repository.
+        """
+        cache_root = Environment.local_cache_dir()
+        return os.path.join(cache_root, util.hash_string(repo_dir) + '.json')
 
 
     def lookup(self, package, version=None):
