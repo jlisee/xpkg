@@ -10,14 +10,19 @@ files:
   md5-cf9d25e4b3c87af1a99d33a6b959fbf1:
     url: http://www.uclibc.org/downloads/uClibc-0.9.33.tar.bz2
 
-# Installs everything to the root instead of architecture specific directory    
+# Installs to the root, intead of an architecture specific directory
 configure:
   - make defconfig
   - sed -e 's/.*RUNTIME_PREFIX.*/RUNTIME_PREFIX="\/"/' -i .config
-  - sed -e 's/.*DEVEL_PREFIX.*/DEVEL_PREFIX="\/"/' -i .config
+  - sed -e 's/.*DEVEL_PREFIX.*/DEVEL_PREFIX="\/usr\/"/' -i .config
 
 build:
   make -j%(jobs)s
 
+# For some reason (probably good) usr/lib/libc.so is an LD script so we
+# make it a symlink to the libc.so.0 instead
+# TODO: figure out why their is a linker script there at all
 install:
-  make PREFIX=%(prefix)s install
+  - make PREFIX=%(prefix)s install
+  - rm %(prefix)s/usr/lib/libc.so
+  - ln -s ../../lib/libc.so.0 %(prefix)s/usr/lib/libc.so
