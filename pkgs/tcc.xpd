@@ -9,6 +9,7 @@ files:
 # Build statically
 configure: >-
   ./configure --prefix=%(prefix)s
+  --sysroot=%(prefix)s
   --extra-cflags='-static -DCONFIG_TCC_STATIC'
 
 build:
