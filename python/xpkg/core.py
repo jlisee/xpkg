@@ -1,9 +1,11 @@
 # Author: Joseph Lisee <jlisee@gmail.com>
 
 # Python Imports
+import json
 import os
 import tarfile
-import json
+
+from collections import defaultdict
 
 # Project Imports
 from xpkg import util
@@ -42,6 +44,7 @@ def parse_dependency(value):
 
 class Exception(BaseException):
     pass
+
 
 class InstallDatabase(object):
     """
@@ -88,6 +91,10 @@ class InstallDatabase(object):
         if self._db is None:
             self._db = {}
 
+        # Build a list of directories and the counts of package that reference
+        # them
+        self._gen_dir_counts()
+
 
     def _save_db(self):
         """
@@ -96,6 +103,18 @@ class InstallDatabase(object):
 
         with open(self._db_path, 'w') as f:
             util.yaml_dump(self._db, f)
+
+
+    def _gen_dir_counts(self):
+        """
+        Generates reference counts of directories, that can be used to see
+        if a package is the last one using that directory.
+        """
+
+        self._dirs = defaultdict(int)
+        for data in self._db.itervalues():
+            for d in data['dirs']:
+                self._dirs[d] += 1
 
 
     def mark_installed(self, name, info):
@@ -174,6 +193,13 @@ class InstallDatabase(object):
 
         return rdepends
 
+
+    def dir_references(self, d):
+        """
+        Returns how many packages are using this directory.
+        """
+
+        return self._dirs[d]
 
     @staticmethod
     def db_dir(root):
@@ -571,7 +597,8 @@ class Environment(object):
                 if os.path.lexists(full_path):
                     if len(os.listdir(full_path)) == 0:
                         os.rmdir(full_path)
-                    else:
+                    elif self._pdb.dir_references(d) == 1:
+                        # Only warn when we are the last package referencing this dir
                         print 'WARNING: not removing dir, has files:',full_path
                 else:
                     # TODO: Log a warning here
