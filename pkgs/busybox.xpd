@@ -12,12 +12,18 @@ files:
   md5-795394f83903b5eec6567d51eebb417e:
     url: http://www.busybox.net/downloads/busybox-1.21.1.tar.bz2
 
-# Build in static stand alone mode
 configure:
   - make defconfig
+
+  # Build in static stand alone mode
   - sed -e 's/.*FEATURE_PREFER_APPLETS.*/CONFIG_FEATURE_PREFER_APPLETS=y/' -i .config
   - sed -e 's/.*FEATURE_SH_STANDALONE.*/CONFIG_FEATURE_SH_STANDALONE=y/' -i .config
   - sed -e 's/.*CONFIG_STATIC.*/CONFIG_STATIC=y/' -i .config
+
+  # Newer version of GCC have trouble with finding 'pmap_unset' when linking (it
+  # might only be in static mode), so we disable the feature that uses that
+  - sed -e 's/.*CONFIG_FEATURE_HAVE_RPC.*/# CONFIG_FEATURE_HAVE_RPC is not set/' -i .config
+  - sed -e 's/.*CONFIG_FEATURE_INETD_RPC.*/# CONFIG_FEATURE_INETD_RPC is not set/' -i .config
 
 build:
   make -j%(jobs)s
