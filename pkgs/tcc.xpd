@@ -7,9 +7,12 @@ files:
     url: http://download.savannah.gnu.org/releases/tinycc/tcc-0.9.26.tar.bz2
 
 # Build statically
+# Specify all the paths manually, these are meant to match up with uclibc build
 configure: >-
   ./configure --prefix=%(prefix)s
   --sysroot=%(prefix)s
+  --crtprefix=%(prefix)s/usr/lib
+  --libpaths=%(prefix)s/lib:%(prefix)s/usr/lib
   --extra-cflags='-static -DCONFIG_TCC_STATIC'
 
 build:
