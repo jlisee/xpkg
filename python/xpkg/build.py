@@ -270,6 +270,7 @@ class PackageBuilder(object):
             cmd = raw_cmd % {
                 'jobs' : str(util.cpu_count()),
                 'prefix' : self._target_dir,
+                'arch' : platform.machine(),
                 'env_root' : self._env_dir,
             }
 
