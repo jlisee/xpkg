@@ -24,7 +24,9 @@ def install(args):
 
     env = _create_env(args.root, create=True, tree_path=tree_path,
                       verbose=args.verbose)
-    env.install(args.path)
+
+    for name in args.names:
+        env.install(name)
 
 
 def remove(args):
@@ -33,7 +35,9 @@ def remove(args):
     """
 
     env = _create_env(args.root)
-    env.remove(args.name)
+
+    for name in args.names:
+        env.remove(name)
 
 
 def build(args):
@@ -238,7 +242,8 @@ def main(argv = None):
     parser_j.set_defaults(func=jump)
 
     parser_i = subparsers.add_parser('install', help=install.__doc__)
-    parser_i.add_argument('path', type=str, help='YAML install file')
+    parser_i.add_argument('names', type=str, nargs='+',
+                          help='Package name, XPD, or XPA file path')
     parser_i.add_argument('-t', '--tree', type=str, default=None,
                           help='Package description tree')
     parser_i.add_argument('-v','--verbose', action='store_true', default=False,
@@ -258,7 +263,7 @@ def main(argv = None):
     parser_i.set_defaults(func=build)
 
     parser_i = subparsers.add_parser('remove', help=remove.__doc__)
-    parser_i.add_argument('name', type=str, help='Name of package')
+    parser_i.add_argument('names', type=str, nargs='+', help='Name of package')
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=remove)
 
