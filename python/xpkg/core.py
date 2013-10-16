@@ -959,16 +959,19 @@ class XPD(object):
     A Xpkg description file, it explains how to build one or more packages.
     """
 
-    def __init__(self, path):
+    def __init__(self, path, data=None):
         """
         Load and parse the given XPD
         """
 
+        # Save path
+        self.path = path
+
         # Load our data
-        if isinstance(path, basestring):
+        if data is None:
             self._data = util.load_xpd(path)
         else:
-            self._data = path
+            self._data = data
 
         # Read fields and define properties
         self.name = self._data['name']
@@ -1160,7 +1163,7 @@ class FilePackageTree(object):
         data = self._cache.load(xpd_path, lambda p: XPD(p)._data)
 
         # Create the description
-        xpd = XPD(data)
+        xpd = XPD(xpd_path, data=data)
 
         # Store each package in for the description in our index
         for package_data in xpd.packages():
