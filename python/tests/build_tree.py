@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import os
 import re
+import shutil
 import sys
 
 # Project Imports
@@ -39,7 +40,27 @@ def setup_package(name, source_dir, file_dir, tree_dir):
         'jobs' : '%(jobs)s',
     }
 
+    # Find all patch files
+    patch_files =  [f for f in os.listdir(source_dir) if f.endswith('.patch')]
+    patch_paths = [os.path.join(source_dir, f) for f in patch_files]
+
+    # Compute their hashes
+    patch_hashes = ['md5-' + util.hash_file(open(p), hashlib.md5)
+                    for p in patch_paths]
+
+    # Build a set of keys to put their hashes back into the system
+    hash_keys = {'hash-' + p: hash_val
+                 for (p, hash_val) in zip(patch_files, patch_hashes)}
+
+    #print hash_keys
+    args.update(hash_keys)
+
+    # Template file
     util.template_file(source_xdp, package_xpd, args)
+
+    # Copy the patch files into the tree directory
+    for patch_path in patch_paths:
+        shutil.copy(patch_path, tree_dir)
 
 
 def create_test_repo(dest_dir):
