@@ -1,0 +1,11 @@
+--- main.c	2013-10-15 21:33:04.386226607 -0400
++++ main.c.new	2013-10-15 21:42:43.858217671 -0400
+@@ -2,7 +2,7 @@
+ 
+ int main(int argc, char** argv)
+ {
+-  printf("%s", "Patch failed :(!\n");
++  printf("%s", "I'm patched!\n");
+ 
+   return 0;
+ }
