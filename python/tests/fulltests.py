@@ -768,6 +768,19 @@ class FullTests(unittest.TestCase):
 
         self.assertRegexpMatches(output, '.*libgreet - 2.0.0.*')
 
+    def test_patching(self):
+        # Setup the env for install (make sure we have access to the tree)
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Install the program
+        self._xpkg_cmd(['install', '--verbose', 'patchme'])
+
+        # Check the message that was printed out
+        output = self._xpkg_cmd(['jump', '-c', 'patchme'])
+
+        self.assertEqual('I\'m patched!\n', output)
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv)
 {
-  printf("%s", "Hello, world!\n");
+  printf("%s", "Patch failed :(!\n");
 
   return 0;
 }

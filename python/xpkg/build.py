@@ -141,7 +141,8 @@ class PackageBuilder(object):
             self._get_sources()
 
             # Determine what directory we have to do the build in
-            dirs = os.listdir(self._work_dir)
+            dirs = [d for d in os.listdir(self._work_dir) if
+                    os.path.isdir(os.path.join(self._work_dir, d))]
 
             if 'build-dir' in self._xpd._data:
                 # If the user specifies a build directory use it
@@ -188,11 +189,43 @@ class PackageBuilder(object):
         # Download and unpack our files
         for filehash, info in self._xpd._data['files'].iteritems():
 
-            # Fetch our file
-            download_path = fetch_file(filehash, info['url'])
+            # Translate the URL as needed, this is so we can address files
+            # (like patches) in the tree
+            base_url = info['url']
 
-            # Unpack into directory
-            root_dir = util.unpack_tarball(download_path, self._work_dir)
+            if base_url.startswith('xpd://'):
+                # Pull out the relative file path from our URL
+                rel_path = base_url[len('xpd://'):]
+
+                # Get the directory of our XPD
+                xpd_dir, _ = os.path.split(self._xpd.path)
+
+                # Build the path to the file relative to that dir
+                file_path = os.path.join(xpd_dir, rel_path)
+
+                # Build the final absolute path
+                final_url = 'file://' + os.path.abspath(file_path)
+            else:
+                final_url = base_url
+
+            # Fetch our file
+            download_path = fetch_file(filehash, final_url)
+
+            # Unpack or copy file
+            end_match = [final_url.endswith(e) for e in
+                         ('.tar.gz', 'tar.bz2', '.tar.xz')]
+            is_tar = reduce(lambda x,y: x | y, end_match)
+
+            if is_tar:
+                # Unpack into the working directory
+                root_dir = util.unpack_tarball(download_path, self._work_dir)
+            else:
+                # Copy the file into the working dir
+                _, file_name = os.path.split(final_url)
+
+                dest_path = os.path.join(self._work_dir, file_name)
+
+                shutil.copyfile(download_path, dest_path)
 
             # Move if needed
             relative_path = info.get('location', None)
