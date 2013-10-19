@@ -23,6 +23,10 @@ configure:
   # Specifically need to be able to find asm/param.h or asm/unistd.h
   - sed -e 's/.*KERNEL_HEADERS.*/KERNEL_HEADERS="\/usr\/include -I\/usr\/include\/%(arch)s-linux-gnu\/"/' -i .config
 
+  # Lets turn on LD_DEBUG support for debugging purposes
+  - sed -e 's/.*SUPPORT_LD_DEBUG.*/SUPPORT_LD_DEBUG=y/' -i .config
+#  - sed -e 's/.*SUPPORT_LD_DEBUG_EARLY.*/SUPPORT_LD_DEBUG_EARLY=y/' -i .config
+
   # Fix for not finding this symbol
   - patch -p0 -i ../uclibc-0.9.33_ll_tzname_symbol_fix.patch
 

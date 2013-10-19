@@ -65,6 +65,19 @@ def fetch_file(filehash, url):
 
     return cache_path
 
+# Basic helper build commanmds
+# def menuconfig(arg, shellcmd):
+#     # Split based on the first equals
+#     parts = arg.split('=')
+#     key = parts[0]
+#     value = '='.join(parts[1:])
+
+#     # Now set the command
+    
+
+# COMMANDS = {
+#     'menuconfig' : menuconf
+# }
 
 class PackageBuilder(object):
     """
