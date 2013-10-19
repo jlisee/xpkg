@@ -9,7 +9,8 @@ version: 0.9.33
 files:
   md5-cf9d25e4b3c87af1a99d33a6b959fbf1:
     url: http://www.uclibc.org/downloads/uClibc-0.9.33.tar.bz2
-
+  md5-2b4305a9ca97dd83d88549374237544a:
+    url: xpd://uclibc-0.9.33_ll_tzname_symbol_fix.patch
 
 configure:
   - make defconfig
@@ -21,6 +22,9 @@ configure:
   # The %(arch)s hack is needed to builc uClibc on Ubuntu 12.04
   # Specifically need to be able to find asm/param.h or asm/unistd.h
   - sed -e 's/.*KERNEL_HEADERS.*/KERNEL_HEADERS="\/usr\/include -I\/usr\/include\/%(arch)s-linux-gnu\/"/' -i .config
+
+  # Fix for not finding this symbol
+  - patch -p0 -i ../uclibc-0.9.33_ll_tzname_symbol_fix.patch
 
 build:
   make -j%(jobs)s
