@@ -84,6 +84,7 @@ def fetch_url(url, local_path):
     # Down the file
     filename, headers = urllib.urlretrieve(url, local_path,
                                            reporthook = progress)
+    print ''
 
     return filename
 
