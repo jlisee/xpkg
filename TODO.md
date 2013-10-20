@@ -1,12 +1,12 @@
-TODO
-=====
+Showstoppers
+-------------
 
-Game changers
---------------
+Things a package manager must have (and ours needs to work)
 
-Things that are considered and advantage vs. other package managers.
+ - proper environment creation
+   - storage of environment settings
 
- - toolsets
+ - toolsets (KEY FEATURE)
    - defines a set of build depenencies
    - name -> list of deps, example:
 
@@ -14,19 +14,6 @@ Things that are considered and advantage vs. other package managers.
      base: coreutils
      bin: binutils
      compiler: gcc
-
- - chroot builds
-   - other utils?
-   - manually map bash because we need a shell
-   - setup system to create a "build env"
-   - install build deps into the env
-   - run the build in there
-   - figure out if we need python in there
-
-Showstoppers
--------------
-
-Things a package manager must have
 
  - support for running with another libc!
    - plan:
@@ -40,12 +27,17 @@ Things a package manager must have
      - If not see here for tips on ELF patching: http://siddhesh.in/journal/2011/03/27/changing-the-default-loader-for-a-program-in-its-elf/
      - Also see this relocatable patch: http://git.yoctoproject.org/cgit.cgi/poky/plain/meta/recipes-core/eglibc/eglibc-2.17/relocatable_sdk.patch
 
- - create much better tracing functionality
-   - switch to using the python logger in the tool itself
-
  - file hashing:
    - store the hash of the files in a package
    - handle the has of files with install path offsets
+
+ - chroot builds (KEY FEATURE)
+   - other utils?
+   - manually map bash because we need a shell
+   - setup system to create a "build env"
+   - install build deps into the env
+   - run the build in there
+   - figure out if we need python in there
 
 
 
@@ -63,6 +55,8 @@ Nice to haves
  - search all package descriptions
 
  - long form package descriptions
+
+ - use the python logger for tracing
 
  - handle dependencies with versions somehow properly with multipkgs
 

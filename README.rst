@@ -8,6 +8,8 @@ A cross platform package manager for C & C++ development.
 
 Example usage (still a work in progress)::
 
+  > xpkg init ~/projects/my-project/env my-project
+
   > xpkg jump my-project
 
   > xpkg install yaml-cpp
@@ -38,6 +40,12 @@ Design
 Concepts:
 
 - Environment: directory which supports your application
+
+  - Properties of an environment:
+    - name
+    - packages
+    - toolset
+    - tree/repo?
 
   - contains a set of installed packages (managed by the install database)
   - structured like a linux/unix tree

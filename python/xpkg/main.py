@@ -10,6 +10,16 @@ import sys
 # Project Imports
 from xpkg import core
 from xpkg import util
+from xpkg import build
+
+
+def init(args):
+    """
+    Create an environment to install packages into.
+    """
+
+    # Create our environment
+    core.Environment.init(args.root, args.name)
 
 
 def install(args):
@@ -40,7 +50,7 @@ def remove(args):
         env.remove(name)
 
 
-def build(args):
+def build_(args):
     """
     Create the binary for of the desired package.
     """
@@ -235,6 +245,13 @@ def main(argv = None):
     root_kwargs = {'type' : str, 'help' : 'Root directory', 'default' : None}
 
     # Create command parsers
+    parser_j = subparsers.add_parser('init', help=jump.__doc__)
+    parser_j.add_argument('root', type=str, help='Root directory')
+    parser_j.add_argument('name', type=str, help='Name for the environment')
+    parser_j.add_argument('-t','--toolset', type=str, default=None,
+                          help='Name for the environment')
+    parser_j.set_defaults(func=init)
+
     parser_j = subparsers.add_parser('jump', help=jump.__doc__)
     parser_j.add_argument(*root_args, **root_kwargs)
     parser_j.add_argument('-c','--command', type=str, help='Command to run',
@@ -251,7 +268,7 @@ def main(argv = None):
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=install)
 
-    parser_i = subparsers.add_parser('build', help=build.__doc__)
+    parser_i = subparsers.add_parser('build', help=build_.__doc__)
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.add_argument('path', type=str, help='YAML install file')
     parser_i.add_argument('-d','--dest', type=str, default='.',
@@ -260,7 +277,7 @@ def main(argv = None):
                           help='Force environment usage')
     parser_i.add_argument('-v','--verbose', action='store_true', default=False,
                           help='Print build output to screen')
-    parser_i.set_defaults(func=build)
+    parser_i.set_defaults(func=build_)
 
     parser_i = subparsers.add_parser('remove', help=remove.__doc__)
     parser_i.add_argument('names', type=str, nargs='+', help='Name of package')

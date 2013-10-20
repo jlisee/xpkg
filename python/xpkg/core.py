@@ -214,6 +214,25 @@ class Environment(object):
     This class manages the local package environment.
     """
 
+    SETTINGS_PATH = os.path.join('env.yml')
+
+    @staticmethod
+    def init(env_dir, name):
+        """
+        Initialize the environment in the given directory.
+        """
+
+        # Bail out with an error if the environment already exists
+        if Environment.env_exists(env_dir):
+            raise Exception('Environment already exists in: %s' % env_dir)
+
+        # Create the empty db file (this triggers database file creation)
+        pdb = InstallDatabase(env_dir)
+
+        # Touch the settings file
+        util.touch(Environment.env_settings_path(env_dir))
+
+
     def __init__(self, env_dir=None, create=False, tree_path=None,
                  repo_path=None, verbose=False):
         """
@@ -238,8 +257,12 @@ class Environment(object):
 
         # Error out if we are not creating and environment and this one does
         # not exist
-        if not os.path.exists(self._env_dir) and not create:
+        if not self.env_exists(self._env_dir) and not create:
             raise Exception('No Xpkg package DB found in root "%s"' % self._env_dir)
+
+        # Create environment if needed
+        if not self.env_exists(self._env_dir) and create:
+            self.init(self._env_dir, 'default')
 
         # If needed this will setup the empty environment
         self._pdb = InstallDatabase(self._env_dir)
@@ -708,6 +731,22 @@ class Environment(object):
         """
 
         return parse_dependency(value)
+
+
+    @staticmethod
+    def env_exists(env_dir):
+        """
+        Returns true if the environment has been setup.
+        """
+        return os.path.exists(Environment.env_settings_path(env_dir))
+
+
+    @staticmethod
+    def env_settings_path(env_dir):
+        """
+        Full path to the settings dir.
+        """
+        return os.path.join(env_dir, Environment.SETTINGS_PATH)
 
 
     @staticmethod
