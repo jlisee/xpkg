@@ -157,18 +157,15 @@ class FullTests(unittest.TestCase):
 
         return output
 
-    def _make_empty_db(self):
+
+    def _make_empty_env(self):
         """
         Creates an empty environment so we know that this is really an
         environment.
         """
 
-        # Create and empty db files
-        db_dir = core.InstallDatabase.db_dir(self.env_dir)
-        util.ensure_dir(db_dir)
-
-        db_path = os.path.join(db_dir, 'db.yml')
-        util.touch(db_path)
+        # Create our environment in the proper directory, with the name 'test'
+        self._xpkg_cmd(['init', self.env_dir, 'test'])
 
 
     def test_no_env(self):
@@ -296,7 +293,7 @@ class FullTests(unittest.TestCase):
         Make sure we can get the basic information about our environment.
         """
 
-        self._make_empty_db()
+        self._make_empty_env()
 
         # Set up our environment variables
         os.environ[core.xpkg_tree_var] = self.tree_dir
@@ -411,7 +408,7 @@ class FullTests(unittest.TestCase):
 
     def test_jump(self):
         # Setup environment
-        self._make_empty_db()
+        self._make_empty_env()
 
         # Test ENV_ROOT
         def get_var(varname):
@@ -524,7 +521,7 @@ class FullTests(unittest.TestCase):
         """
 
         # Setup environment
-        self._make_empty_db()
+        self._make_empty_env()
 
         # Make sure we can access the package tree for building
         os.environ[core.xpkg_tree_var] = self.tree_dir
@@ -541,7 +538,7 @@ class FullTests(unittest.TestCase):
         """
 
         # Setup environment
-        self._make_empty_db()
+        self._make_empty_env()
 
         # Make sure we can access the package tree for building
         os.environ[core.xpkg_tree_var] = self.tree_dir
@@ -552,7 +549,7 @@ class FullTests(unittest.TestCase):
 
         # Purge the environment and re-setup
         shutil.rmtree(self.env_dir)
-        self._make_empty_db()
+        self._make_empty_env()
 
         # Get the path to the generated package
         pkg_path = os.path.join(self.repo_dir, os.listdir(self.repo_dir)[0])
@@ -572,7 +569,7 @@ class FullTests(unittest.TestCase):
         """
 
         # Build the hello package
-        self._make_empty_db()
+        self._make_empty_env()
         os.environ[core.xpkg_tree_var] = self.tree_dir
 
         self._xpkg_cmd(['build',
@@ -590,7 +587,7 @@ class FullTests(unittest.TestCase):
 
         # Clean up the environment
         shutil.rmtree(self.env_dir)
-        self._make_empty_db()
+        self._make_empty_env()
 
         # Install the hello package from the XPA
         os.environ[core.xpkg_repo_var] = self.repo_dir
@@ -650,7 +647,7 @@ class FullTests(unittest.TestCase):
 
     def test_install_path_changes(self):
         # Setup environment
-        self._make_empty_db()
+        self._make_empty_env()
 
         # Make sure we can access the package tree for building
         os.environ[core.xpkg_tree_var] = self.tree_dir
