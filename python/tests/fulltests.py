@@ -27,8 +27,7 @@ from xpkg import core
 from xpkg import util
 from tests import build_tree
 
-
-class FullTests(unittest.TestCase):
+class TestBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -58,6 +57,10 @@ class FullTests(unittest.TestCase):
 
 
     def setUp(self):
+        """
+        Creates repo and environment directory.
+        """
+
         # Create temp dir
         self.work_dir = tempfile.mkdtemp(suffix = '-testing-xpkg')
         print self.work_dir
@@ -71,8 +74,6 @@ class FullTests(unittest.TestCase):
         # Create the env_dir
         self.env_dir = os.path.join(self.work_dir, 'env')
 
-        self.hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
-
         # Create our binary package repository dir
         self.repo_dir = os.path.join(self.work_dir, 'repo')
         util.ensure_dir(self.repo_dir)
@@ -82,6 +83,10 @@ class FullTests(unittest.TestCase):
 
 
     def tearDown(self):
+        """
+        Cleans up the created files, and resets the environment.
+        """
+
         # Remove temp dir
         if os.path.exists(self.work_dir):
             shutil.rmtree(self.work_dir)
@@ -167,6 +172,16 @@ class FullTests(unittest.TestCase):
         # Create our environment in the proper directory, with the name 'test'
         self._xpkg_cmd(['init', self.env_dir, 'test'])
 
+
+
+class FullTests(TestBase):
+
+    def setUp(self):
+        # Normal setup
+        TestBase.setUp(self)
+
+        # Saves this to maek the rest of the tests shorter
+        self.hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
 
     def test_no_env(self):
         """
@@ -777,6 +792,60 @@ class FullTests(unittest.TestCase):
 
         self.assertEqual('I\'m patched!\n', output)
 
+
+class ToolsetTests(TestBase):
+    """
+    Tests that require toolset packages to be built first.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Sets up a little test Xpkg environment and builds the test toolset
+        packages.
+        """
+
+        # Get all the basics setup
+        TestBase.setUpClass()
+
+        # Create a toolset repo directory
+        cls.toolset_repo_dir = os.path.join(cls.storage_dir, 'toolset-repo')
+
+        util.ensure_dir(cls.toolset_repo_dir)
+
+        # Build our packages into it
+        root_tree = os.path.join(root_dir, 'pkgs')
+
+        for pkg_name in ['busybox', 'tcc']:
+            xpd_path = os.path.join(root_tree, pkg_name + '.xpd')
+
+            args = ['build', xpd_path, '--dest', cls.toolset_repo_dir]
+
+            cmd = [sys.executable, '-m', 'xpkg.main'] + args
+
+            # Run build inside toolset dir so that the build logs don't pollute
+            # Anything
+            cwd = os.getcwd()
+            with util.cd(cls.toolset_repo_dir):
+                with util.save_env():
+                    os.environ['PYTHONPATH'] = cwd
+
+                    output = util.shellcmd(cmd, shell=False, stream=False)
+
+    def test_basic(self):
+        """
+        Makes sure our basic toolset package works.
+        """
+
+        # Setup the environment to use our testing toolset
+        self._xpkg_cmd(['init', self.env_dir, 'test-env', '--toolset', 'test'])
+
+        # Make sure we can locate of packages
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[core.xpkg_repo_var] = self.toolset_repo_dir
+
+        # Install the program
+        self._xpkg_cmd(['install', 'toolset-basic'])
 
 
 if __name__ == '__main__':
