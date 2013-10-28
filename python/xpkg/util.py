@@ -335,6 +335,25 @@ class EnvStorage(object):
 
         self._env = None
 
+@contextmanager
+def save_env():
+    """
+    Saves and restores environment variables, example:
+
+    >>> os.environ['A'] = 'Before'
+    >>> with save_env():
+    ...    os.environ['A'] = 'During'
+    >>> print os.environ['A']
+    Before
+    """
+
+    env_state = EnvStorage(store = True)
+
+    try:
+        yield
+    finally:
+        env_state.restore()
+
 
 class Version(object):
     def __init__(self, verstr):
