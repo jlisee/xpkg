@@ -66,6 +66,102 @@ def fetch_file(filehash, url):
     return cache_path
 
 
+class Toolset(object):
+    """
+    A set of build dependencies that lets you build your desired software.
+    """
+
+    def __init__(self, name, pkg_info):
+        self.name = name
+        self.build_deps = pkg_info
+
+
+    def to_dict(self):
+        """
+        Serialize this toolset to a dict.
+        """
+        return {
+            'name' : self.name,
+            'build-deps' : self.build_deps,
+        }
+
+
+    def lookup_build_dep(self, depname):
+        """
+        Translates the given dependency to the specific one based on the
+        provided build_deps.  If string of 0 length is returned the dependency
+        should be ignored.
+        """
+
+        # Error out if we don't have the require dep
+        if not depname in self.build_deps:
+            args = (self.name, depname)
+            msg = 'Toolset "%s" does not have a package for: "%s"' % args
+            raise Exception(msg)
+
+        # Return the desired dep!
+        return self.build_deps[depname]
+
+
+    @staticmethod
+    def create_from_dict(d):
+        """
+        Create the toolset from the serialized dict.
+        """
+        return Toolset(name=d['name'], pkg_info=d['build-deps'])
+
+
+    @staticmethod
+    def lookup_by_name(name):
+        """
+        Grab a built in toolset by name.
+        """
+
+        if not (name in BuiltInToolsets):
+            raise Exception("Can't find toolset '%s'" % name)
+
+        return BuiltInToolsets[name]
+
+class LocalToolset(Toolset):
+    """
+    Resolve all build deps to '', so that we use whatever the system has.
+    """
+
+    def __init__(self):
+        Toolset.__init__(self, 'local', {})
+
+
+    def lookup_build_dep(self):
+        return ''
+
+
+# Default GNU toolset
+GNUToolset = Toolset('GNU', {
+    'shell' : 'dash',
+    'base' : 'coreutils',
+    'linker' : 'binutils',
+    'c-compiler' : 'gcc',
+    'c++-compiler' : 'gcc',
+})
+
+# Toolset for testing
+TestToolset = Toolset('Test', {
+    'shell' : 'busybox',
+    'base' : 'busybox',
+    'linker' : 'tcc',
+    'c-compiler' : 'tcc',
+})
+
+# Our map of toolsets
+BuiltInToolsets = {
+    'gnu' : GNUToolset,
+    'local' : LocalToolset(),
+    'test' : TestToolset,
+}
+
+DefaultToolsetName = 'local'
+
+
 class PackageBuilder(object):
     """
     Assuming all the dependency conditions for the XPD are met, this builds

@@ -209,15 +209,50 @@ class InstallDatabase(object):
         return os.path.join(root, 'var', 'xpkg')
 
 
+class Settings(object):
+    """
+    Settings for the current environment.
+
+    TODO: add versioning to the on disk format
+    """
+
+    def __init__(self, path):
+        """
+        Create settings object with the stored settings from the given path.
+        """
+
+        # Load the settings data if the file exists
+        if os.path.exists(path):
+            settings_data = util.yaml_load(open(path))
+        else:
+            settings_data = None
+
+
+        # Lookup data based on the presence of the configuration data
+        if settings_data is None:
+            toolset_dict = None
+            self.name = 'none'
+        else:
+            toolset_dict = settings_data.get('toolset', None)
+            self.name = settings_data.get('name', 'unknown')
+
+        # Create toolset if possible otherwise get the default
+        if toolset_dict is None:
+            self.toolset = build.Toolset.lookup_by_name(build.DefaultToolsetName)
+        else:
+            self.toolset = build.Toolset.create_from_dict(toolset_dict)
+
+
+
 class Environment(object):
     """
     This class manages the local package environment.
     """
 
-    SETTINGS_PATH = os.path.join('env.yml')
+    SETTINGS_PATH = os.path.join('var', 'xpkg', 'env.yml')
 
     @staticmethod
-    def init(env_dir, name):
+    def init(env_dir, name, toolset_name=None):
         """
         Initialize the environment in the given directory.
         """
@@ -229,8 +264,20 @@ class Environment(object):
         # Create the empty db file (this triggers database file creation)
         pdb = InstallDatabase(env_dir)
 
-        # Touch the settings file
-        util.touch(Environment.env_settings_path(env_dir))
+        # Lookup our toolset and translate to dict
+        toolset = build.Toolset.lookup_by_name(toolset_name)
+
+        # Create our settings dict and write it disk
+        settings = {
+            'name' : name,
+            'toolset' : toolset.to_dict(),
+        }
+
+        # For path to our settings files, and save it
+        settings_path = os.path.join(env_dir, Environment.SETTINGS_PATH)
+
+        with open(settings_path, 'w') as f:
+            util.yaml_dump(settings, f)
 
 
     def __init__(self, env_dir=None, create=False, tree_path=None,
@@ -262,10 +309,15 @@ class Environment(object):
 
         # Create environment if needed
         if not self.env_exists(self._env_dir) and create:
-            self.init(self._env_dir, 'default')
+            self.init(self._env_dir, 'default', build.DefaultToolsetName)
 
         # If needed this will setup the empty environment
         self._pdb = InstallDatabase(self._env_dir)
+
+        # Load the settings
+        settings = Settings(self.env_settings_path(self._env_dir))
+
+        self.toolset = settings.toolset
 
         def get_paths(base_path, env_var):
             """
@@ -461,7 +513,10 @@ class Environment(object):
         deps = info.dependencies
 
         if build:
-            deps = info.dependencies + info.build_dependencies
+            # Resolve all the build dependencies
+            build_deps = self._resolve_build_deps(info.build_dependencies)
+
+            deps = info.dependencies + build_deps
 
         # Install or report a version conflict for each dependency as needed
         for dep in deps:
@@ -576,6 +631,30 @@ class Environment(object):
         version_match = self._pdb.installed(name, version)
 
         return (installed, version_match)
+
+
+    def _resolve_build_deps(self, build_deps):
+        """
+        Uses the current toolset to resolve build dependencies.  Any build
+        dependency started with "tl:" is resolved using the current toolset.
+        """
+
+        # Use the toolset to resolve all of our deps
+        final_deps = []
+
+        for dep in build_deps:
+            if dep.startswith('tl:'):
+                # Use the toolset to translate the dep
+                new_dep = self.toolset.lookup_build_dep(dep[3:])
+            else:
+                # Not a toolset dep just include it directly
+                new_dep = dep
+
+            # Only include if we have a valid dep
+            if len(new_dep):
+                final_deps.append(new_dep)
+
+        return final_deps
 
 
     def remove(self, name):

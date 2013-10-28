@@ -18,8 +18,14 @@ def init(args):
     Create an environment to install packages into.
     """
 
+    # Get the proper toolset name
+    if args.toolset is None:
+        toolset_name = build.DefaultToolsetName
+    else:
+        toolset_name = args.toolset
+
     # Create our environment
-    core.Environment.init(args.root, args.name)
+    core.Environment.init(args.root, args.name, toolset_name)
 
 
 def install(args):
