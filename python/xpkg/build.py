@@ -12,6 +12,8 @@ import tarfile
 import tempfile
 
 # Project Imports
+from xpkg import linux
+from xpkg import paths
 from xpkg import util
 
 
@@ -220,6 +222,22 @@ class PackageBuilder(object):
 
         # Store our target dir
         self._target_dir = target_dir
+        util.ensure_dir(self._target_dir)
+
+        # Determine our environment directory
+        if environment:
+            self._env_dir = environment._env_dir
+        else:
+            self._env_dir = ''
+
+        # Setup the ld.so symlink in the target dir pointing to either
+        # the system ld.so, or the current environments
+        ld_target_dir = self._target_dir
+        update_root = self._env_dir if len(self._env_dir) else self._target_dir
+
+        linux.update_ld_so_symlink(update_root, ld_target_dir)
+
+        ld_so_path = paths.ld_linux_path(update_root)
 
         try:
             # Store the current environment
@@ -229,9 +247,10 @@ class PackageBuilder(object):
             # reference the libraries installed in it
             if environment:
                 environment.apply_env_variables()
-                self._env_dir = environment._env_dir
-            else:
-                self._env_dir = ''
+
+            # Now add an environment variable to add the linker path
+            flag_str = ' -Wl,--dynamic-linker=%s' % ld_so_path
+            os.environ['LDFLAGS'] = os.environ.get('LDFLAGS', '') + flag_str
 
             # Fetches and unpacks all the required sources for the package
             self._get_sources()

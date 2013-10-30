@@ -24,6 +24,7 @@ root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
 
 # Project imports
 from xpkg import core
+from xpkg import linux
 from xpkg import util
 from tests import build_tree
 
@@ -111,6 +112,15 @@ class TestBase(unittest.TestCase):
             self.fail('Path: "%s" exists' % path)
 
 
+    def assertLPathExists(self, path):
+        """
+        Checks if the link exists, but doesn't care if the file it points to
+        actually exists.
+        """
+        if not os.path.lexists(path):
+            self.fail('Symlink: "%s" does not exist' % path)
+
+
     def _xpkg_cmd(self, args, env_dir=None, use_var=True, should_fail=False):
         """
         Run Xpkg command and return the output.
@@ -182,6 +192,24 @@ class FullTests(TestBase):
 
         # Saves this to maek the rest of the tests shorter
         self.hello_bin = os.path.join(self.env_dir, 'bin', 'hello')
+
+
+    def test_init(self):
+        """
+        Lets just make what we expected to be here is here.
+        """
+
+        # Set things up
+        self._make_empty_env()
+
+        # TODO: make this linux specific
+        ld_so_path = os.path.join(self.env_dir, 'lib', 'ld-linux-xpkg.so')
+        settings_dir = os.path.join(self.env_dir, 'var', 'xpkg')
+
+        self.assertLPathExists(ld_so_path)
+        self.assertPathExists(ld_so_path)
+        self.assertPathExists(settings_dir)
+
 
     def test_no_env(self):
         """
@@ -780,6 +808,7 @@ class FullTests(TestBase):
 
         self.assertRegexpMatches(output, '.*libgreet - 2.0.0.*')
 
+
     def test_patching(self):
         # Setup the env for install (make sure we have access to the tree)
         os.environ[core.xpkg_tree_var] = self.tree_dir
@@ -793,9 +822,68 @@ class FullTests(TestBase):
         self.assertEqual('I\'m patched!\n', output)
 
 
+class LinuxTests(TestBase):
+
+    def test_local_elf_interp(self):
+        """
+        Makes sure we have a custom elf interp that links to the system one.
+        """
+
+        # Run the install
+        self._xpkg_cmd(['install', 'basic', '--tree', self.tree_dir])
+
+        # Make sure the program exists
+        basic_bin = os.path.join(self.env_dir, 'bin', 'basic')
+        self.assertPathExists(basic_bin)
+
+        # Run our program to make sure it works
+        output = util.shellcmd([basic_bin], shell=False, stream=False)
+
+        self.assertEqual('Hello, world!\n', output)
+
+        # Now make sure it has the proper elf interp
+        expected = os.path.join(self.env_dir, 'lib', 'ld-linux-xpkg.so')
+        interp_path = linux.readelf_interp(basic_bin)
+        self.assertEquals(expected, interp_path)
+
+
+    def test_local_elf_interp(self):
+        """
+        Makes sure that we link to the installed interp if there is one.
+        """
+
+        # This is a slight hack, but lets pre-create seed the environment with
+        # our symlink ld.so so that it is the link target
+        interp_path = linux.readelf_interp(sys.executable)
+        lib_dir = os.path.join(self.env_dir, 'lib')
+        target_path = os.path.join(lib_dir, 'ld-2.99.so')
+
+        util.ensure_dir(lib_dir)
+        os.symlink(interp_path, target_path)
+
+        # Create out environment
+        self._make_empty_env()
+
+        # Run the install
+        self._xpkg_cmd(['install', 'basic', '--tree', self.tree_dir])
+
+        # Make sure it has the proper elf interp
+        basic_bin = os.path.join(self.env_dir, 'bin', 'basic')
+        interp_path = linux.readelf_interp(basic_bin)
+
+        expected = os.path.join(self.env_dir, 'lib', 'ld-linux-xpkg.so')
+
+        self.assertEquals(expected, interp_path)
+
+        # Make sure it points to our special one
+        linked_path = os.readlink(interp_path)
+        self.assertEquals(target_path, linked_path)
+
+
 class ToolsetTests(TestBase):
     """
     Tests that require toolset packages to be built first.
+    @TODO: FIX THIS TEST THE MAKEFILE DOESN"T USE TCC AT ALL
     """
 
     @classmethod

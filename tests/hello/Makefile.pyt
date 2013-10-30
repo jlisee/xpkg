@@ -1,5 +1,5 @@
-make:
-	g++ hello.cpp -o hello
+all:
+	g++ hello.cpp -o hello $(LDFLAGS)
 
 install:
 	mkdir -p ${DESTDIR}/bin
