@@ -724,3 +724,13 @@ def robust_topological_sort(graph):
                 component_graph[node_c].append(successor_c)
 
     return topological_sort(component_graph)
+
+
+def is_64bit():
+    """
+    Returns true if we are on 64bit platform.
+
+    Reference: http://docs.python.org/2/library/platform.html#cross-platform
+    """
+
+    return sys.maxsize > 2**32

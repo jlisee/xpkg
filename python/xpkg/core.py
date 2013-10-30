@@ -737,8 +737,14 @@ class Environment(object):
         # are directly lists of compiler flags
         cflags = '-I%s' % os.path.join(self._env_dir, 'include')
 
-        lib_dir = os.path.join(self._env_dir, 'lib')
-        ldflags = '-L%s -L%s' % (lib_dir, '"/home/with space"')
+        # Get our list of library directories
+        lib_dirs = [os.path.join(self._env_dir, 'lib')]
+        if util.is_64bit():
+            lib_dirs.append(os.path.join(self._env_dir, 'lib64'))
+
+        # For our LDFLAGS and LD_LIBRARY_PATH variables
+        ldflags = ' '.join(['-L%s' % l for l in lib_dirs])
+        ld_library_path = os.pathsep.join(lib_dirs)
 
         # Default list of bin paths
         bin_paths = [os.path.join(self._env_dir, 'bin')]
@@ -753,36 +759,23 @@ class Environment(object):
 
         env_paths = {
             'PATH' : (os.pathsep.join(bin_paths), os.pathsep),
-            'LD_LIBRARY_PATH' : (os.path.join(self._env_dir, 'lib'), os.pathsep),
+            'LD_LIBRARY_PATH' : (ld_library_path, os.pathsep),
             'CFLAGS' : (cflags, ' '),
             'CCFLAGS' : (cflags, ' '),
             'CPPFLAGS' : (cflags, ' '),
             'LDFLAGS' : (ldflags, ' '),
            }
 
-        # Check for the presence of a custom ld-linux.so, we need to use
-        # LD_PRELOAD so this overloads the hard coded version in binaries
-        if os.path.exists(lib_dir):
-            ld_linux = [f for f in os.listdir(lib_dir) if f.startswith('ld-linux')]
-        else:
-            ld_linux = []
-
-        if len(ld_linux):
-            ld_interp = sorted(ld_linux)[0]
-
-            if len(ld_linux) > 1:
-                print 'WARNING: multiple ld-linux loaders found, using:',ld_interp
-
-            preload_path = os.path.join(lib_dir, ld_interp)
-            env_paths['LD_PRELOAD'] = (preload_path, ':')
-
         return env_paths
 
 
-    def apply_env_variables(self):
+    def apply_env_variables(self, overwrite=False):
         """
         Change the current environment variables so that we can use the things
         are in that environment.
+
+          overwrite - over write local environment variables, try to limit the
+                      effect of other things installed on the system.
         """
 
         env_paths = self.get_env_variables()
@@ -793,7 +786,7 @@ class Environment(object):
 
             cur_var = os.environ.get(varname, None)
 
-            if cur_var:
+            if cur_var and not overwrite:
                 os.environ[varname] = varpath + sep + cur_var
             else:
                 os.environ[varname] = varpath

@@ -17,11 +17,14 @@ Things a package manager must have (and ours needs to work)
 
  - support for running with another libc!
    - plan:
+     - Make sure when environment is created we have a symlink ld-linux in the env at all times (try make it pickable)
+       - Make this some kind of ensure function that is run when ever the environment is changed
+       - By default have this link to proper libc
      - add a pure which sets environment up explicitly to make builds more reliable,
        half way to chroot basically
-     - compile all binaries po
    - notes:
      - see: http://stackoverflow.com/a/851229/138948
+        -Wl,--dynamic-linker=/path/to/newglibc/ld-linux.so.2
      - hope that are standard null termination binary patch overwrite technique
      will work
      - If not see here for tips on ELF patching: http://siddhesh.in/journal/2011/03/27/changing-the-default-loader-for-a-program-in-its-elf/
@@ -38,7 +41,6 @@ Things a package manager must have (and ours needs to work)
    - install build deps into the env
    - run the build in there
    - figure out if we need python in there
-
 
 
 Nice to haves
