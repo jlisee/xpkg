@@ -317,6 +317,7 @@ class Environment(object):
         # Load the settings
         settings = Settings(self.env_settings_path(self._env_dir))
 
+        self.name = settings.name
         self.toolset = settings.toolset
 
         def get_paths(base_path, env_var):
@@ -721,7 +722,7 @@ class Environment(object):
         self.apply_env_variables()
 
         # Setup up the PS1 (this doesn't work)
-        os.environ['PS1'] = '(xpkg) \u@\h:\w\$'
+        os.environ['PS1'] = '(xpkg:%s) \u@\h:\w\$' % self.name
 
         # Step into shell
         os.execvp(program, [program] + args)
