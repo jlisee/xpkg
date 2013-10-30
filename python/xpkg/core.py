@@ -305,7 +305,7 @@ class Environment(object):
         # Error out if we are not creating and environment and this one does
         # not exist
         if not self.env_exists(self._env_dir) and not create:
-            raise Exception('No Xpkg package DB found in root "%s"' % self._env_dir)
+            raise Exception('No Xpkg environment found in "%s"' % self._env_dir)
 
         # Create environment if needed
         if not self.env_exists(self._env_dir) and create:
