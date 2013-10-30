@@ -8,9 +8,9 @@ import tarfile
 from collections import defaultdict
 
 # Project Imports
-from xpkg import util
 from xpkg import build
-
+from xpkg import linux
+from xpkg import util
 
 xpkg_root_var = 'XPKG_ROOT'
 xpkg_tree_var = 'XPKG_TREE'
@@ -264,6 +264,9 @@ class Environment(object):
         # Create the empty db file (this triggers database file creation)
         pdb = InstallDatabase(env_dir)
 
+        # Make sure we have a valid ld.so symlink
+        linux.update_ld_so_symlink(env_dir)
+
         # Lookup our toolset and translate to dict
         toolset = build.Toolset.lookup_by_name(toolset_name)
 
@@ -470,7 +473,7 @@ class Environment(object):
                             output_to_file=not self.verbose)
 
             for info in infos:
-                self._pdb.mark_installed(info['name'], info)
+                self._mark_installed(info['name'], info)
 
 
     def _install_xpa(self, path):
@@ -496,7 +499,7 @@ class Environment(object):
         xpa.install(self._env_dir)
 
         # Mark the package install
-        self._pdb.mark_installed(info['name'], info)
+        self._mark_installed(info['name'], info)
 
 
     def _install_deps(self, info, build=False):
@@ -658,6 +661,16 @@ class Environment(object):
         return final_deps
 
 
+    def _mark_installed(self, name, info):
+        """
+        Marks the package installed and updates the so link as needed.
+        """
+
+        self._pdb.mark_installed(info['name'], info)
+
+        linux.update_ld_so_symlink(self._env_dir)
+
+
     def remove(self, name):
         """
         Removes the given package from the environment.
@@ -709,6 +722,9 @@ class Environment(object):
 
             # Remove the package from the database
             self._pdb.mark_removed(name)
+
+            # Update the ld.so as needed
+            linux.update_ld_so_symlink(self._env_dir)
         else:
             print 'Package %s not installed.' % name
 
