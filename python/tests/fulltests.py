@@ -192,7 +192,7 @@ class FullTests(TestBase):
 
         output = self._xpkg_cmd(['list'], should_fail = True)
 
-        self.assertRegexpMatches(output, 'No Xpkg package DB found in root.*')
+        self.assertRegexpMatches(output, 'No Xpkg environment found in.*')
 
 
     def test_install(self):
