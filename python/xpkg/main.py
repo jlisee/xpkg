@@ -113,7 +113,7 @@ def info(args):
         # Nothing supplied, grab environment and dump information about it
         env = _create_env(args.root)
 
-        _environment_info(env)
+        _environment_info(env, args.verbose)
 
         info = None
 
@@ -165,11 +165,13 @@ def _package_info(info, verbose):
             print '    -',f
 
 
-def _environment_info(env):
+def _environment_info(env, verbose):
     """
     Print information about the environment.
     """
 
+    print '  name:',env.name
+    print '  toolset:',env.toolset.name
     print '  root:',env.root
 
     def print_path(name, paths, depth=2):
@@ -182,25 +184,34 @@ def _environment_info(env):
     print_path('trees', env.tree_paths)
     print_path('repos', env.repo_paths)
 
-    # Now print the environment variables
-    print '  env:'
-    env_vars = env.get_env_variables()
+    if verbose:
+        # Now print the environment variables
+        print '  env:'
+        env_vars = env.get_env_variables()
 
-    for varname, value in env_vars.iteritems():
-        # Unpack the variable and it's separator
-        variable, sep = value
+        for varname, value in env_vars.iteritems():
+            # Unpack the variable and it's separator
+            variable, sep = value
 
-        # Attempt to split into parts
-        if sep == ' ':
-            parts = shlex.split(variable)
-        else:
-            parts = variable.split(sep)
+            # Attempt to split into parts
+            if sep == ' ':
+                parts = shlex.split(variable)
+            else:
+                parts = variable.split(sep)
 
-        # Print it out
-        if len(parts) > 1:
-            print_path(varname, parts, depth=4)
-        else:
-            print '    %s: %s' % (varname, variable)
+            # Print it out
+            if len(parts) > 1:
+                print_path(varname, parts, depth=4)
+            else:
+                print '    %s: %s' % (varname, variable)
+
+        print '  toolset-env:'
+        toolset_env_info = env.get_toolset_env_info()
+
+        for action, varmap in toolset_env_info.iteritems():
+            print '    %s:' % action
+            for varname, value in varmap.iteritems():
+                print '      %s: "%s"' % (varname, value)
 
 
 def list_packages(args):
