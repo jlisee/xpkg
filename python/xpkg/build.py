@@ -117,6 +117,31 @@ class Toolset(object):
         return self.build_deps[depname]
 
 
+    def get_env_var_info(self, subs):
+        """
+        Returns the information about what environment variables that people are
+        settings.
+        """
+
+        actions_table = {
+            self.REPLACE_VAR : 'replace',
+            self.APPEND_VAR : 'append',
+            self.PREPEND_VAR : 'prepend',
+        }
+
+        vars_by_action = {}
+
+        for varname, inputs in self.env_vars.iteritems():
+            raw_value, method = inputs
+
+            value = raw_value % subs
+            action = actions_table[method]
+
+            vars_by_action.setdefault(action, {})[varname] = value
+
+        return vars_by_action
+
+
     def apply_env_vars(self, subs):
         """
         Apply the configured environment vars to our current environment

@@ -787,6 +787,11 @@ class Environment(object):
         return env_paths
 
 
+    def get_toolset_env_info(self):
+        subs = {'LD_SO_PATH' : paths.ld_linux_path(self._env_dir)}
+        return self.toolset.get_env_var_info(subs)
+
+
     def apply_env_variables(self, overwrite=False):
         """
         Change the current environment variables so that we can use the things

@@ -344,18 +344,21 @@ class FullTests(TestBase):
 
         # Our expected results
         expected = {
+            'name' : 'test',
+            'toolset' : 'local',
             'root' : self.env_dir,
             'trees' : [self.tree_dir],
             'repos' : [self.repo_dir],
         }
 
         # Run output and compare the results
-        output = self._xpkg_cmd(['info'])
+        output = self._xpkg_cmd(['info', '--verbose'])
 
         data = yaml.load(output)
 
-        # Remove the env section
+        # Remove the env sections
         env_section = data.pop('env')
+        toolset_env_section = data.pop('toolset-env')
 
         self.assertEqual(expected, data)
 
