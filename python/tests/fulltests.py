@@ -847,7 +847,7 @@ class LinuxTests(TestBase):
         self.assertEquals(expected, interp_path)
 
 
-    def test_local_elf_interp(self):
+    def test_local_elf_interp_install(self):
         """
         Makes sure that we link to the installed interp if there is one.
         """
@@ -904,7 +904,7 @@ class ToolsetTests(TestBase):
         # Build our packages into it
         root_tree = os.path.join(root_dir, 'pkgs')
 
-        for pkg_name in ['busybox', 'tcc']:
+        for pkg_name in ['busybox', 'tcc', 'uclibc']:
             xpd_path = os.path.join(root_tree, pkg_name + '.xpd')
 
             args = ['build', xpd_path, '--dest', cls.toolset_repo_dir]
@@ -926,14 +926,21 @@ class ToolsetTests(TestBase):
         """
 
         # Setup the environment to use our testing toolset
-        self._xpkg_cmd(['init', self.env_dir, 'test-env', '--toolset', 'test'])
+        self._xpkg_cmd(['init', self.env_dir, 'test-env', '--toolset', 'Test'])
 
         # Make sure we can locate of packages
         os.environ[core.xpkg_tree_var] = self.tree_dir
         os.environ[core.xpkg_repo_var] = self.toolset_repo_dir
 
         # Install the program
-        self._xpkg_cmd(['install', 'toolset-basic'])
+        self._xpkg_cmd(['install', '--verbose', 'toolset-basic'])
+
+        # Can we run our program
+        basic_bin = os.path.join(self.env_dir, 'bin', 'basic')
+
+        output = util.shellcmd([basic_bin], shell=False, stream=False)
+
+        self.assertEqual('Hello, world!\n', output)
 
 
 if __name__ == '__main__':

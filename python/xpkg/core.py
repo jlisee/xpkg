@@ -11,6 +11,7 @@ from collections import defaultdict
 from xpkg import build
 from xpkg import linux
 from xpkg import util
+from xpkg import paths
 
 xpkg_root_var = 'XPKG_ROOT'
 xpkg_tree_var = 'XPKG_TREE'
@@ -810,6 +811,11 @@ class Environment(object):
 
         # Setup the Xpkg path
         os.environ[xpkg_root_var] = self._env_dir
+
+        # Apply toolset environment variables
+        # TODO: only use this sub on linux
+        subs = {'LD_SO_PATH' : paths.ld_linux_path(self._env_dir)}
+        self.toolset.apply_env_vars(subs)
 
 
     def _parse_install_input(self, value):
