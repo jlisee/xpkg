@@ -6,6 +6,7 @@ build-dependencies:
   - tl:base
   - tl:c-compiler
   - tl:linker
+  - tl:libc
 # Lets ignore make for now
 #  - make
 

@@ -71,11 +71,22 @@ def fetch_file(filehash, url):
 class Toolset(object):
     """
     A set of build dependencies that lets you build your desired software.
+
+    TODO: use a versioned serialization system for this
     """
 
-    def __init__(self, name, pkg_info):
+    REPLACE_VAR = 1
+    APPEND_VAR = 2
+    PREPEND_VAR = 3
+
+    def __init__(self, name, pkg_info, env_vars = None):
         self.name = name
         self.build_deps = pkg_info
+
+        if env_vars is None:
+            self.env_vars = {}
+        else:
+            self.env_vars = env_vars
 
 
     def to_dict(self):
@@ -85,6 +96,7 @@ class Toolset(object):
         return {
             'name' : self.name,
             'build-deps' : self.build_deps,
+            'env-vars' : self.env_vars
         }
 
 
@@ -105,12 +117,38 @@ class Toolset(object):
         return self.build_deps[depname]
 
 
+    def apply_env_vars(self, subs):
+        """
+        Apply the configured environment vars to our current environment
+        """
+
+        for varname, inputs in self.env_vars.iteritems():
+            raw_value, method = inputs
+
+            # Sub the value
+            value = raw_value % subs
+
+            # Set value based on replacement rule
+            if method == self.REPLACE_VAR:
+                new_value = value
+            elif method == self.APPEND_VAR:
+                new_value = os.environ.get(varname, '') + value
+            elif method == PREPEND_VAR:
+                new_value = value + os.environ.get(varname, '')
+            else:
+                raise Exception('Invalid method!')
+
+            os.environ[varname] = new_value
+
+
     @staticmethod
     def create_from_dict(d):
         """
         Create the toolset from the serialized dict.
         """
-        return Toolset(name=d['name'], pkg_info=d['build-deps'])
+        return Toolset(name=d['name'],
+                       pkg_info=d['build-deps'],
+                       env_vars=d['env-vars'])
 
 
     @staticmethod
@@ -124,41 +162,63 @@ class Toolset(object):
 
         return BuiltInToolsets[name]
 
+
 class LocalToolset(Toolset):
     """
     Resolve all build deps to '', so that we use whatever the system has.
     """
 
     def __init__(self):
-        Toolset.__init__(self, 'local', {})
+        # TODO: only add this path on linux
+        env_vars = {'LDFLAGS' : LD_VAR}
+
+        Toolset.__init__(self, 'local', pkg_info={}, env_vars=env_vars)
 
 
     def lookup_build_dep(self):
         return ''
 
 
+# Sets up dynamic linker to point to our indirection path
+LD_VAR = (' -Wl,--dynamic-linker=%(LD_SO_PATH)s', Toolset.APPEND_VAR)
+
 # Default GNU toolset
-GNUToolset = Toolset('GNU', {
-    'shell' : 'dash',
-    'base' : 'coreutils',
-    'linker' : 'binutils',
-    'c-compiler' : 'gcc',
-    'c++-compiler' : 'gcc',
-})
+GNUToolset = Toolset(
+    'GNU',
+    pkg_info={
+        'shell' : 'dash',
+        'base' : 'coreutils',
+        'linker' : 'binutils',
+        'c-compiler' : 'gcc',
+        'c++-compiler' : 'gcc',
+        'libc' : 'libc',
+    },
+    env_vars={
+        'CC' : ('gcc', Toolset.REPLACE_VAR),
+        'CXX' : ('g++', Toolset.REPLACE_VAR),
+        'LDFLAGS' : LD_VAR,
+    })
 
 # Toolset for testing
-TestToolset = Toolset('Test', {
-    'shell' : 'busybox',
-    'base' : 'busybox',
-    'linker' : 'tcc',
-    'c-compiler' : 'tcc',
-})
+TestToolset = Toolset(
+    'Test',
+    pkg_info = {
+        'shell' : 'busybox',
+        'base' : 'busybox',
+        'linker' : 'tcc',
+        'c-compiler' : 'tcc',
+        'libc' : 'uclibc',
+    },
+    env_vars = {
+        'CC' : ('tcc', Toolset.REPLACE_VAR),
+        'LD_SO' : ('%(LD_SO_PATH)s', Toolset.REPLACE_VAR),
+    })
 
 # Our map of toolsets
 BuiltInToolsets = {
-    'gnu' : GNUToolset,
+    'GNU' : GNUToolset,
     'local' : LocalToolset(),
-    'test' : TestToolset,
+    'Test' : TestToolset,
 }
 
 DefaultToolsetName = 'local'
@@ -237,8 +297,6 @@ class PackageBuilder(object):
 
         linux.update_ld_so_symlink(update_root, ld_target_dir)
 
-        ld_so_path = paths.ld_linux_path(update_root)
-
         try:
             # Store the current environment
             env_vars = util.EnvStorage(store = True)
@@ -247,10 +305,6 @@ class PackageBuilder(object):
             # reference the libraries installed in it
             if environment:
                 environment.apply_env_variables()
-
-            # Now add an environment variable to add the linker path
-            flag_str = ' -Wl,--dynamic-linker=%s' % ld_so_path
-            os.environ['LDFLAGS'] = os.environ.get('LDFLAGS', '') + flag_str
 
             # Fetches and unpacks all the required sources for the package
             self._get_sources()

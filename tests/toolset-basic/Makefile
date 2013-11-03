@@ -1,5 +1,5 @@
 all:
-	$(CC) basic.c -o basic $(LDFLAGS)
+	$(CC) basic.c -o basic $(LDFLAGS) -static
 
 install:
 	mkdir -p ${DESTDIR}/bin
