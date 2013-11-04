@@ -1,0 +1,19 @@
+name: patchelf
+description: >
+  Small utility to modify the dynamic linker and RPATH of ELF executables.
+version: 0.6
+
+# TODO: proper build deps
+
+files:
+  md5-5087261514b4b5814a39c3d3a36eb6ef:
+    url: http://hydra.nixos.org/build/1524660/download/2/patchelf-0.6.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
