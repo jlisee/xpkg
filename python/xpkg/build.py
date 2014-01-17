@@ -15,6 +15,7 @@ import tempfile
 from xpkg import linux
 from xpkg import paths
 from xpkg import util
+from xpkg import commands
 
 
 # Not really sure this fits here, but it's the only module that uses it
@@ -486,32 +487,43 @@ class PackageBuilder(object):
         else:
             cmds = [raw]
 
-        # Run each command in turn
-        for raw_cmd in cmds:
-            # Make sure we have env_root when needed
-            if raw_cmd.count('%(env_root)s') and len(self._env_dir) == 0:
-                raise Exception('Package references environment root, '
-                                'must be built in an environment')
+        # Run our list of shell or built in commands
+        for cmd_data in cmds:
+            if isinstance(cmd_data, dict):
+                # Parse out our arguments
+                cmd = commands.parse_command(cmd_data)
 
-            # Sub in our variables into the commands
-            cmd = raw_cmd % {
-                'jobs' : str(util.cpu_count()),
-                'prefix' : self._target_dir,
-                'arch' : platform.machine(),
-                'env_root' : self._env_dir,
-            }
+                # Interp the working_dir (maybe the args?, maybe the entire
+                # dict before running?)
+                final_working_dir = self._interp_text(cmd.working_dir)
 
-            # Run our command
-            self._shellcmd(cmd, self._output)
+                final_cmd = commands.Command(name=cmd.name, args=cmd.args,
+                                             working_dir=final_working_dir)
 
 
-    def _shellcmd(self, cmd, output=None):
+                # Run the command
+                commands.run_command(final_cmd)
+
+            else:
+                # Run our shell command
+                self._shellcmd(cmd_data, self._output)
+
+
+    def _shellcmd(self, raw_cmd, output=None):
         """
-        Runs the given shell command, either output to stderr/stdout or
-        the given file object.
+        Interpolates desired variables in the command.  Then runs the given
+        command, either output to stderr/stdout or the given file object.
 
         It will throw a CallProcessError if the process fails.
         """
+
+        # Make sure we have env_root when needed
+        if raw_cmd.count('%(env_root)s') and len(self._env_dir) == 0:
+            raise Exception('Package references environment root, '
+                            'must be built in an environment')
+
+        # Sub in our variables into the commands
+        cmd = self._interp_text(raw_cmd)
 
         # Determine where our output goes
         if output:
@@ -532,7 +544,17 @@ class PackageBuilder(object):
         # Now lets get writing
         subprocess.check_call(cmd, stderr=stderr, stdout=stdout, shell=True)
 
+    def _interp_text(self, raw_text):
+        """
+        Interpolates all of our important variables into the commands.
+        """
 
+        return raw_text % {
+            'jobs' : str(util.cpu_count()),
+            'prefix' : self._target_dir,
+            'arch' : platform.machine(),
+            'env_root' : self._env_dir,
+        }
 
     def _create_info(self, new_paths):
         """
