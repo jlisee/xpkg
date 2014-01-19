@@ -841,6 +841,23 @@ class FullTests(TestBase):
         self.assertEqual('I\'m fun\n', output)
 
 
+    def test_env_commands(self):
+        """
+        Make sure we can set environment variables for each command that
+        builds are package.
+        """
+
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Install the program
+        self._xpkg_cmd(['install', '--verbose', 'env-command'])
+
+        # Check the message that was printed out
+        output = self._xpkg_cmd(['jump', '-c', 'env_command'])
+
+        self.assertEqual('Hi\n', output)
+
+
 class LinuxTests(TestBase):
 
     def test_local_elf_interp(self):

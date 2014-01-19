@@ -481,6 +481,15 @@ class PackageBuilder(object):
         needed for each command.
         """
 
+        # If the raw is a dict, it's a advanced command that sets environment
+        # variables so read those variables
+        if isinstance(raw, dict):
+            env_vars = raw.get('env', {}).items()
+
+            raw = raw['cmds']
+        else:
+            env_vars = []
+
         # If don't have a list of cmds make a single cmd list
         if isinstance(raw, list):
             cmds = raw
@@ -502,12 +511,27 @@ class PackageBuilder(object):
 
 
                 # Run the command
-                commands.run_command(final_cmd)
+                run_cmd = lambda: commands.run_command(final_cmd)
 
             else:
                 # Run our shell command
-                self._shellcmd(cmd_data, self._output)
+                run_cmd = lambda: self._shellcmd(cmd_data, self._output)
 
+
+            if len(env_vars):
+                with util.save_env():
+                    # Apply environment variables before we run the command
+                    for name, value in env_vars:
+                        cur_value = os.environ.get(name, None)
+                        if cur_value:
+                            os.environ[name] = cur_value + ' ' + name
+                        else:
+                            os.environ[name] = value
+
+                    # Finally run our command
+                    run_cmd()
+            else:
+                run_cmd()
 
     def _shellcmd(self, raw_cmd, output=None):
         """
