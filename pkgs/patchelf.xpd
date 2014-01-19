@@ -9,11 +9,16 @@ files:
   md5-5087261514b4b5814a39c3d3a36eb6ef:
     url: http://hydra.nixos.org/build/1524660/download/2/patchelf-0.6.tar.bz2
 
+# We build as static so that it doesn't depend on libc, since it's purpose is to
+# fix packages in an uncertain libc environment.
 configure:
-  ./configure --prefix=%(prefix)s
+  env:
+    LDFLAGS: '-static'
+  cmds:
+    ./configure --prefix=%(prefix)s
 
 build:
-  make -j%(jobs)s
+  - make -j%(jobs)s
 
 install:
   make install
