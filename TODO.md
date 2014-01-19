@@ -91,6 +91,14 @@ Nice to haves
  - support for multiple download sources for the same file, allowing for
    slightly more robust file fetching
 
+ - good source of packages for windows (see SDL as well):
+
+   http://win-builds.org/stable/packages/windows_32/package_list.html
+
+ - good yaml source of packages needed for building python scientific environments:
+
+   https://github.com/hashdist/hashstack2
+
 Docs
 ------
 
