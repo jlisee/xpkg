@@ -97,3 +97,9 @@ Concepts:
 
 
 - Platform: for us this is the binary format and expected kernel
+
+Similar Projects
+=================
+
+- disthash: http://hashdist.github.io/
+- nix: http://nixos.org/nix/
