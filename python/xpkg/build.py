@@ -499,19 +499,14 @@ class PackageBuilder(object):
         # Run our list of shell or built in commands
         for cmd_data in cmds:
             if isinstance(cmd_data, dict):
+                # Interp the command data
+                interped_cmd = self._interp_args(cmd_data)
+
                 # Parse out our arguments
-                cmd = commands.parse_command(cmd_data)
-
-                # Interp the working_dir (maybe the args?, maybe the entire
-                # dict before running?)
-                final_working_dir = self._interp_text(cmd.working_dir)
-
-                final_cmd = commands.Command(name=cmd.name, args=cmd.args,
-                                             working_dir=final_working_dir)
-
+                cmd = commands.parse_command(interped_cmd)
 
                 # Run the command
-                run_cmd = lambda: commands.run_command(final_cmd)
+                run_cmd = lambda: commands.run_command(cmd)
 
             else:
                 # Run our shell command
@@ -532,6 +527,7 @@ class PackageBuilder(object):
                     run_cmd()
             else:
                 run_cmd()
+
 
     def _shellcmd(self, raw_cmd, output=None):
         """
@@ -568,6 +564,7 @@ class PackageBuilder(object):
         # Now lets get writing
         subprocess.check_call(cmd, stderr=stderr, stdout=stdout, shell=True)
 
+
     def _interp_text(self, raw_text):
         """
         Interpolates all of our important variables into the commands.
@@ -579,6 +576,33 @@ class PackageBuilder(object):
             'arch' : platform.machine(),
             'env_root' : self._env_dir,
         }
+
+
+    def _interp_args(self, obj):
+        """
+        Recursively interpolates all strings contained in the given object. It
+        can be any value yaml/json structure.  All strings contained within
+        will be interpolated.
+        """
+
+        if isinstance(obj, str):
+            ret  = self._interp_text(obj)
+
+        elif isinstance(obj, list):
+            ret = []
+            for i in obj:
+                ret.append(self._interp_args(i))
+
+        elif isinstance(obj, dict):
+            ret = {}
+            for key, value in obj.iteritems():
+                ret[key] = self._interp_args(value)
+
+        else:
+            ret = obj
+
+        return ret
+
 
     def _create_info(self, new_paths):
         """
