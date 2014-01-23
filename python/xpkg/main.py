@@ -8,9 +8,10 @@ import shlex
 import sys
 
 # Project Imports
+from xpkg import build
+from xpkg import commands
 from xpkg import core
 from xpkg import util
-from xpkg import build
 
 
 def init(args):
@@ -227,6 +228,23 @@ def list_packages(args):
         print '  %s - %s' % (package, info['version'])
 
 
+def run_command(args):
+    """
+    Run the given built in command with the desired arguments.
+    """
+
+    # Create an environment
+    env = _create_env(args.root)
+
+
+    # Run within the environment
+    with util.save_env():
+        env.apply_env_variables()
+
+        cmd = commands.Command(name=args.name[0], args=args.args, working_dir='')
+        commands.run_command(cmd)
+
+
 def _get_env_dir(env_dir):
     """
     Returns the absolute path to the given directory, or just the None.
@@ -311,6 +329,16 @@ def main(argv = None):
     parser_i = subparsers.add_parser('list', help=list_packages.__doc__)
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=list_packages)
+
+    parser_i = subparsers.add_parser('command', help=run_command.__doc__)
+    #parser_j.add_argument(*root_args, **root_kwargs)
+    parser_i.add_argument('name', type=str, nargs=1,
+                          help='Name of the command')
+    parser_i.add_argument('args', type=str, nargs='*',
+                          help='Arguments for the command')
+    parser_i.add_argument(*root_args, **root_kwargs)
+    parser_i.set_defaults(func=run_command)
+
 
     # parse some argument lists
     args = parser.parse_args(argv[1:])
