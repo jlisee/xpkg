@@ -91,6 +91,58 @@ def parse_command(cmd):
 
 
 @command
+def patchelf(args):
+    """
+    Patches all elfs in the current file tree to point to the given interp.
+
+    Arguments:
+      [new_interp, directory to search or exe]
+    """
+
+    # Parser arguments
+    if not isinstance(args, list):
+        args = [args]
+
+    target_interp = args[0]
+
+    if len(args) > 1:
+        path = args[1]
+    else:
+        path = os.getcwd()
+
+    # Identify a file as being elf
+    elf_magic = '\x7fELF'
+
+    def is_elf(fpath):
+        with open(fpath) as f:
+            magic = f.read(4)
+
+        return magic == elf_magic
+
+    # Find all elf binaries
+    elf_files = []
+
+    if os.path.isdir(path):
+        for root, dirs, files in os.walk(path):
+            for file_path in [os.path.join(root, f) for f in files]:
+                if is_elf(file_path):
+                    elf_files.append(os.path.abspath(file_path))
+
+    elif is_elf(path):
+        elf_files.append(os.path.abspath(path))
+
+    # Patch each binary if needed
+    for elf_file in elf_files:
+
+        # Get the current elf interp
+        interp = linux.readelf_interp(elf_file)
+
+        if interp and interp != target_interp:
+            util.shellcmd(['patchelf', '--set-interpreter', target_interp,
+                            elf_file], shell=False)
+
+
+@command
 def symlink(args):
     """
     Creates a symlink, expects an array of arguments: [source, link_name]

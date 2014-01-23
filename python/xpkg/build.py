@@ -575,6 +575,8 @@ class PackageBuilder(object):
             'prefix' : self._target_dir,
             'arch' : platform.machine(),
             'env_root' : self._env_dir,
+            # TODO: make this linux specific
+            'LD_SO_PATH' : paths.ld_linux_path(self._env_dir),
         }
 
 
