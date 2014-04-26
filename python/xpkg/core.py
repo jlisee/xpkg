@@ -736,7 +736,7 @@ class Environment(object):
         """
 
         # Setup the environment variables
-        self.apply_env_variables()
+        self.apply_env_variables(overwrite=True)
 
         # Setup up the PS1 (this doesn't work)
         os.environ['PS1'] = '(xpkg:%s) \u@\h:\w\$' % self.name
