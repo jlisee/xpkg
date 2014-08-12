@@ -4,9 +4,12 @@ version: 2.18-svnr23787
 
 files:
   # SVN repository path: svn://svn.eglibc.org/branches/eglibc-2_18
-  md5-b395b021422a027d89884992e91734fc:
-    url: http://downloads.yoctoproject.org/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2
-    location: eglibc-source
+  # md5-b395b021422a027d89884992e91734fc:
+  #   url: http://downloads.yoctoproject.org/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2
+  # SVN repository path: svn://svn.eglibc.org/branches/eglibc-2_15
+  md5-e7f8a4e4207843ac75fc4716455ae96c:
+     url: file:///home/jlisee/projects/eglibc/eglibc-2.15-svnr25241.tar.bz2
+     location: eglibc-source
 
 # We have to build outside the source tree
 build-dir: eglibc-build
