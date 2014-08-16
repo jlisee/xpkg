@@ -1,0 +1,10 @@
+name: ubuntu-libc
+description: Ubuntu Embedded GNU C Library
+version: 1
+
+files:
+  md5-23691c079e90271e3e60dc287864bcdb:
+    url: xpd://build.sh
+
+install:
+  bash build.sh %(prefix)s
