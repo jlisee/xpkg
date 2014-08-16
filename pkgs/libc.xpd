@@ -1,6 +1,6 @@
 name: libc
 description: Embedded GNU C Library
-version: 2.18-svnr23787
+version: 2.15-svnr25241
 
 files:
   # SVN repository path: svn://svn.eglibc.org/branches/eglibc-2_18
