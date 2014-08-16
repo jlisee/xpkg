@@ -37,12 +37,12 @@ def shellcmd(cmd, echo=True, stream=True, shell=True):
     Run 'cmd' in the shell and return its standard out.
     """
 
+    out = None
+
     if echo:
         print '[cmd] {0}'.format(cmd)
 
     if stream and echo:
-        out = None
-
         subprocess.check_call(cmd, stderr=sys.stderr, stdout=sys.stdout,
                               shell=shell)
     else:
