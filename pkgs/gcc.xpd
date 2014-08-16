@@ -35,4 +35,4 @@ build:
 install:
   - make install
   # This makes sure (TODO: make this linux specific)
-  - patchelf: ['%(LD_SO_PATH)s', '%(prefix)s']
+  #- patchelf: ['%(LD_SO_PATH)s', '%(prefix)s']

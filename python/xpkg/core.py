@@ -266,7 +266,7 @@ class Environment(object):
         pdb = InstallDatabase(env_dir)
 
         # Make sure we have a valid ld.so symlink
-        linux.update_ld_so_symlink(env_dir)
+        #linux.update_ld_so_symlink(env_dir)
 
         # Lookup our toolset and translate to dict
         toolset = build.Toolset.lookup_by_name(toolset_name)
@@ -669,7 +669,7 @@ class Environment(object):
 
         self._pdb.mark_installed(info['name'], info)
 
-        linux.update_ld_so_symlink(self._env_dir)
+        #linux.update_ld_so_symlink(self._env_dir)
 
 
     def remove(self, name):
@@ -725,7 +725,7 @@ class Environment(object):
             self._pdb.mark_removed(name)
 
             # Update the ld.so as needed
-            linux.update_ld_so_symlink(self._env_dir)
+            #linux.update_ld_so_symlink(self._env_dir)
         else:
             print 'Package %s not installed.' % name
 

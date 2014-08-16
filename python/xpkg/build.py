@@ -323,7 +323,7 @@ class PackageBuilder(object):
         ld_target_dir = self._target_dir
         update_root = self._env_dir if len(self._env_dir) else self._target_dir
 
-        linux.update_ld_so_symlink(update_root, ld_target_dir)
+        #linux.update_ld_so_symlink(update_root, ld_target_dir)
 
         try:
             # Store the current environment
