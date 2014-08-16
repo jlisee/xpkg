@@ -129,7 +129,7 @@ def info(args):
         env = _create_env(args.root)
 
         # Grab the information
-        info = env._pdb.get_info(input_val)
+        info = env.info(input_val)
 
     # Display info
     if info:

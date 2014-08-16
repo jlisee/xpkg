@@ -160,6 +160,24 @@ class InstallDatabase(object):
         return self._db.get(name, None)
 
 
+    def get_file_info(self, path):
+        """
+        Return the information on the installed package which contains the file,
+        returns None if it doesn't exist.
+        """
+        # TODO: update the database to maintain a mapping table from file to
+        # package
+
+        for name, contents in self._db.iteritems():
+            for f in contents['files']:
+                if f == path:
+                    return contents
+            for f in contents['dirs']:
+                if f == path:
+                    return contents
+
+        return None
+
     def installed(self, name, version=None):
         """
         Returns true if the given package is installed, supplying no version
@@ -728,6 +746,27 @@ class Environment(object):
             #linux.update_ld_so_symlink(self._env_dir)
         else:
             print 'Package %s not installed.' % name
+
+
+    def info(self, input_val):
+        """
+        Returns information about either the given package, or the package the
+        file belongs too.
+
+        @return None if no lookup was successful
+        """
+
+        info = self._pdb.get_info(input_val)
+
+        if not info:
+            # It's not a package so lets try doing a file lookup instead
+            full_path = os.path.abspath(input_val)
+
+            if full_path.startswith(self.root):
+                relative_path = full_path[len(self.root) + 1:]
+                return self._pdb.get_file_info(relative_path)
+
+        return info
 
 
     def jump(self, program='bash', args=[]):
@@ -1461,6 +1500,8 @@ class PackageDatabase(object):
     """
     Stores information about packages, right now just does version and name
     look ups.  Will eventually support more advanced queries.
+
+    This is used to query the repo and tree for what packages they contain.
     """
 
     def __init__(self):

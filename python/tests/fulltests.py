@@ -330,6 +330,15 @@ class FullTests(TestBase):
         expected['dirs'] = ['bin']
         self.assertEqual(expected, data)
 
+        # Non-existent output
+        output = self._xpkg_cmd(['info', 'nothere'], use_var=False)
+
+        self.assertEquals('Package nothere not installed.\n', output)
+
+        # Test getting file input
+        output = self._xpkg_cmd(['info', 'bin/hello'], use_var=False)
+        self.assertEqual(expected, data)
+
 
     def test_environment_info(self):
         """
