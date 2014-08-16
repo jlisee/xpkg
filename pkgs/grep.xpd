@@ -1,0 +1,16 @@
+name: grep
+description: Search one or more input files for lines containing a match to a specified pattern.
+version: 2.9
+
+files:
+  md5-03e3451a38b0d615cb113cbeaf252dc0:
+    url: http://ftp.gnu.org/gnu/grep/grep-2.9.tar.gz
+
+configure:
+  - ./configure --prefix=%(prefix)s
+
+build:
+  - make -j%(jobs)s
+
+install:
+  - make install
