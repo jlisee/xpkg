@@ -454,8 +454,9 @@ class PackageBuilder(object):
         """
 
         # TODO: log this
-        print 'Building...'
-        self._run_cmds(self._xpd._data['build'])
+        if 'build' in self._xpd._data:
+            print 'Building...'
+            self._run_cmds(self._xpd._data['build'])
 
 
     def _install(self):
