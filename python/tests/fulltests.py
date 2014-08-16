@@ -860,6 +860,7 @@ class FullTests(TestBase):
 
 class LinuxTests(TestBase):
 
+    @unittest.skip("this feature is current not-enabled")
     def test_local_elf_interp(self):
         """
         Makes sure we have a custom elf interp that links to the system one.
@@ -882,7 +883,7 @@ class LinuxTests(TestBase):
         interp_path = linux.readelf_interp(basic_bin)
         self.assertEquals(expected, interp_path)
 
-
+    @unittest.skip("this feature is current not-enabled")
     def test_local_elf_interp_install(self):
         """
         Makes sure that we link to the installed interp if there is one.

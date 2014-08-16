@@ -736,7 +736,8 @@ class Environment(object):
         """
 
         # Setup the environment variables
-        self.apply_env_variables(overwrite=True)
+        self.apply_env_variables()
+        #self.apply_env_variables(overwrite=True)
 
         # Setup up the PS1 (this doesn't work)
         os.environ['PS1'] = '(xpkg:%s) \u@\h:\w\$' % self.name
@@ -788,7 +789,8 @@ class Environment(object):
 
 
     def get_toolset_env_info(self):
-        subs = {'LD_SO_PATH' : paths.ld_linux_path(self._env_dir)}
+        #subs = {'LD_SO_PATH' : paths.ld_linux_path(self._env_dir)}
+        subs = {}
         return self.toolset.get_env_var_info(subs)
 
 
@@ -819,8 +821,8 @@ class Environment(object):
 
         # Apply toolset environment variables
         # TODO: only use this sub on linux
-        subs = {'LD_SO_PATH' : paths.ld_linux_path(self._env_dir)}
-        self.toolset.apply_env_vars(subs)
+        #subs = {'LD_SO_PATH' : paths.ld_linux_path(self._env_dir)}
+        self.toolset.apply_env_vars({})
 
 
     def _parse_install_input(self, value):

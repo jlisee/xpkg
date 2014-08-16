@@ -165,7 +165,7 @@ class Toolset(object):
                 raise Exception('Invalid method!')
 
             os.environ[varname] = new_value
-
+       # os.environ['LD_DEBUG'] = 'all'
 
     @staticmethod
     def create_from_dict(d):
@@ -196,7 +196,8 @@ class LocalToolset(Toolset):
 
     def __init__(self):
         # TODO: only add this path on linux
-        env_vars = {'LDFLAGS' : LD_VAR}
+        #env_vars = {'LDFLAGS' : LD_VAR}
+        env_vars = {}
 
         Toolset.__init__(self, 'local', pkg_info={}, env_vars=env_vars)
 
@@ -206,7 +207,8 @@ class LocalToolset(Toolset):
 
 
 # Sets up dynamic linker to point to our indirection path
-LD_VAR = (' -Wl,--dynamic-linker=%(LD_SO_PATH)s', Toolset.APPEND_VAR)
+# No more redirection of the linker
+#LD_VAR = (' -Wl,--dynamic-linker=%(LD_SO_PATH)s', Toolset.APPEND_VAR)
 
 # Default GNU toolset
 GNUToolset = Toolset(
@@ -222,7 +224,7 @@ GNUToolset = Toolset(
     env_vars={
         'CC' : ('gcc', Toolset.REPLACE_VAR),
         'CXX' : ('g++', Toolset.REPLACE_VAR),
-        'LDFLAGS' : LD_VAR,
+        #'LDFLAGS' : LD_VAR,
     })
 
 # Toolset for testing
@@ -237,7 +239,7 @@ TestToolset = Toolset(
     },
     env_vars = {
         'CC' : ('tcc', Toolset.REPLACE_VAR),
-        'LD_SO' : ('%(LD_SO_PATH)s', Toolset.REPLACE_VAR),
+        #'LD_SO' : ('%(LD_SO_PATH)s', Toolset.REPLACE_VAR),
     })
 
 # Our map of toolsets
@@ -576,7 +578,7 @@ class PackageBuilder(object):
             'arch' : platform.machine(),
             'env_root' : self._env_dir,
             # TODO: make this linux specific
-            'LD_SO_PATH' : paths.ld_linux_path(self._env_dir),
+            #'LD_SO_PATH' : paths.ld_linux_path(self._env_dir),
         }
 
 
