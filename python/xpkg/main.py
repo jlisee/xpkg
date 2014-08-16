@@ -97,7 +97,7 @@ def jump(args):
     pargs = parts[1:]
 
     # Now lets run the command inside the environment
-    env.jump(program=program, args=pargs)
+    env.jump(program=program, args=pargs, overwrite=args.overwrite)
 
 
 def info(args):
@@ -280,7 +280,7 @@ def main(argv = None):
     root_kwargs = {'type' : str, 'help' : 'Root directory', 'default' : None}
 
     # Create command parsers
-    parser_j = subparsers.add_parser('init', help=jump.__doc__)
+    parser_j = subparsers.add_parser('init', help=init.__doc__)
     parser_j.add_argument('root', type=str, help='Root directory')
     parser_j.add_argument('name', type=str, help='Name for the environment')
     parser_j.add_argument('-t','--toolset', type=str, default=None,
@@ -291,6 +291,8 @@ def main(argv = None):
     parser_j.add_argument(*root_args, **root_kwargs)
     parser_j.add_argument('-c','--command', type=str, help='Command to run',
                           default='bash', dest='command')
+    parser_j.add_argument('-o','--overwrite', action='store_true', default=False,
+                          help='Overwrite instead of prepend environment variables')
     parser_j.set_defaults(func=jump)
 
     parser_i = subparsers.add_parser('install', help=install.__doc__)

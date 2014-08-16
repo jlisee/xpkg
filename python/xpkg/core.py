@@ -769,14 +769,17 @@ class Environment(object):
         return info
 
 
-    def jump(self, program='bash', args=[]):
+    def jump(self, program='bash', args=[], overwrite=False):
         """
-        Jump into the desired environment
+        Jump into the desired environment.  When overwrite all variables will
+        be set instead of pre-pended.
         """
 
+        if args is None:
+            args = []
+
         # Setup the environment variables
-        self.apply_env_variables()
-        #self.apply_env_variables(overwrite=True)
+        self.apply_env_variables(overwrite=overwrite)
 
         # Setup up the PS1 (this doesn't work)
         os.environ['PS1'] = '(xpkg:%s) \u@\h:\w\$' % self.name
