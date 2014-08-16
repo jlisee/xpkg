@@ -796,9 +796,19 @@ class Environment(object):
         cflags = '-I%s' % os.path.join(self._env_dir, 'include')
 
         # Get our list of library directories
-        lib_dirs = [os.path.join(self._env_dir, 'lib')]
+        lib_bases = ['lib']
+
         if util.is_64bit():
-            lib_dirs.append(os.path.join(self._env_dir, 'lib64'))
+            lib_bases.extend([
+                'lib64',
+                'lib/x86_64-linux-gnu',
+                ])
+        else:
+            lib_bases.extend([
+                'lib/i386-linux-gnu',
+            ])
+
+        lib_dirs = [os.path.join(self._env_dir, l) for l in lib_bases]
 
         # For our LDFLAGS and LD_LIBRARY_PATH variables
         ldflags = ' '.join(['-L%s' % l for l in lib_dirs])
