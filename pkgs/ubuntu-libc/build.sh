@@ -11,6 +11,7 @@ packages=(
     libc6-dev
     libc-bin
     libc-dev-bin
+    linux-libc-dev
 )
 
 for package in "${packages[@]}"; do
@@ -27,13 +28,17 @@ for package in "${packages[@]}"; do
             dest_file=$dest_dir$file
         fi
 
+        # Remove the include path x86_64-linux-gnu
+        dest_file="${dest_file/\/x86_64-linux-gnu/}"
+        dest_file="${dest_file/\/i386-linux-gnu/}"
+
         # Transfer the files and open the directories
         if [ -d $file ]; then
             echo mkdir -p $file $dest_file
             mkdir -p $file $dest_file
         else
-            echo cp $file $dest_file
-            cp $file $dest_file
+            echo cp -P $file $dest_file
+            cp -P $file $dest_file
         fi
     done
 done
