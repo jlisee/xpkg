@@ -34,5 +34,22 @@ build:
 
 install:
   - make install
+  # Hack the embedded include paths to remove system ones
+  - full_binary_str_replace:
+     args: ['lib/gcc/%(arch)s-unknown-linux-gnu/%(pkg_version)s/cc1', /usr/local/include, /UNUSED]
+     working_dir: '%(prefix)s'
+
+  - full_binary_str_replace:
+     args: ['lib/gcc/%(arch)s-unknown-linux-gnu/%(pkg_version)s/cc1', /usr/include, /UNUSED2]
+     working_dir: '%(prefix)s'
+
+  - full_binary_str_replace:
+     args: ['lib/gcc/%(arch)s-unknown-linux-gnu/%(pkg_version)s/cc1plus', /usr/local/include, /UNUSED]
+     working_dir: '%(prefix)s'
+
+  - full_binary_str_replace:
+     args: ['lib/gcc/%(arch)s-unknown-linux-gnu/%(pkg_version)s/cc1plus', /usr/include, /UNUSED2]
+     working_dir: '%(prefix)s'
+
   # This makes sure (TODO: make this linux specific)
   #- patchelf: ['%(LD_SO_PATH)s', '%(prefix)s']
