@@ -152,3 +152,49 @@ def symlink(args):
     link_name = args[1]
 
     os.symlink(src, link_name)
+
+
+@command
+def full_binary_str_replace(args):
+    """
+    Replace a complete binary string.
+    """
+
+    # Read in and validate args
+    file_path = args[0]
+    old = args[1]
+    new = args[2]
+
+    if len(new) > len(old):
+        margs = (old, file_path, new)
+        msg = "Cannot replace '%s' in '%s', replacement ('%s') is longer"
+        raise Exception(msg & margs)
+
+    # Generate null-terminated string
+    new_len = len(new)
+    null_old = old + '\0'
+    null_old_len = len(null_old)
+
+    padded_new = new + ('\0' * (null_old_len - new_len))
+
+    args = (len(null_old), len(padded_new))
+    msg = 'Old len %d not equal to new padded len %d' % args
+    assert len(padded_new) == len(null_old), msg
+
+    # Load and replace contents
+    contents = open(file_path).read()
+
+    results = contents.replace(null_old, padded_new)
+
+    # Check to make sure the length hasn't changed
+    len_contents = len(contents)
+    len_results = len(results)
+
+    args = (len_contents, len_results)
+    msg = 'Len changed from %d to %d' % args
+
+    assert len_contents == len_results, msg
+
+    # Write out the final results
+    with open(file_path, 'w') as f:
+        f.write(results)

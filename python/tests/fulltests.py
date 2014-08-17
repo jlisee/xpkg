@@ -784,6 +784,11 @@ class FullTests(TestBase):
         self.assertIn(['libmulti-dev', '1.0.0'], install_info)
         self.assertEqual(4, len(install_info))
 
+        # TODO:
+        #  - purge environment
+        #  - just install libmulti
+        #  - make sure it's the only thing installed
+
 
     def test_multi_tree(self):
         """
@@ -849,6 +854,11 @@ class FullTests(TestBase):
 
         self.assertEqual('I\'m fun\n', output)
 
+        # Now run the command and make sure our internal path changed
+        output = self._xpkg_cmd(['jump', '-c', 'fun -h'])
+
+        self.assertEqual('Path: /fixed/path\n', output)
+
 
     def test_env_commands(self):
         """
@@ -865,6 +875,13 @@ class FullTests(TestBase):
         output = self._xpkg_cmd(['jump', '-c', 'env_command'])
 
         self.assertEqual('Hi\n', output)
+
+
+    # TODO: test build dependencies
+    #  - build package with build-deps
+    #  - make sure normal and build depth is installed
+    #  - purge-environment
+    #  - install package, make sure only normal dep is installed
 
 
 class LinuxTests(TestBase):

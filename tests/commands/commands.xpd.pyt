@@ -20,3 +20,8 @@ install:
   - symlink:
      args: [commands, ./bin/fun]
      working_dir: '%(prefix)s'
+
+  # Replace an internal binary string full
+  - full_binary_str_replace:
+     args: [./bin/fun, /i/am/a/bad/path, /fixed/path]
+     working_dir: '%(prefix)s'
