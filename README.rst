@@ -84,9 +84,12 @@ Concepts:
   - either a zip or tar ball
   - metadata:
 
-    - manifest of files
-    - info on platform & toolset
-    - raw package file
+    - manifest of files & hashes
+    - package dependencies (name + version)
+    - system dependencies (tag/name + version), example:
+        libc >= 2.15
+        linux >= 3.1
+    - inputs file (to be definied)
 
   - try to hold off on pre-post install scripts
 
@@ -97,6 +100,10 @@ Concepts:
 
 
 - Platform: for us this is the binary format and expected kernel
+
+- Places with pages:
+
+ - https://earthserver.com/Setting_up_a_modern_C%2B%2B_development_environment_on_Linux_with_Clang_and_Emacs (Web archive: http://web.archive.org/web/20131111034941/https://earthserver.com/Setting_up_a_modern_C%2B%2B_development_environment_on_Linux_with_Clang_and_Emacs)
 
 Similar Projects
 =================
