@@ -612,13 +612,13 @@ class Environment(object):
         """
 
         # Get the full dep list based on whether we need the build dependencies
-        deps = info.dependencies
+        deps = self._resolve_deps(info.dependencies)
 
         if build:
             # Resolve all the build dependencies
-            build_deps = self._resolve_build_deps(info.build_dependencies)
+            build_deps = self._resolve_deps(info.build_dependencies)
 
-            deps = info.dependencies + build_deps
+            deps += build_deps
 
         # Install or report a version conflict for each dependency as needed
         for dep in deps:
@@ -697,7 +697,7 @@ class Environment(object):
 
             packages.append((name, version))
         elif input_val.endswith('.xpd'):
-            # Path is an xpd file load that then install
+            # Path is an xpd file, load it
             xpd_data = util.load_xpd(input_val)
 
             # Check for all those package combinations
@@ -735,7 +735,7 @@ class Environment(object):
         return (installed, version_match)
 
 
-    def _resolve_build_deps(self, build_deps):
+    def _resolve_deps(self, build_deps):
         """
         Uses the current toolset to resolve build dependencies.  Any build
         dependency started with "tl:" is resolved using the current toolset.
