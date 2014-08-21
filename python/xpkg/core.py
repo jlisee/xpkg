@@ -7,6 +7,9 @@ import tarfile
 
 from collections import defaultdict
 
+# Library Imports
+import toposort
+
 # Project Imports
 from xpkg import build
 from xpkg import linux
@@ -403,42 +406,49 @@ class Environment(object):
           package==version
         """
 
+        install_obj = None
+
         # Check to make sure the install is allowed
         self._install_check(input_val)
 
         # Install our input
         if input_val.endswith('.xpa'):
             # We have a binary package so install it
-            self._install_xpa(input_val)
+            install_obj = XPA(input_val)
 
         elif input_val.endswith('.xpd'):
             # Path is an xpd file load that then install
-            xpd = XPD(input_val)
+            install_obj = XPD(input_val)
 
-            self._install_xpd(xpd)
         else:
             # The input_val is a package name so parse out the desired version
             # and name
             name, version = self._parse_install_input(input_val)
 
             # First try and find the xpa (pre-compiled) version of the package
-            xpa = self._repo.lookup(name, version)
+            install_obj = self._repo.lookup(name, version)
 
-            if xpa:
-                # Install the XPA
-                self._install_xpa(xpa)
-
-            else:
+            if not install_obj:
                 # No binary package try, so lets try and find a description in
                 # the package tree
-                xpd_data = self._tree.lookup(name, version)
+                install_obj = self._tree.lookup(name, version)
 
-                if xpd_data is None:
+                if install_obj is None:
                     msg = "Cannot find description for package: %s" % input_val
                     raise Exception(msg)
 
-                # Install the XPD
-                self._install_xpd(xpd_data)
+        # Install what we have
+        if install_obj:
+            # Check for cycles in the dependency graph
+            self._check_deps(install_obj)
+
+            # Install as needed
+            if isinstance(install_obj, XPA):
+                self._install_xpa(install_obj)
+            elif isinstance(install_obj, XPD):
+                self._install_xpd(install_obj)
+            else:
+                raise Error("Incorrect install obj")
 
 
     def build_xpd(self, xpd, dest_path, verbose=False):
@@ -463,7 +473,76 @@ class Environment(object):
         return res
 
 
-    def _install_xpd(self, xpd, build_into_env=False):
+    def _check_deps(self, input_info):
+        """
+        An XPA or XPD whose deps we are going to check.  Make sure we can
+        install them, and that we don't have any loops.
+        """
+
+        seen_deps = set([input_info.name])
+        to_check = [input_info]
+        dep_graph = defaultdict(set)
+
+        # TODO: build list of every version of each package available
+        # TODO: pull info from _install_deps so we can provide a list of deps
+        # to install
+
+        # Keep working through packages until there are none left and we
+        # have all the edge dependencies
+        while len(to_check) > 0:
+            # Get an object to test
+            info = to_check.pop()
+            cur_name = info.name
+            #print cur_name
+
+            # Build a list of the names of the deps this package needs, we
+            # include build deps of files
+            deps = self._resolve_deps(info.dependencies)
+            #print '  Deps:',deps
+
+            if isinstance(info, XPD):
+                build_deps = self._resolve_deps(info.build_dependencies)
+                #print '  Build deps:',deps
+                deps += build_deps
+
+            # Add these to the list of seen deps
+            for dep in deps:
+                # The input_val is a package name so parse out the desired
+                # version and name
+                name, version = self._parse_install_input(dep)
+
+                # Turn the deps into further objects to check
+                next_info = self._repo.lookup(name, version)
+
+                if not next_info:
+                    next_info = self._tree.lookup(name, version)
+
+                if next_info is None:
+                    msg = "Cannot find description for package: %s" % dep
+                    raise Exception(msg)
+
+                # Catch a package depending on it's self
+                if cur_name == name:
+                    raise Exception('Package "%s" depends on it\'s self' % name)
+
+                # Now add the edge list
+                dep_graph[cur_name].add(name)
+
+                # If we have not seen this before add it to the list to check
+                if not dep in seen_deps:
+                    to_check.append(next_info)
+                    seen_deps.add(cur_name)
+
+        # Run a topological sort to find see if we have any cycles
+        try:
+            toposort.toposort(dep_graph)
+            # Ignore result for now we just want to catch cycles
+        except ValueError as e:
+            # TODO: translate this exception better
+            raise Exception(str(e))
+
+
+    def _install_xpd(self, xpd, build_into_env=False, installing=None):
         """
         Builds package and directly installs it into the given environment.
 

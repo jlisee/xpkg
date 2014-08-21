@@ -1,4 +1,5 @@
 PyYAML==3.10
 argparse==1.2.1
 pyelftools==0.21
+toposort==1.1
 wsgiref==0.1.2
