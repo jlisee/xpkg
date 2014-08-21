@@ -46,6 +46,30 @@ References
 Nice to haves
 --------------
 
+ - SAT solver:
+   - Wiki: http://en.wikipedia.org/wiki/Boolean_satisfiability_problem
+   - General Idea (my understanding):
+     - Assume: want to install A
+       - A needs B* & C*
+       - C needs B2
+       - B has versions B1 and B
+     - A! or B1 or B2
+     - A! or C
+     - C! or B2
+   - PicoSAT (small C based solver):
+     - CNF: format a list of OR clauses AND together
+     - Python wrapper: https://pypi.python.org/pypi/pycosat
+   - SUSE SAT solver lib:
+     libsolv (C): https://github.com/openSUSE/libsolv
+     high level wrapper (python & C): https://github.com/akozumpl/hawkey
+   - SUSE zypper SAT solver, papers:
+     http://files.opensuse.org/opensuse/en/b/b9/Fosdem2008-solver.pdf
+     https://www.youtube.com/watch?v=Z8ArpGRbxTM
+   - SUSE SAT solver guides:
+     http://en.opensuse.org/openSUSE:Libzypp_satsolver_basics (Copy of FOSDEM2008)
+     http://en.opensuse.org/openSUSE:Libzypp_satsolver_internals
+     http://doc.opensuse.org/projects/satsolver/HEAD/ (doxygen docs)
+
  - create python packages
    - need pip package
    - helper function to generate xpd from pypi would help
