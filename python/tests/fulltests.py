@@ -203,12 +203,21 @@ class FullTests(TestBase):
         self._make_empty_env()
 
         # TODO: make this linux specific
-        ld_so_path = os.path.join(self.env_dir, 'lib', 'ld-linux-xpkg.so')
         settings_dir = os.path.join(self.env_dir, 'var', 'xpkg')
+        self.assertPathExists(settings_dir)
 
+
+    @unittest.skip("ld-linux feature not supported")
+    def test_ld_linux_init(self):
+        """
+        Make sure the ld path is setup properly linux.
+        """
+
+        self._make_empty_env()
+
+        ld_so_path = os.path.join(self.env_dir, 'lib', 'ld-linux-xpkg.so')
         self.assertLPathExists(ld_so_path)
         self.assertPathExists(ld_so_path)
-        self.assertPathExists(settings_dir)
 
 
     def test_no_env(self):
