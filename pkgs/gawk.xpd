@@ -1,0 +1,16 @@
+name: gawk
+description: GNU awk, a pattern scanning and processing language
+version: 4.1.1
+
+files:
+  md5-45f5b09aa87b4744c4c53bf274e96ed0:
+    url: http://ftp.gnu.org/gnu/gawk/gawk-4.1.1.tar.gz
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
