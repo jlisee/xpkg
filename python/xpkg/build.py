@@ -80,7 +80,8 @@ class Toolset(object):
     APPEND_VAR = 2
     PREPEND_VAR = 3
 
-    def __init__(self, name, pkg_info, env_vars = None):
+    def __init__(self, name, pkg_info, env_vars=None, isolate=False,
+                 no_build_deps=False):
         self.name = name
         self.build_deps = pkg_info
 
@@ -88,6 +89,12 @@ class Toolset(object):
             self.env_vars = {}
         else:
             self.env_vars = env_vars
+
+        self.isolate = isolate
+        self.no_build_deps = no_build_deps
+
+        if self.isolate and self.no_build_deps:
+            raise Exception('Cannot isolate an ignore build deps at the same time')
 
 
     def to_dict(self):
@@ -97,7 +104,9 @@ class Toolset(object):
         return {
             'name' : self.name,
             'build-deps' : self.build_deps,
-            'env-vars' : self.env_vars
+            'env-vars' : self.env_vars,
+            'isolate' : self.isolate,
+            'no_build_deps' : self.no_build_deps,
         }
 
 
@@ -107,6 +116,11 @@ class Toolset(object):
         provided build_deps.  If string of 0 length is returned the dependency
         should be ignored.
         """
+
+        # Fallback to whatever the user has
+        if self.no_build_deps:
+            return ''
+
 
         # Error out if we don't have the require dep
         if not depname in self.build_deps:
@@ -174,7 +188,9 @@ class Toolset(object):
         """
         return Toolset(name=d['name'],
                        pkg_info=d['build-deps'],
-                       env_vars=d['env-vars'])
+                       env_vars=d['env-vars'],
+                       isolate=d['isolate'],
+                       no_build_deps=d['no_build_deps'])
 
 
     @staticmethod
@@ -189,21 +205,13 @@ class Toolset(object):
         return BuiltInToolsets[name]
 
 
-class LocalToolset(Toolset):
-    """
-    Resolve all build deps to '', so that we use whatever the system has.
-    """
-
-    def __init__(self):
-        # TODO: only add this path on linux
-        #env_vars = {'LDFLAGS' : LD_VAR}
-        env_vars = {}
-
-        Toolset.__init__(self, 'local', pkg_info={}, env_vars=env_vars)
-
-
-    def lookup_build_dep(self):
-        return ''
+# Resolve all build deps to '', so that we use whatever the system has. Used
+# for bootstraping our set of packages
+LocalToolset = Toolset(
+    'local',
+    pkg_info={},
+    no_build_deps=True,
+    )
 
 
 # Sets up dynamic linker to point to our indirection path
@@ -242,10 +250,11 @@ TestToolset = Toolset(
         #'LD_SO' : ('%(LD_SO_PATH)s', Toolset.REPLACE_VAR),
     })
 
+
 # Our map of toolsets
 BuiltInToolsets = {
     'GNU' : GNUToolset,
-    'local' : LocalToolset(),
+    'local' : LocalToolset,
     'Test' : TestToolset,
 }
 
@@ -332,7 +341,8 @@ class PackageBuilder(object):
             # If we have an environment apply it's variables so the build can
             # reference the libraries installed in it
             if environment:
-                environment.apply_env_variables()
+                isolate = environment.toolset.isolate
+                environment.apply_env_variables(isolate=isolate)
 
             # Fetches and unpacks all the required sources for the package
             self._get_sources()

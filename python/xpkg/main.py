@@ -97,7 +97,7 @@ def jump(args):
     pargs = parts[1:]
 
     # Now lets run the command inside the environment
-    env.jump(program=program, args=pargs, overwrite=args.overwrite)
+    env.jump(program=program, args=pargs, isolate=args.isolate)
 
 
 def info(args):
@@ -291,7 +291,7 @@ def main(argv = None):
     parser_j.add_argument(*root_args, **root_kwargs)
     parser_j.add_argument('-c','--command', type=str, help='Command to run',
                           default='bash', dest='command')
-    parser_j.add_argument('-o','--overwrite', action='store_true', default=False,
+    parser_j.add_argument('-i','--isolate', action='store_true', default=False,
                           help='Overwrite instead of prepend environment variables')
     parser_j.set_defaults(func=jump)
 

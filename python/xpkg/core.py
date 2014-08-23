@@ -848,9 +848,9 @@ class Environment(object):
         return info
 
 
-    def jump(self, program='bash', args=[], overwrite=False):
+    def jump(self, program='bash', args=[], isolate=False):
         """
-        Jump into the desired environment.  When overwrite all variables will
+        Jump into the desired environment.  When we isolate all variables will
         be set instead of pre-pended.
         """
 
@@ -858,7 +858,7 @@ class Environment(object):
             args = []
 
         # Setup the environment variables
-        self.apply_env_variables(overwrite=overwrite)
+        self.apply_env_variables(isolate=isolate)
 
         # Setup up the PS1 (this doesn't work)
         os.environ['PS1'] = '(xpkg:%s) \u@\h:\w\$' % self.name
@@ -925,13 +925,13 @@ class Environment(object):
         return self.toolset.get_env_var_info(subs)
 
 
-    def apply_env_variables(self, overwrite=False):
+    def apply_env_variables(self, isolate=False):
         """
         Change the current environment variables so that we can use the things
         are in that environment.
 
-          overwrite - over write local environment variables, try to limit the
-                      effect of other things installed on the system.
+          isolate - over write local environment variables, try to limit the
+                    effect of other things installed on the system.
         """
 
         env_paths = self.get_env_variables()
@@ -942,7 +942,7 @@ class Environment(object):
 
             cur_var = os.environ.get(varname, None)
 
-            if cur_var and not overwrite:
+            if cur_var and not isolate:
                 os.environ[varname] = varpath + sep + cur_var
             else:
                 os.environ[varname] = varpath
