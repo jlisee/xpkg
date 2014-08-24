@@ -893,6 +893,39 @@ class FullTests(TestBase):
     #  - install package, make sure only normal dep is installed
 
 
+    def test_create(self):
+        # Get the basics from our directory
+        p = os.path.join(root_dir, 'tests', 'create', 'autotool')
+        xpd_path = os.path.join(p, 'result.xpd')
+        expected = yaml.load(open(xpd_path))
+        expected_path = os.path.join(self.work_dir, 'autotool.xpd')
+
+        # Create our tar file
+        tar_name = '%s-%s.tar.gz' % (expected['name'], expected['version'])
+
+        tar_path = os.path.join(self.work_dir, tar_name)
+
+        util.make_tarball(tar_path, p)
+
+        # Update the expected with the correct hash and file path
+        hash_str = util.hash_file(open(tar_path), hashlib.md5)
+        expected['files'] = {'md5-' + hash_str : {'url' : tar_path}}
+
+        # Run our command with that tar file
+        abs_tar = os.path.abspath(tar_path)
+
+        with util.save_env():
+            os.environ['PYTHONPATH'] = os.getcwd() + ':' + os.environ.get('PYTHONPATH','')
+            with util.cd(self.work_dir):
+                output = self._xpkg_cmd(['create', abs_tar])
+
+        # Now lets load our file
+        self.assertPathExists(expected_path)
+        xpd = yaml.load(open(expected_path))
+
+        self.assertEquals(expected, xpd)
+
+
 class LinuxTests(TestBase):
 
     @unittest.skip("this feature is current not-enabled")

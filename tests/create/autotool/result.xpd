@@ -1,0 +1,29 @@
+name: autotool
+version: 3.2.1
+description:
+
+build-dependencies:
+  - tl:shell
+  - tl:base
+  - tl:c-compiler
+  - tl:linker
+  - make
+  - sed
+  - grep
+  - gawk
+
+dependencies:
+ - tl:libc
+
+files:
+  hash_replace:
+    url: file_replace
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install

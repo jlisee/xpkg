@@ -2,16 +2,21 @@
 
 # Author: Joseph Lisee <jlisee@gmail.com>
 
+# Python Imports
 import argparse
 import os
 import shlex
 import sys
+
+# Library Imports
+import yaml
 
 # Project Imports
 from xpkg import build
 from xpkg import commands
 from xpkg import core
 from xpkg import util
+from xpkg import create as xcreate
 
 
 def init(args):
@@ -245,6 +250,25 @@ def run_command(args):
         commands.run_command(cmd)
 
 
+def create(args):
+    """
+    Retrieve the given URI, uses xpkg cache if possible.
+    """
+
+    # Generate an XPD to build the resource at that URL
+    xpd_yaml = xcreate.url_to_xpd(args.url[0])
+
+    # Now create an output path and check it
+    output_path = args.output
+
+    if not output_path:
+        xpd = yaml.load(xpd_yaml)
+        output_path = xpd['name'] + '.xpd'
+
+    with open(output_path, 'w') as f:
+        f.write(xpd_yaml)
+
+
 def _get_env_dir(env_dir):
     """
     Returns the absolute path to the given directory, or just the None.
@@ -341,6 +365,13 @@ def main(argv = None):
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=run_command)
 
+    parser_i = subparsers.add_parser('create', help=create.__doc__)
+    parser_i.add_argument('url', type=str, nargs=1,
+                          help='URL of archive you wish to create an XPD for')
+    parser_i.add_argument('-o', '--output', type=str, default=None,
+                          help='(Optional) Output file for the generated XPD')
+    parser_i.add_argument(*root_args, **root_kwargs)
+    parser_i.set_defaults(func=create)
 
     # parse some argument lists
     args = parser.parse_args(argv[1:])
@@ -348,6 +379,8 @@ def main(argv = None):
     if args.debug:
         args.func(args)
     else:
+        # TODO: provide a debug option that shows the stack trace, or maybe log
+        # it
         try:
             args.func(args)
         except core.Exception as e:
