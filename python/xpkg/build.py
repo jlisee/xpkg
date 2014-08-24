@@ -394,7 +394,7 @@ class PackageBuilder(object):
         """
 
         # Download and unpack our files
-        for filehash, info in self._xpd._data['files'].iteritems():
+        for filehash, info in self._xpd._data.get('files', {}).iteritems():
 
             # Translate the URL as needed, this is so we can address files
             # (like patches) in the tree
@@ -475,17 +475,20 @@ class PackageBuilder(object):
         """
 
         # TODO: log this
-        print 'Installing...'
+        if 'install' in self._xpd._data:
+            print 'Installing...'
 
-        pre_paths = set(util.list_files(self._target_dir))
+            pre_paths = set(util.list_files(self._target_dir))
 
-        self._run_cmds(self._xpd._data['install'])
+            self._run_cmds(self._xpd._data['install'])
 
-        post_paths = set(util.list_files(self._target_dir))
+            post_paths = set(util.list_files(self._target_dir))
 
-        new_paths = post_paths - pre_paths
+            new_paths = post_paths - pre_paths
 
-        return new_paths
+            return new_paths
+
+        return []
 
 
     def _run_cmds(self, raw):

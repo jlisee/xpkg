@@ -894,6 +894,10 @@ class FullTests(TestBase):
 
 
     def test_create(self):
+        """
+        Test that XPD creation helper works properly.
+        """
+
         # Get the basics from our directory
         p = os.path.join(root_dir, 'tests', 'create', 'autotool')
         xpd_path = os.path.join(p, 'result.xpd')
@@ -924,6 +928,26 @@ class FullTests(TestBase):
         xpd = yaml.load(open(expected_path))
 
         self.assertEquals(expected, xpd)
+
+
+    def test_metapkgs(self):
+        """
+        Make sure we can build and install meta-packages.
+        """
+
+        # Make sure we can access the package tree for building
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Install greet
+        self._xpkg_cmd(['install', 'metapkg'])
+
+        # Make sure we have the basic program installed by 'basic' which the
+        # meta-package pulled in
+        greeter_bin = os.path.join(self.env_dir, 'bin', 'basic')
+
+        output = self._xpkg_cmd(['jump', '-c', 'basic'])
+        self.assertEqual('Hello, world!\n', output)
+
 
 
 class LinuxTests(TestBase):
