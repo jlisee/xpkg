@@ -1,0 +1,16 @@
+name: patch
+description: Apply a diff file to an original
+version: 2.7.1
+
+files:
+  md5-95dd8d7e41dcbcecdd5cd88ef915378d:
+    url: http://ftp.gnu.org/gnu/patch/patch-2.7.1.tar.gz
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make -j%(jobs)s install
