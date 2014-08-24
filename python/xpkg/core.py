@@ -535,6 +535,8 @@ class Environment(object):
 
         # Run a topological sort to find see if we have any cycles
         try:
+            # TODO: replace this with our internal sort once it has a cycle
+            # detection option
             toposort.toposort(dep_graph)
             # Ignore result for now we just want to catch cycles
         except ValueError as e:

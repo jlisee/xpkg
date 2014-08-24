@@ -218,6 +218,9 @@ class SortTests(unittest.TestCase):
 
         self.assertEqual(expected, topo_graph)
 
+    # TODO: update this code to optionally detect cycles and make sure are
+    # detected properly (like toposort so we can drop the req)
+
 
 if __name__ == '__main__':
     unittest.main()
