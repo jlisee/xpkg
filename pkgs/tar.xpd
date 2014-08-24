@@ -1,0 +1,16 @@
+name: tar
+description: GNU version of the tar archiving utility
+version: 1.28
+
+files:
+  md5-8f32b2bc1ed7ddf4cf4e4a39711341b0:
+    url: http://ftp.gnu.org/gnu/tar/tar-1.28.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
