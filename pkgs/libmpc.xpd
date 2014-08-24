@@ -2,7 +2,14 @@ name: libmpc
 description: GNU library for arithmetic of complex numbers.
 version: 1.0.1
 
+# Circular dep (this lib is xneeded to build gcc)
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
 dependencies:
+ - tl:libc
  - libmpfr==3.1.2
  - libgmp==5.1.2
 

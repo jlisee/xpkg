@@ -2,6 +2,14 @@ name: tar
 description: GNU version of the tar archiving utility
 version: 1.28
 
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+
 files:
   md5-8f32b2bc1ed7ddf4cf4e4a39711341b0:
     url: http://ftp.gnu.org/gnu/tar/tar-1.28.tar.bz2

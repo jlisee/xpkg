@@ -2,6 +2,14 @@ name: diffutils
 description: File comparison utilities
 version: 3.2
 
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+
 files:
   md5-22e4deef5d8949a727b159d6bc65c1cc:
     url: http://ftp.gnu.org/gnu/diffutils/diffutils-3.2.tar.gz

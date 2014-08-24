@@ -2,6 +2,14 @@ name: sed
 description: The GNU sed stream editor
 version: 4.2.2
 
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+ - tl:libc
+
 files:
   md5-7ffe1c7cdc3233e1e0c4b502df253974:
     url: http://ftp.gnu.org/gnu/sed/sed-4.2.2.tar.bz2

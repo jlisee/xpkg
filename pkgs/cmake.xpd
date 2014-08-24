@@ -2,7 +2,17 @@ name: cmake
 description: Cross-platform, open-source build system
 version: 2.8.11.2
 
+build-dependencies:
+  - tl:shell
+  - tl:base
+  - tl:c++-compiler
+  - tl:linker
+  - make
+  - sed
+
 dependencies:
+  # TODO: need deps on libstdc++
+  - tl:libc
   - ncurses
 
 files:

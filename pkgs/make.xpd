@@ -4,6 +4,20 @@ description: >
   files of a program from the program's source files.
 version: 3.82
 
+# We don't use the autotools-build here because we don't want the circular make
+# dependency
+build-dependencies:
+  - tl:shell
+  - tl:base
+  - tl:c-compiler
+  - tl:linker
+  - sed
+  - grep
+  - gawk
+
+dependencies:
+ - tl:libc
+
 files:
   md5-1a11100f3c63fcf5753818e59d63088f:
     url: http://mirrors.kernel.org/gnu/make/make-3.82.tar.bz2

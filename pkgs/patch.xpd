@@ -2,6 +2,14 @@ name: patch
 description: Apply a diff file to an original
 version: 2.7.1
 
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+ - tl:libc
+
 files:
   md5-95dd8d7e41dcbcecdd5cd88ef915378d:
     url: http://ftp.gnu.org/gnu/patch/patch-2.7.1.tar.gz

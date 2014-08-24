@@ -2,6 +2,15 @@ name: zlib
 description: General purpose data compression library
 version: 1.2.8
 
+# Circular dep (this lib is needed to build gcc)
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+
 files:
   md5-44d667c142d7cda120332623eab69f40:
     url: http://zlib.net/zlib-1.2.8.tar.gz

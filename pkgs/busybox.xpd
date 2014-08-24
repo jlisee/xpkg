@@ -4,9 +4,12 @@ description: >
   executable.
 version: 1.21.1
 
-# build-dependencies:
-#   - make
-#   - sed
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - findutils
+  - diffutils
 
 files:
   md5-795394f83903b5eec6567d51eebb417e:

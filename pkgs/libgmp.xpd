@@ -2,6 +2,16 @@ name: libgmp
 description: The GNU Multiple Precision Arithmetic Library
 version: 5.1.2
 
+# Circular dep (this lib is xneeded to build gcc)
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - m4
+
+dependencies:
+  - tl:libc
+
 files:
   md5-7e3516128487956cd825fef01aafe4bc:
     url: ftp://ftp.gmplib.org/pub/gmp-5.1.2/gmp-5.1.2.tar.bz2

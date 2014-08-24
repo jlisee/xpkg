@@ -2,9 +2,13 @@ name: uclibc
 description: C library for developing embedded Linux systems
 version: 0.9.33
 
-# build-dependencies:
-#   - make
-#   - sed
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - findutils
+  - patch
+  - tar
 
 files:
   md5-cf9d25e4b3c87af1a99d33a6b959fbf1:

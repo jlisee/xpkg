@@ -2,6 +2,16 @@ name: dash
 description: Debian Almquist shell (DASH) POSIX-compliant implementation of /bin/sh
 version: 0.5.7
 
+# Circular dependency with "shell" (this *is* shell)
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - make
+
+dependencies:
+ - tl:libc
+
 files:
   md5-f6cedb10ae7258adb5ab17a10ae80d51:
     url: http://gondor.apana.org.au/~herbert/dash/files/dash-0.5.7.tar.gz
