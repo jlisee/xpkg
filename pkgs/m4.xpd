@@ -1,0 +1,16 @@
+name: m4
+description: a macro processing language
+version: 1.4.17
+
+files:
+  md5-a5e9954b1dae036762f7b13673a2cf76:
+    url: http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.gz
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
