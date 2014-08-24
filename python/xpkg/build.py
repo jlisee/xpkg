@@ -227,13 +227,16 @@ GNUToolset = Toolset(
         'linker' : 'binutils',
         'c-compiler' : 'gcc',
         'c++-compiler' : 'gcc',
-        'libc' : 'libc',
+        # TODO: check this to "local-libc" package
+        'libc' : 'ubuntu-libc',
     },
     env_vars={
         'CC' : ('gcc', Toolset.REPLACE_VAR),
         'CXX' : ('g++', Toolset.REPLACE_VAR),
         #'LDFLAGS' : LD_VAR,
     })
+
+
 
 # Toolset for testing
 TestToolset = Toolset(
