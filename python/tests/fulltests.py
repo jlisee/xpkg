@@ -1012,7 +1012,7 @@ class ToolsetTests(TestBase):
         for pkg_name in ['busybox', 'tcc', 'uclibc']:
             xpd_path = os.path.join(root_tree, pkg_name + '.xpd')
 
-            args = ['build', xpd_path, '--dest', cls.toolset_repo_dir]
+            args = ['build', xpd_path, '--dest', cls.toolset_repo_dir, '--no-env']
 
             cmd = [sys.executable, '-m', 'xpkg.main'] + args
 

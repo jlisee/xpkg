@@ -67,6 +67,10 @@ def build_(args):
     Create the binary for of the desired package.
     """
 
+    # Verify arguments
+    if args.use_env and args.no_env:
+        raise Exception("Can't build with 'no-env' and 'use-env'")
+
     # Load the description from th file
     xpd = core.XPD(args.path)
 
@@ -74,7 +78,7 @@ def build_(args):
 
     have_deps = (len(xpd.dependencies) + len(xpd.build_dependencies)) > 0
 
-    if args.use_env or have_deps:
+    if args.use_env or have_deps and not args.no_env:
         # If we have dependencies build within the enviornemnt
         env = _create_env(args.root)
 
@@ -336,6 +340,8 @@ def main(argv = None):
                           help='Where to place the package')
     parser_i.add_argument('-e','--use-env', action='store_true', default=False,
                           help='Force environment usage')
+    parser_i.add_argument('-n','--no-env', action='store_true', default=False,
+                          help='Force independent build')
     parser_i.add_argument('-v','--verbose', action='store_true', default=False,
                           help='Print build output to screen')
     parser_i.set_defaults(func=build_)
