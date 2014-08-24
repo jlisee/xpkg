@@ -523,7 +523,9 @@ class Environment(object):
                     raise Exception(msg)
 
                 # Catch a package depending on it's self
-                if cur_name == name:
+                is_installed = self._is_package_installed(name, version)
+
+                if not is_installed and cur_name == name:
                     raise Exception('Package "%s" depends on it\'s self' % name)
 
                 # Now add the edge list
