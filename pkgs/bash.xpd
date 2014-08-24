@@ -1,0 +1,24 @@
+name: bash
+description: GNU Bourne Again SHell
+version: 4.3
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+
+files:
+  md5-81348932d5da294953e15d4814c74dd1:
+    url: http://ftp.gnu.org/gnu/bash/bash-4.3.tar.gz
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
