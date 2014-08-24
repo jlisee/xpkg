@@ -3,6 +3,7 @@
 # Python Imports
 import json
 import os
+import stat
 import tarfile
 
 from collections import defaultdict
@@ -1137,6 +1138,17 @@ class XPA(object):
             for file_path in files:
                 full_path = os.path.join(dest_path, file_path)
 
+                # Make sure we have write access to the file so we can change
+                # its contents. Some packages have write protected files with
+                # paths we need to change.
+                fperms = os.stat(full_path).st_mode
+                perms_changed = True
+
+                if 0 == (fperms & stat.S_IWUSR):
+                    perms_changed = True
+                    os.chmod(full_path, fperms | stat.S_IWUSR)
+
+                # Read in the file contents and update the variables
                 contents = open(full_path).read()
 
                 if replace:
@@ -1157,6 +1169,10 @@ class XPA(object):
                 # Write out the final results
                 with open(full_path, 'w') as f:
                     f.write(results)
+
+                # Change perms back if needed
+                if perms_changed:
+                    os.chmod(full_path, fperms)
 
         # Do a simple find and replace in all text files
         replace_env_in_files(files = offset_info['text_files'],
