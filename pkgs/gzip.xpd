@@ -1,0 +1,24 @@
+name: gzip
+description: GNU compression utilities
+version: 1.5
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+
+files:
+  md5-11b76536941ee1c0221fe6eefbcb32cb:
+    url: http://ftp.gnu.org/gnu/gzip/gzip-1.5.tar.gz
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
