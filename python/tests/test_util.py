@@ -4,6 +4,7 @@ __doc__ = """Tests for the util module
 """
 
 # Python Imports
+import os
 import unittest
 
 # Project Imports
@@ -174,6 +175,30 @@ class UtilTests(unittest.TestCase):
                    "    of a program from the program's source files."
 
         self.assertEqual(expected, wrapped)
+
+    def test_temp_dir(self):
+        """
+        Make sure our temporary directory function works
+        """
+
+        with util.temp_dir('bob_smith') as tdir:
+            # Make sure we have the directory and our naming convention
+            if not os.path.exists(tdir):
+                self.fail('Temporary dir: "%s" does not exist' % tdir)
+
+            self.assertRegexpMatches(tdir, '.*bob_smith')
+
+            # Touch a file and make sure it's in our dir
+            util.touch('my_file')
+
+            if not os.path.exists(os.path.join(tdir, 'my_file')):
+                self.fail('We are not in the desired directory')
+
+
+        # Make sure the directory no longer existss
+        if os.path.exists(tdir):
+            self.fail('Temporary dir: "%s" still exists, not cleaned up' % tdir)
+
 
 
 class SortTests(unittest.TestCase):

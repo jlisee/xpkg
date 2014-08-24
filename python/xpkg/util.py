@@ -7,10 +7,12 @@ import hashlib
 import multiprocessing
 import os
 import re
+import shutil
 import string
 import subprocess
 import sys
 import tarfile
+import tempfile
 import urllib
 
 from contextlib import contextmanager
@@ -179,6 +181,27 @@ def cd(new_dir):
     finally:
         # Return to current directory
         os.chdir(cwd)
+
+
+@contextmanager
+def temp_dir(suffix='', prefix='tmp', dir=None):
+    """
+    Create temporary directory, changes into it, then remove it when the block
+    exists.
+
+    with temp_dir() as new_dir:
+        # Current directory is the temporary directory 'new_dir'
+    # 'new_dir' no longer exists
+    """
+
+    temp_dir = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
+
+    try:
+        with cd(temp_dir):
+            yield temp_dir
+
+    finally:
+        shutil.rmtree(temp_dir)
 
 
 def template_file(source_path, dest_path, args):
