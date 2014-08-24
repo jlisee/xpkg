@@ -2,6 +2,9 @@ name: cmake
 description: Cross-platform, open-source build system
 version: 2.8.11.2
 
+dependencies:
+  - ncurses
+
 files:
   md5-6f5d7b8e7534a5d9e1a7664ba63cf882:
     url: http://www.cmake.org/files/v2.8/cmake-2.8.11.2.tar.gz
