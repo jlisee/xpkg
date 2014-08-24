@@ -124,14 +124,9 @@ def generate_yaml(pkg_info):
     if pkg_info.build_sys == 'autotools':
         if 'c' in pkg_info.languages:
             build_pkgs.extend([
-                'tl:shell',
-                'tl:base',
+                'autotools-build',
                 'tl:c-compiler',
                 'tl:linker',
-                'make',
-                'sed',
-                'grep',
-                'gawk',
                 ])
 
             pkgs.extend([

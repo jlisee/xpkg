@@ -1,0 +1,11 @@
+name: autotools-build
+description: meta-package for packages required by autotools build systems
+version: 1
+
+dependencies:
+  - tl:shell
+  - tl:base
+  - make
+  - sed
+  - grep
+  - gawk

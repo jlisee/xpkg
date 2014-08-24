@@ -272,6 +272,7 @@ def create(args):
     with open(output_path, 'w') as f:
         f.write(xpd_yaml)
 
+    print 'XPD written to:',output_path
 
 def _get_env_dir(env_dir):
     """
