@@ -952,6 +952,13 @@ class Environment(object):
             else:
                 os.environ[varname] = varpath
 
+        # Remove not being set environment environment variables when we are
+        # isolating the environment
+        if isolate:
+            for varname in os.environ.keys():
+                if varname not in env_paths:
+                    del os.environ[varname]
+
         # Setup the Xpkg path
         os.environ[xpkg_root_var] = self._env_dir
 
