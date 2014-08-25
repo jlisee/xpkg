@@ -232,8 +232,11 @@ def list_packages(args):
     # Create environment
     env = _create_env(args.root)
 
+    # Get a list of packages
+    pkgs = list(env._pdb.iter_packages())
+
     # List packages
-    for package, info in env._pdb.iter_packages():
+    for package, info in sorted(pkgs, cmp=lambda a,b: cmp(a[0], b[0])):
         print '  %s - %s' % (package, info['version'])
 
 
