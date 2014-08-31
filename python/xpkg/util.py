@@ -4,6 +4,7 @@
 import copy
 import fnmatch
 import hashlib
+import json
 import multiprocessing
 import os
 import re
@@ -14,6 +15,8 @@ import sys
 import tarfile
 import tempfile
 import urllib
+
+import pprint as pprint_
 
 from contextlib import contextmanager
 
@@ -757,3 +760,14 @@ def is_64bit():
     """
 
     return sys.maxsize > 2**32
+
+
+def pprint(v):
+    """
+    Prints the given object, includes support for nested dicts.
+    """
+
+    if type(v) in [list, dict,int, float, tuple]:
+        print json.dumps(v, sort_keys='True', indent=2)
+    else:
+        pprint_.pprint(v)
