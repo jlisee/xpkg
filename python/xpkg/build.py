@@ -423,7 +423,7 @@ class PackageBuilder(object):
 
             # Unpack or copy file
             end_match = [final_url.endswith(e) for e in
-                         ('.tar.gz', 'tar.bz2', '.tar.xz')]
+                         ('.tar.gz', 'tar.bz2', '.tar.xz', '.tgz')]
             is_tar = reduce(lambda x,y: x | y, end_match)
 
             if is_tar:
