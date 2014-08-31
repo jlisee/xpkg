@@ -3,17 +3,29 @@ Showstoppers
 
 Things a package manager must have (and ours needs to work)
 
- - provide proper build time dependencies for all packages
-   - Test having overwrite==True for env variables (maybe make a toolset variable)
-
- - Create "bootstrap" environments which null-out these dependencies
-   so you can use the local versions
-
  - create a set of python packages
+     - fix broken pyc files because of binary string replacement
+
+ - fix packing parsing, tasks 3 seconds do an info call on the python package, now everything is freaking slow because of it
+     - maybe switch to msgpack or bson for the file cache
+     - split things into metadata + contents, so we don't have to parse/handle
+       contents all the time
+     - lazy load the content as needed (we don't need the bulky contents all the time)
+     - A pure binary format would be too much right now :(
+
+ - split up python into minimal (just core interp, key libs), normal, and dev
+ - split out libstdc++ and libgcc_s from gcc
+
+ - things to look at:
+    - look at how fakeroot works for package isolation
+    - arch build tool: https://wiki.archlinux.org/index.php/Makepkg
+      - its in: ftp://ftp.archlinux.org/other/pacman/pacman-4.1.2.tar.gz
 
  - create a way for a for package to hard-link/copy in system libraries
    - used for opengl so we can link again the vendor version
    - X11 we will just build ourselves
+
+ - make sure binutils is not searching the local system directories
 
  - generalize the ubuntu-libc package to "local-libc"
 
@@ -23,6 +35,11 @@ Things a package manager must have (and ours needs to work)
  - file hashing:
    - store the hash of the files in a package
    - handle the has of files with install path offsets
+
+ - environment lock file to prevent two processes from changing the env at once
+
+ - crashes during install should roll back and remove all files properly
+   - right now it just leaves a bunch of files laying around
 
  - isolated (chroot?) builds (KEY FEATURE)
    - other utils? (docker, by-hand lxc?)
@@ -56,7 +73,7 @@ Nice to haves
      - A! or B1 or B2
      - A! or C
      - C! or B2
-   - PicoSAT (small C based solver):
+   - PicoSAT (small C based solver): 
      - CNF: format a list of OR clauses AND together
      - Python wrapper: https://pypi.python.org/pypi/pycosat
    - SUSE SAT solver lib:
@@ -70,10 +87,29 @@ Nice to haves
      http://en.opensuse.org/openSUSE:Libzypp_satsolver_internals
      http://doc.opensuse.org/projects/satsolver/HEAD/ (doxygen docs)
 
+ - support for network access to package roots, and environments
+
+ - separate builds into steps
+   - make the builder just a system that runs a generic set of steps
+   - independent of the builder we can produce the steps (used for nix/disthash style input derivations)
+
  - create python packages
    - need pip package
    - helper function to generate xpd from pypi would help
    - just use pip to do the install
+   - maybe even have a way to install from pypi directly, without needed to have
+     the xpd file, would only work for pure packages
+
+ - create a command to build all bootstrap packages
+   - it's the set of all dependencies for the compiler in an enviornment
+   - build the set of packages which are needed to build packages
+   - this is used to provide the user on a specific platform with the chicken and egg packages
+
+ - better mirror support:
+   - support "content addressable" mirror
+   - turn the cache into just a local content addressbale mirro
+   - support file name based mirrors as well
+   - make mirror support transparent
 
  - mini-toolset to test toolset support on:
    - busybox - replaces coreutils (maybe toybox)
@@ -104,6 +140,15 @@ Nice to haves
 
  - only warn about a directory having files (on removal) if no other
    package has files in that directory
+
+ - commands for managing the environment
+   - add additional trees
+   - add additional roots
+
+ - better building workflow support:
+   - command to setup the temp dir and download files
+   - command that lets you jump into the temp dir, and manually examine and
+     execute steps
 
  - xz compression support, see: https://github.com/peterjc/backports.lzma
    - then we can support newer coreutils version
