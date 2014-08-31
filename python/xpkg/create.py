@@ -27,8 +27,11 @@ PkgInfo = namedtuple('PkgInfo', [
 
 PKG_VER_REGEX = re.compile('([a-zA-Z0-9]+)-([0-9\.]+).*')
 
-def get_pkg_info(url):
-    # Grab the file name we are going to get from the URL
+def get_name_version(url):
+    """
+    Returns the name and version of the project based on the given URL
+    """
+
     r, file_name = os.path.split(url)
 
     # Pull out the name and version from the package
@@ -40,9 +43,19 @@ def get_pkg_info(url):
     if m:
         groups = m.groups()
         if len(groups) > 0:
-            name = groups[0]
+            name = groups[0].lower()
         if len(groups) > 1:
             version = groups[1].strip('.')
+
+    return name, version
+
+
+def get_pkg_info(url):
+    # Grab the file name we are going to get from the URL
+    r, file_name = os.path.split(url)
+
+    # Pull out the name and version from the package
+    name, version = get_name_version(url)
 
     # Grab the file
     # TODO: use the cache interface so it's pre-cached for the user
@@ -57,9 +70,13 @@ def get_pkg_info(url):
     res = subprocess.check_output(args)
 
     description = None
+
     if len(res):
-        fname, raw_descript = res.split('-')
-        description = raw_descript.strip()
+        parts = res.split('-')
+
+        if len(parts) > 1:
+            fname, raw_descript = parts[:2]
+            description = raw_descript.strip()
 
     # Unpack the package and guess the build system
     package_dir = util.unpack_tarball(file_name)
@@ -71,6 +88,8 @@ def get_pkg_info(url):
 
     if 'configure' in root_files:
         build_sys = 'autotools'
+    elif 'Makefile' in root_files:
+        build_sys = 'make'
 
     # Try to guess project languages
     extensions = defaultdict(int)
@@ -129,9 +148,19 @@ def generate_yaml(pkg_info):
                 'tl:linker',
                 ])
 
-            pkgs.extend([
-                'tl:libc'
-            ])
+    elif pkg_info.build_sys == 'make':
+        if 'c' in pkg_info.languages:
+            build_pkgs.extend([
+                'tl:base',
+                'tl:c-compiler',
+                'tl:linker',
+                'make'
+                ])
+
+    if 'c' in pkg_info.languages:
+        pkgs.extend([
+            'tl:libc'
+        ])
 
     output.write('build-dependencies:\n')
     for pkg in build_pkgs:
@@ -150,6 +179,8 @@ def generate_yaml(pkg_info):
     # Build description
     if pkg_info.build_sys == 'autotools':
         output.write('configure:\n  ./configure --prefix=%(prefix)s\n\n')
+
+    if pkg_info.build_sys in ['autotools', 'make']:
         output.write('build:\n  make -j%(jobs)s\n\n')
         output.write('install:\n  make install\n')
 
