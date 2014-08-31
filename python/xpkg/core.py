@@ -540,8 +540,12 @@ class Environment(object):
         try:
             # TODO: replace this with our internal sort once it has a cycle
             # detection option
-            toposort.toposort(dep_graph)
-            # Ignore result for now we just want to catch cycles
+            res = toposort.toposort(dep_graph)
+
+            for v in res:
+                # Ignore result for now we just want to catch cycles
+                pass
+
         except ValueError as e:
             # TODO: translate this exception better
             raise Exception(str(e))
