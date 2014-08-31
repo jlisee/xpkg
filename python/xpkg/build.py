@@ -589,10 +589,18 @@ class PackageBuilder(object):
         Interpolates all of our important variables into the commands.
         """
 
+        # The "kernel arch" is the arch which Ubuntu follows the debian/ubuntu
+        # convention for kernel flags, so we can build things like a libc which
+        # wants those headers.
+        arch_trans = {'i686' : 'i386'}
+        arch = platform.machine()
+        kernel_arch = arch_trans.get(arch, arch)
+
         return raw_text % {
             'jobs' : str(util.cpu_count()),
             'prefix' : self._target_dir,
-            'arch' : platform.machine(),
+            'arch' : arch,
+            'kernel_arch' : kernel_arch,
             'env_root' : self._env_dir,
             'pkg_version' : self._xpd._data['version'],
             # TODO: make this linux specific
