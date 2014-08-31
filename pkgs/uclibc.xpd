@@ -25,7 +25,7 @@ configure:
 
   # The %(arch)s hack is needed to builc uClibc on Ubuntu 12.04
   # Specifically need to be able to find asm/param.h or asm/unistd.h
-  - sed -e 's/.*KERNEL_HEADERS.*/KERNEL_HEADERS="\/usr\/include -I\/usr\/include\/%(arch)s-linux-gnu\/"/' -i .config
+  - sed -e 's/.*KERNEL_HEADERS.*/KERNEL_HEADERS="\/usr\/include -I\/usr\/include\/%(kernel_arch)s-linux-gnu\/"/' -i .config
 
   # Fix for not finding this symbol
   - patch -p0 -i ../uclibc-0.9.33_ll_tzname_symbol_fix.patch
