@@ -4,6 +4,7 @@
 import json
 import os
 import stat
+import subprocess
 import tarfile
 
 from collections import defaultdict
@@ -1119,9 +1120,18 @@ class XPA(object):
         """
         Given the package info go in and replace all occurrences of the original
         install path with the new install path.
+
+        @TODO Break up this mega function
         """
 
-        offset_info = self.info['install_path_offsets']
+        # Grab the offset info and filer out the pyc strings
+        raw_offset_info = self.info['install_path_offsets']
+
+        offset_info, pyc_files = remove_special_offset_files(raw_offset_info)
+
+        # Fix up all the pyc files
+        recompile_pyc_files(pyc_files, dest_path)
+
         # Make sure the type is a string, incase it because unicode somehow
         # TODO: see if our caching layer is giving us unicode strings
         install_dir = str(offset_info['install_dir'])
@@ -1255,6 +1265,52 @@ class XPA(object):
                              new = dest_path,
                              len_check = True,
                              replace=binary_sub_replace)
+
+
+def recompile_pyc_files(files, dest_path):
+    """
+    Recompiles all the given python files using the local python.
+    """
+
+    # TODO: maybe do multiple of these at once to save on interp startup
+    # time
+    for pyc_file in files:
+        path, _ = os.path.splitext(pyc_file)
+        full_path = os.path.join(dest_path, path + '.py')
+        subprocess.call(['python', '-m', 'py_compile', full_path])
+
+
+def remove_special_offset_files(offset_info):
+    """
+    Some types of files, like compiled python files (.pyc) need special
+    handling to deal with their embedded paths.  This removes them from
+    the list so they can be handled separately.
+    """
+
+    # The keys which contains files to filer
+    file_keys = set(['text_files', 'binary_files', 'sub_binary_files'])
+
+    # Copy all non-file info into the new offset
+    non_file_keys = set(offset_info.keys()) - file_keys
+    new_offset_info = dict([(k, offset_info[k]) for k in non_file_keys])
+
+    for f in file_keys:
+        new_offset_info[f] = {}
+
+    # Filter in the file keys
+    special_ext = set(['.pyc'])
+    special_files = []
+
+    for key in file_keys:
+        for file_path, value in offset_info[key].iteritems():
+            _, ext = os.path.splitext(file_path)
+
+            if ext in special_ext:
+                special_files.append(file_path)
+            else:
+                new_offset_info[key][file_path] = value
+
+    return new_offset_info, special_files
 
 
 class XPD(object):

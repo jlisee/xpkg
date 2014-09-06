@@ -951,6 +951,25 @@ class FullTests(TestBase):
     # TODO: test that we don't store hard links twice in offset info
 
 
+    def test_python_pyc(self):
+        """
+        Make sure our path re-writing stuff handles .pyc files.
+        """
+
+        # Make sure we can access the package tree for building
+        os.environ[core.xpkg_tree_var] = self.tree_dir
+
+        # Install greet
+        self._xpkg_cmd(['install', 'pygreet'])
+
+        # Now lets update the python path and try importing
+        lib_dir = os.path.join(self.env_dir, 'lib', 'python')
+        os.environ['PYTHONPATH'] = lib_dir + os.pathsep + os.environ.get('PYTHONPATH','')
+
+        output = self._xpkg_cmd(['jump', '-c', 'python -c "import greet; greet.greet()"'])
+        self.assertEqual('Hello, world!\n', output)
+
+
 class LinuxTests(TestBase):
 
     @unittest.skip("this feature is current not-enabled")

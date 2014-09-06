@@ -690,7 +690,7 @@ class PackageBuilder(object):
 
                 # Create default empty offset list section
                 offset_names = ['binary_files', 'sub_binary_files', 'text_files']
-                package_offsets = dict(zip(offset_names, [[]] * 3))
+                package_offsets = dict(zip(offset_names, [{}] * 3))
                 package_offsets['install_dir'] = install_path_offsets['install_dir']
 
                 # Search the offset list and make sure to include any the
