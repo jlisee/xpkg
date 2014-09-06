@@ -913,7 +913,7 @@ class FullTests(TestBase):
 
         # Update the expected with the correct hash and file path
         hash_str = util.hash_file(open(tar_path), hashlib.md5)
-        expected['files'] = {'md5-' + hash_str : {'url' : tar_path}}
+        expected['files'] = {'md5-' + hash_str : {'url' : 'file://' + tar_path}}
 
         # Run our command with that tar file
         abs_tar = os.path.abspath(tar_path)

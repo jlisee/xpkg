@@ -262,8 +262,15 @@ def create(args):
     Retrieve the given URI, uses xpkg cache if possible.
     """
 
+    # Manage URL
+    raw_url = args.url[0]
+    if raw_url.count('://'):
+        url = raw_url
+    else:
+        url = 'file://' + os.path.abspath(raw_url)
+
     # Generate an XPD to build the resource at that URL
-    xpd_yaml = xcreate.url_to_xpd(args.url[0])
+    xpd_yaml = xcreate.url_to_xpd(url)
 
     # Now create an output path and check it
     output_path = args.output
@@ -276,6 +283,7 @@ def create(args):
         f.write(xpd_yaml)
 
     print 'XPD written to:',output_path
+
 
 def _get_env_dir(env_dir):
     """
