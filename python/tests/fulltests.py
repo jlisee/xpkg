@@ -948,6 +948,7 @@ class FullTests(TestBase):
         output = self._xpkg_cmd(['jump', '-c', 'basic'])
         self.assertEqual('Hello, world!\n', output)
 
+    # TODO: test that we don't store hard links twice in offset info
 
 
 class LinuxTests(TestBase):

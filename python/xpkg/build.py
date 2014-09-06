@@ -833,6 +833,9 @@ class PackageBuilder(object):
           }
         """
 
+        # Track the inodes so we only work on hard-linked files once
+        inodes = set()
+
         # Get just our files
         install_dir = self._target_dir
         full_paths = [(os.path.join(install_dir, p),p) for p in paths]
@@ -845,6 +848,14 @@ class PackageBuilder(object):
         text_files = {}
 
         for full_path, filepath in files:
+            # Lookup the inode and ignore the file if we have seen it already
+            inode = os.stat(full_path).st_ino
+
+            if inode in inodes:
+                continue
+            else:
+                inodes.add(inode)
+
             # Load file into memory
             contents = open(full_path).read()
 
