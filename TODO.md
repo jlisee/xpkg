@@ -3,9 +3,6 @@ Showstoppers
 
 Things a package manager must have (and ours needs to work)
 
- - create a set of python packages
-     - fix broken pyc files because of binary string replacement
-
  - fix packing parsing, tasks 3 seconds do an info call on the python package, now everything is freaking slow because of it
      - maybe switch to msgpack or bson for the file cache
      - split things into metadata + contents, so we don't have to parse/handle
@@ -37,6 +34,8 @@ Things a package manager must have (and ours needs to work)
    - handle the has of files with install path offsets
 
  - environment lock file to prevent two processes from changing the env at once
+   - use the python "lockfile" module
+   - only do write lock access
 
  - crashes during install should roll back and remove all files properly
    - right now it just leaves a bunch of files laying around
@@ -49,6 +48,8 @@ Things a package manager must have (and ours needs to work)
    - install build deps into the env
    - run the build in there
    - figure out if we need python in there
+
+ - put the build logs somewhere else
 
 References
 -----------
