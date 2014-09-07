@@ -2,6 +2,18 @@ name: binutils
 description: A collection of binary tools (linker, assembler, etc.)
 version: 2.23.2
 
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - bison
+  - flex
+
+dependencies:
+ - tl:libc
+ # ar is picking up libfl and linking to it need to separate out flex
+ - flex
+
 files:
   md5-4f8fa651e35ef262edc01d60fb45702e:
     url: http://ftp.gnu.org/gnu/binutils/binutils-2.23.2.tar.bz2
