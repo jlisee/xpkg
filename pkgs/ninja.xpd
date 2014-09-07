@@ -2,11 +2,16 @@ name: ninja
 description: A small build system with a focus on speed
 version: 1.4.0
 
+build-dependencies:
+  - tl:shell
+  - tl:base
+  - tl:c++-compiler
+  - tl:linker
+  - python
+
 files:
   md5-cff1cd76e132c0af86a8bf9f6d811eb6:
     url: https://github.com/martine/ninja/archive/v1.4.0.tar.gz
-
-# TODO: add a build-dependency on python
 
 build:
   ./bootstrap.py
