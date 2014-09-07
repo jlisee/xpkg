@@ -1,5 +1,5 @@
 name: bison
-description: The GNU general-purpose parser generator
+description: YACC-compatible parser generator
 version: 3.0.2
 
 build-dependencies:
