@@ -1,0 +1,26 @@
+name: bison
+description: YACC
+version: 3.0.2
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - m4
+  - perl
+
+dependencies:
+  - tl:libc
+
+files:
+  md5-72c66879187c128d04f4ab7422e8072d:
+    url: http://ftp.gnu.org/gnu/bison/bison-3.0.2.tar.gz
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
