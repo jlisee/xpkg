@@ -1,0 +1,15 @@
+--- pp_ctl.c.orig	2014-09-07 14:35:46.789917289 -0400
++++ pp_ctl.c	2014-09-07 14:38:26.165914832 -0400
+@@ -3969,6 +3969,12 @@
+ 			dirlen = 0;
+ 		    }
+ 
++		    /* We replace these strings, so we expect null padding, and
++		     * shrink the string to fit */
++		    while (dirlen > 0 && dir[dirlen-1] == 0) {
++			dirlen--;
++		    }
++
+ 		    if (!IS_SAFE_SYSCALL(dir, dirlen, "@INC entry", "require"))
+ 			continue;
+ #ifdef VMS

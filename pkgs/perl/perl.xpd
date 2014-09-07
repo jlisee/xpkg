@@ -1,0 +1,34 @@
+name: perl
+description: "Larry Wall's Practical Extraction and Report Language"
+version: 5.20.0
+
+# Not really sure about these are complete...
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - patch
+
+dependencies:
+  - tl:libc
+
+files:
+  md5-20cbecd4e9e880ee7a50a136c8b1484e:
+    url: http://www.cpan.org/src/5.0/perl-5.20.0.tar.bz2
+  md5-9ecfcf722cd4adb39857ed2b55467c35:
+    url: xpd://inc_null_pad.patch
+
+configure:
+  # This patch makes perl ignore the null padding at the end of the INC
+  # include path strings. This comes from when relocate libperl
+  - patch -p0 -i ../inc_null_pad.patch
+  - ./Configure -des -Dusethreads -Duseshrplib
+    -Dprefix=%(prefix)s
+    -Dvendorprefix=%(prefix)s
+    -Dcc=gcc
+
+build:
+  make -j%(jobs)s
+
+install:
+  make -j%(jobs)s install
