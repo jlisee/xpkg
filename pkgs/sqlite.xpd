@@ -1,0 +1,24 @@
+name: sqlite
+description: SQLite in process SQL database.
+version: 3.8.6
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+
+files:
+  md5-f7e4a156b583abeba349629e2364224b:
+    url: http://www.sqlite.org/2014/sqlite-autoconf-3080600.tar.gz
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
