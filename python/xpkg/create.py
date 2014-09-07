@@ -75,8 +75,8 @@ def get_pkg_info(url):
         parts = res.split('-')
 
         if len(parts) > 1:
-            fname, raw_descript = parts[:2]
-            description = raw_descript.strip()
+            fname = parts[0]
+            description = '-'.join(parts[1:]).strip()
 
     # Unpack the package and guess the build system
     package_dir = util.unpack_tarball(file_name)
