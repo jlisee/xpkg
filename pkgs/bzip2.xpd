@@ -1,0 +1,29 @@
+name: bzip2
+description: high-quality block-sorting file compressor - utilities
+version: 1.0.6
+
+build-dependencies:
+  - tl:base
+  - tl:c-compiler
+  - tl:linker
+  - diffutils
+  - make
+
+dependencies:
+  - tl:libc
+
+files:
+  md5-00b516f4704d4a7cb50a1d97e6e8e15b:
+    url: http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
+
+build:
+  - make -j%(jobs)s -f Makefile-libbz2_so
+  - make -j%(jobs)s bzip2 bzip2recover
+
+install:
+  - make install PREFIX=%(prefix)s
+  # The install doesn't handle these for us
+  - install -m755 libbz2.so.1.0.6 %(prefix)s/lib
+  - ln -s libbz2.so.1.0.6 %(prefix)s/lib/libbz2.so
+  - ln -s libbz2.so.1.0.6 %(prefix)s/lib/libbz2.so.1
+  - ln -s libbz2.so.1.0.6 %(prefix)s/lib/libbz2.so.1.0
