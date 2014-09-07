@@ -1,0 +1,40 @@
+name: python
+description: interactive high-level object-oriented language
+version: 2.7.8
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+  - libreadline
+  - libffi
+  - sqlite
+  - zlib
+
+files:
+  md5-d4bca0159acb0b44a781292b5231936f:
+    url: https://www.python.org/ftp/python/2.7.8/Python-2.7.8.tgz
+
+configure:
+  # Ensure we use our version of these libs not the embedded versions
+  - rm -r Modules/expat
+  - rm -r Modules/zlib
+  - rm -r Modules/_ctypes/libffi
+  - ./configure --prefix=%(prefix)s
+    --enable-shared
+    --with-threads
+    --enable-ipv6
+    --enable-unicode=ucs4
+    --with-system-expat
+    --with-system-ffi
+
+#  --with-dbmliborder=gdbm:ndbm
+
+build:
+  - make -j%(jobs)s
+
+install:
+  make install
