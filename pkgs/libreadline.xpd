@@ -1,0 +1,24 @@
+name: libreadline
+description: GNU readline and history libraries
+version: 6.3
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+
+files:
+  md5-33c8fb279e981274f485fd91da77e94a:
+    url: https://ftp.gnu.org/gnu/readline/readline-6.3.tar.gz
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
