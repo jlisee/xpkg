@@ -178,7 +178,7 @@ def generate_yaml(pkg_info):
 
     if pkg_info.build_sys in ['autotools', 'make']:
         output.write('build:\n  make -j%(jobs)s\n\n')
-        output.write('install:\n  make install\n')
+        output.write('install:\n  make -j%(jobs)s install\n')
 
     return output.getvalue()
 

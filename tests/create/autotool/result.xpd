@@ -21,4 +21,4 @@ build:
   make -j%(jobs)s
 
 install:
-  make install
+  make -j%(jobs)s install
