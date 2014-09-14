@@ -1,0 +1,26 @@
+name: libxt
+description: X11 toolkit intrinsics library
+version: 1.1.4
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+  - libsm
+  - libx11
+
+files:
+  md5-03149823ae57bb02d0cec90d5b97d56c:
+    url: http://xorg.freedesktop.org/releases/individual/lib/libXt-1.1.4.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make -j%(jobs)s install
