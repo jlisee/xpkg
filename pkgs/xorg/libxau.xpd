@@ -1,0 +1,27 @@
+name: libxau
+description: X11 authorization library
+version: 1.0.8
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - pkg-config
+
+dependencies:
+  - tl:libc
+  - xproto
+
+files:
+  md5-685f8abbffa6d145c0f930f00703b21b:
+    url: http://xorg.freedesktop.org/releases/individual/lib/libXau-1.0.8.tar.bz2
+
+configure: >-
+  ./configure --prefix=%(prefix)s
+  --disable-static
+
+build:
+  make -j%(jobs)s
+
+install:
+  make -j%(jobs)s install
