@@ -7,6 +7,8 @@ Functions to return common xpkg paths.
 # Python Imports
 import os
 
+# Project Imports
+from xpkg import envvars
 
 def ld_linux_path(root):
     """
@@ -15,3 +17,14 @@ def ld_linux_path(root):
     """
 
     return os.path.join(root, 'lib', 'ld-linux-xpkg.so')
+
+
+def local_cache_dir():
+    """
+    Local user cache directory.
+    """
+
+    if envvars.xpkg_local_cache_var in os.environ:
+        return os.environ[envvars.xpkg_local_cache_var]
+    else:
+        return os.path.expanduser(os.path.join('~', '.xpkg', 'cache'))

@@ -25,6 +25,7 @@ root_dir = os.path.abspath(os.path.join(cur_dir, '..', '..'))
 
 # Project imports
 from xpkg import core
+from xpkg import envvars
 from xpkg import linux
 from xpkg import util
 from tests import build_tree
@@ -71,7 +72,7 @@ class TestBase(unittest.TestCase):
         self.user_cache_dir = os.path.join(self.work_dir, 'user_cache')
 
         # Mock the user dir
-        os.environ[core.xpkg_local_cache_var] = self.user_cache_dir
+        os.environ[envvars.xpkg_local_cache_var] = self.user_cache_dir
 
         # Create the env_dir
         self.env_dir = os.path.join(self.work_dir, 'env')
@@ -138,11 +139,11 @@ class TestBase(unittest.TestCase):
 
         if use_var:
             env_args = []
-            os.environ[core.xpkg_root_var] = env_dir
+            os.environ[envvars.xpkg_root_var] = env_dir
         else:
             # Clear variable
-            if core.xpkg_root_var in os.environ:
-                del os.environ[core.xpkg_root_var]
+            if envvars.xpkg_root_var in os.environ:
+                del os.environ[envvars.xpkg_root_var]
 
             # Set out args
             env_args = ['--root',env_dir]
@@ -285,7 +286,7 @@ class FullTests(TestBase):
         """
 
         # Set our environment variable
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Run the install
         self._xpkg_cmd(['install', 'hello'])
@@ -303,7 +304,7 @@ class FullTests(TestBase):
         self._xpkg_cmd(['build', self.hello_xpd, '--dest', self.repo_dir])
 
         # Run the install, referencing our adhoc package repository
-        os.environ[core.xpkg_repo_var] = self.repo_dir
+        os.environ[envvars.xpkg_repo_var] = self.repo_dir
 
         self._xpkg_cmd(['install', 'hello'])
 
@@ -358,8 +359,8 @@ class FullTests(TestBase):
         self._make_empty_env()
 
         # Set up our environment variables
-        os.environ[core.xpkg_tree_var] = self.tree_dir
-        os.environ[core.xpkg_repo_var] = self.repo_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_repo_var] = self.repo_dir
 
         # Our expected results
         expected = {
@@ -430,7 +431,7 @@ class FullTests(TestBase):
         """
 
         # Make this visible so we can pull in fake tools
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install the package
         self._xpkg_cmd(['install', os.path.join(self.tree_dir, 'libgreet.xpd')])
@@ -451,7 +452,7 @@ class FullTests(TestBase):
     def test_remove_with_deps(self):
 
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install greet
         self._xpkg_cmd(['install', 'greeter'])
@@ -481,7 +482,7 @@ class FullTests(TestBase):
 
             return self._xpkg_cmd(['jump', '-c', py_command]).strip()
 
-        self.assertEquals(self.env_dir, get_var(core.xpkg_root_var))
+        self.assertEquals(self.env_dir, get_var(envvars.xpkg_root_var))
 
         # Make sure PATH is set
         path = get_var('PATH')
@@ -534,7 +535,7 @@ class FullTests(TestBase):
 
     def test_dependencies(self):
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install greet
         self._xpkg_cmd(['install', 'greeter'])
@@ -549,7 +550,7 @@ class FullTests(TestBase):
 
     def test_versions(self):
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install greet
         self._xpkg_cmd(['install', 'greeter==1.0.0'])
@@ -569,7 +570,7 @@ class FullTests(TestBase):
         """
 
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install libgreet and make sure we have the most recent version
         self._xpkg_cmd(['install', 'libgreet'])
@@ -589,7 +590,7 @@ class FullTests(TestBase):
         self._make_empty_env()
 
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # This will force the install faketools
         xpd_path = os.path.join(self.tree_dir, 'libgreet.xpd')
@@ -606,7 +607,7 @@ class FullTests(TestBase):
         self._make_empty_env()
 
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Build the package
         xpd_path = os.path.join(self.tree_dir, 'greeter.xpd')
@@ -635,7 +636,7 @@ class FullTests(TestBase):
 
         # Build the hello package
         self._make_empty_env()
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         self._xpkg_cmd(['build',
                         os.path.join(self.tree_dir, 'libgreet2.xpd'),
@@ -655,7 +656,7 @@ class FullTests(TestBase):
         self._make_empty_env()
 
         # Install the hello package from the XPA
-        os.environ[core.xpkg_repo_var] = self.repo_dir
+        os.environ[envvars.xpkg_repo_var] = self.repo_dir
 
         self._xpkg_cmd(['install', 'libgreet'])
 
@@ -668,7 +669,7 @@ class FullTests(TestBase):
     def test_for_path_offsets(self):
 
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install faketools so we don't depend on dependencies working
         self._xpkg_cmd(['install', 'faketools'])
@@ -717,7 +718,7 @@ class FullTests(TestBase):
         self._make_empty_env()
 
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Put a libgreet binary package in the repo, so that's embedded build
         # directory is different and needs to be actively changed.
@@ -725,7 +726,7 @@ class FullTests(TestBase):
         self._xpkg_cmd(['build', xpd_path, '--dest', self.repo_dir])
 
         # Make sure we have the repo dir setup so pull in our pre-built package
-        os.environ[core.xpkg_repo_var] = self.repo_dir
+        os.environ[envvars.xpkg_repo_var] = self.repo_dir
 
         # Install greet
         self._xpkg_cmd(['install', 'greeter'])
@@ -769,7 +770,7 @@ class FullTests(TestBase):
         """
 
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Run the install
         self._xpkg_cmd(['install', os.path.join(self.tree_dir, 'multipkg.xpd')])
@@ -823,7 +824,7 @@ class FullTests(TestBase):
 
         # Set the tree environment variable to include both the primary and
         # the secondary tree
-        os.environ[core.xpkg_tree_var] = '%s:%s' % (primary_tree, secondary_tree)
+        os.environ[envvars.xpkg_tree_var] = '%s:%s' % (primary_tree, secondary_tree)
 
         # Make sure we can install hello package
         self._xpkg_cmd(['install', 'hello'])
@@ -840,7 +841,7 @@ class FullTests(TestBase):
 
     def test_patching(self):
         # Setup the env for install (make sure we have access to the tree)
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install the program
         self._xpkg_cmd(['install', '--verbose', 'patchme'])
@@ -856,7 +857,7 @@ class FullTests(TestBase):
         Tests our custom command system
         """
 
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install the program
         self._xpkg_cmd(['install', '--verbose', 'commands'])
@@ -878,7 +879,7 @@ class FullTests(TestBase):
         builds are package.
         """
 
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install the program
         self._xpkg_cmd(['install', '--verbose', 'env-command'])
@@ -939,7 +940,7 @@ class FullTests(TestBase):
         """
 
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install greet
         self._xpkg_cmd(['install', 'metapkg'])
@@ -960,7 +961,7 @@ class FullTests(TestBase):
         """
 
         # Make sure we can access the package tree for building
-        os.environ[core.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
 
         # Install greet
         self._xpkg_cmd(['install', 'pygreet'])
@@ -1081,8 +1082,8 @@ class ToolsetTests(TestBase):
         self._xpkg_cmd(['init', self.env_dir, 'test-env', '--toolset', 'Test'])
 
         # Make sure we can locate of packages
-        os.environ[core.xpkg_tree_var] = self.tree_dir
-        os.environ[core.xpkg_repo_var] = self.toolset_repo_dir
+        os.environ[envvars.xpkg_tree_var] = self.tree_dir
+        os.environ[envvars.xpkg_repo_var] = self.toolset_repo_dir
 
         # Install the program
         self._xpkg_cmd(['install', '--verbose', 'toolset-basic'])

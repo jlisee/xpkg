@@ -14,14 +14,10 @@ import toposort
 
 # Project Imports
 from xpkg import build
+from xpkg import envvars
 from xpkg import linux
-from xpkg import util
 from xpkg import paths
-
-xpkg_root_var = 'XPKG_ROOT'
-xpkg_tree_var = 'XPKG_TREE'
-xpkg_repo_var = 'XPKG_REPO'
-xpkg_local_cache_var = 'XPKG_LOCAL_CACHE'
+from xpkg import util
 
 
 def parse_dependency(value):
@@ -407,8 +403,8 @@ class Environment(object):
         """
 
         if env_dir is None:
-            if xpkg_root_var in os.environ:
-                self._env_dir = os.environ[xpkg_root_var]
+            if envvars.xpkg_root_var in os.environ:
+                self._env_dir = os.environ[envvars.xpkg_root_var]
             else:
                 raise Exception("No XPKG_ROOT not defined, can't find environment")
         else:
@@ -461,7 +457,7 @@ class Environment(object):
 
         # Setup the package tree to either load from the given path or return
         # no packages
-        self.tree_paths = get_paths(tree_path, xpkg_tree_var)
+        self.tree_paths = get_paths(tree_path, envvars.xpkg_tree_var)
 
         if len(self.tree_paths) == 1:
             self._tree = FilePackageTree(self.tree_paths[0])
@@ -472,7 +468,7 @@ class Environment(object):
             self._tree = EmptyPackageSource()
 
         # Setup the package repository so we can install pre-compiled packages
-        self.repo_paths = get_paths(repo_path, xpkg_repo_var)
+        self.repo_paths = get_paths(repo_path, envvars.xpkg_repo_var)
 
         if len(self.repo_paths) == 1:
             self._repo = FilePackageRepo(self.repo_paths[0])
@@ -1054,7 +1050,7 @@ class Environment(object):
                     del os.environ[varname]
 
         # Setup the Xpkg path
-        os.environ[xpkg_root_var] = self._env_dir
+        os.environ[envvars.xpkg_root_var] = self._env_dir
 
         # Apply toolset environment variables
         # TODO: only use this sub on linux
@@ -1094,18 +1090,6 @@ class Environment(object):
         The directory we hold current built packages.
         """
         return os.path.join(root, 'var', 'xpkg', 'cache')
-
-
-    @staticmethod
-    def local_cache_dir():
-        """
-        Local user cache directory.
-        """
-
-        if xpkg_local_cache_var in os.environ:
-            return os.environ[xpkg_local_cache_var]
-        else:
-            return os.path.expanduser(os.path.join('~', '.xpkg', 'cache'))
 
 
     @staticmethod
@@ -1680,7 +1664,7 @@ class FileParseCache(object):
         self._dirty = False
 
         # Determine the path to our cache
-        cache_root = Environment.local_cache_dir()
+        cache_root = paths.local_cache_dir()
 
         hash_key = self._path + name
         hash_file = 'md5-%s.json' % util.hash_string(hash_key)
