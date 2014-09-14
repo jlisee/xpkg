@@ -138,7 +138,7 @@ def info(args):
         env = _create_env(args.root)
 
         # Grab the information
-        info = env.info(input_val)
+        info = env.info(input_val, with_files=args.verbose)
 
     # Display info
     if info:

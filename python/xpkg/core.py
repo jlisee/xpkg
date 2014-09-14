@@ -61,14 +61,21 @@ class InstallDatabase(object):
 
         # Package db location
         self._db_dir = self.db_dir(env_dir)
-        self._db_path = os.path.join(self._db_dir, 'db.yml')
+        self._db_path = os.path.join(self._db_dir, 'data.yml')
+        self._file_info_dir = os.path.join(self._db_dir, 'file_info')
 
         # Create package database if it doesn't exist
         if not os.path.exists(self._db_path):
             self._create_db()
 
+        if not os.path.exists(self._file_info_dir):
+            os.makedirs(self._file_info_dir)
+
         # Load database
         self._load_db()
+
+        # Create empty file data cache
+        self._file_info = {}
 
 
     def _create_db(self):
@@ -128,11 +135,24 @@ class InstallDatabase(object):
         Marks the current package installed
         """
 
+        # Split into info and file info
+        file_keys = set(['files', 'install_path_offsets'])
+        bare_info = {}
+        file_info = {}
+
+        for key, value in info.iteritems():
+            if key in file_keys:
+                file_info[key] = info[key]
+            else:
+                bare_info[key] = info[key]
+
         # Mark package with the current installed version
-        self._db[name] = info
+        self._db[name] = bare_info
 
         # Save the data to disk
         self._save_db()
+
+        self._save_file_info(name, file_info)
 
 
     def mark_removed(self, name):
@@ -146,6 +166,9 @@ class InstallDatabase(object):
         # Save the data to disk
         self._save_db()
 
+        # Remove the file info
+        self._remove_file_info(name)
+
 
     def iter_packages(self):
         """
@@ -156,16 +179,23 @@ class InstallDatabase(object):
             yield k
 
 
-    def get_info(self, name):
+    def get_info(self, name, with_files=False):
         """
         Return the information on the installed package, returns None if it
         doesn't exist.
         """
 
-        return self._db.get(name, None)
+        info = self._db.get(name, None)
+
+        if with_files:
+            file_info = self._get_file_info(name)
+
+            info.update(file_info)
+
+        return info
 
 
-    def get_file_info(self, path):
+    def get_info_for_path(self, path):
         """
         Return the information on the installed package which contains the file,
         returns None if it doesn't exist.
@@ -174,6 +204,11 @@ class InstallDatabase(object):
         # package
 
         for name, contents in self._db.iteritems():
+            # Grab file info
+            file_info = self._get_file_info(name)
+            contents.update(file_info)
+
+            # Check for file
             for f in contents['files']:
                 if f == path:
                     return contents
@@ -182,6 +217,7 @@ class InstallDatabase(object):
                     return contents
 
         return None
+
 
     def installed(self, name, version=None):
         """
@@ -225,12 +261,65 @@ class InstallDatabase(object):
 
         return self._dirs[d]
 
+
+    # File info guys
+    def _save_file_info(self, name, file_info):
+        """
+        Save file info to disk.
+        """
+
+        # Save into the cache
+        self._file_info[name] = file_info
+
+        # Form our path
+        file_info_path = os.path.join(self._file_info_dir, name + '.json')
+
+        # Load
+        with open(file_info_path, 'w') as f:
+            json.dump(file_info, f)
+
+
+    def _get_file_info(self, name):
+        """
+        Load file info from disk.
+        """
+
+        # Try to load from in memory cache first
+        if name in self._file_info:
+            return self._file_info[name]
+
+        # Build path to the file
+        file_info_path = os.path.join(self._file_info_dir, name + '.json')
+
+        # Load the data
+        with open(file_info_path) as f:
+            file_info = json.load(f)
+
+        # Cache and return the data
+        self._file_info[name] = file_info
+
+        return file_info
+
+
+    def _remove_file_info(self, name):
+        """
+        Remove file info from disk.
+        """
+
+        if name in self._file_info:
+            del self._file_info[name]
+
+        file_info_path = os.path.join(self._file_info_dir, name + '.json')
+
+        os.remove(file_info_path)
+
+
     @staticmethod
     def db_dir(root):
         """
         Returns the db directory relative to the given root.
         """
-        return os.path.join(root, 'var', 'xpkg')
+        return os.path.join(root, 'var', 'xpkg', 'db')
 
 
 class Settings(object):
@@ -792,7 +881,7 @@ class Environment(object):
             raise Exception("Can't remove %s required by: %s" % args)
 
         # Remove all the files from the db
-        info = self._pdb.get_info(name)
+        info = self._pdb.get_info(name, with_files=True)
 
         if info:
             # First we remove the files
@@ -837,7 +926,7 @@ class Environment(object):
             print 'Package %s not installed.' % name
 
 
-    def info(self, input_val):
+    def info(self, input_val, with_files=False):
         """
         Returns information about either the given package, or the package the
         file belongs too.
@@ -845,7 +934,7 @@ class Environment(object):
         @return None if no lookup was successful
         """
 
-        info = self._pdb.get_info(input_val)
+        info = self._pdb.get_info(input_val, with_files=with_files)
 
         if not info:
             # It's not a package so lets try doing a file lookup instead
@@ -853,7 +942,7 @@ class Environment(object):
 
             if full_path.startswith(self.root):
                 relative_path = full_path[len(self.root) + 1:]
-                return self._pdb.get_file_info(relative_path)
+                return self._pdb.get_info_for_path(relative_path)
 
         return info
 

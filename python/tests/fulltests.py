@@ -8,6 +8,7 @@ porting over to a future version.
 
 # Python Imports
 import hashlib
+import json
 import os
 import shutil
 import subprocess
@@ -677,9 +678,11 @@ class FullTests(TestBase):
 
         # Read in the DB
         db_dir = core.InstallDatabase.db_dir(self.env_dir)
-        db_path = os.path.join(db_dir, 'db.yml')
+        db_path = os.path.join(db_dir, 'data.yml')
+        info_path = os.path.join(db_dir, 'file_info', 'libgreet.json')
 
         self.assertPathExists(db_path)
+        self.assertPathExists(info_path)
 
         # Make sure our package is in it
         db = yaml.load(open(db_path))
@@ -687,7 +690,7 @@ class FullTests(TestBase):
         self.assertIn('libgreet', db)
 
         # Now lets make sure we have the right info
-        info = db['libgreet']
+        info = json.load(open(info_path))
         binary_offsets = info['install_path_offsets']['binary_files']
 
         self.assertEqual(1, len(binary_offsets))
