@@ -26,29 +26,68 @@ PkgInfo = namedtuple('PkgInfo', [
 
 # http://ftp.gnu.org/gnu/patch/patch-2.7.1.tar.bz2
 
-PKG_VER_REGEX = re.compile('([a-zA-Z0-9]+)-([0-9\.]+).*')
+PKG_VER_REGEX = re.compile('([0-9\.]+).*')
 
 def get_name_version(url):
     """
-    Returns the name and version of the project based on the given URL
+    Returns the name and version of the project based on the given URL.  By
+    convention all names will be made lower case.
     """
 
     r, file_name = os.path.split(url)
 
-    # Pull out the name and version from the package
-    m = PKG_VER_REGEX.match(file_name)
-
+    # Break the file name into the name and version + extension part
     name = None
     version = None
 
-    if m:
-        groups = m.groups()
-        if len(groups) > 0:
-            name = groups[0].lower()
-        if len(groups) > 1:
-            version = groups[1].strip('.')
+    parts = file_name.split('-')
 
-    return name, version
+    if len(parts) >= 2:
+        name = '-'.join(parts[:-1])
+
+        # Now try and get the version out of the last section of the string
+        m = PKG_VER_REGEX.match(parts[-1])
+
+        if m:
+            version = m.groups()[0].strip('.')
+
+    return name.lower(), version
+
+
+def search_apt_cache(name):
+    """
+    Searches apt-cache for the package with the given name to generate the
+    description.
+
+    @return a String if found, none otherwise
+    """
+
+    description = None
+
+    args = ['apt-cache','search', '^%s$' % name]
+    res = subprocess.check_output(args)
+
+    if len(res) == 0:
+        # No match try with a version number at the back, sometimes debian
+        # packages have that
+        args[-1] = '^%s[0-9\.\-]+$' % name
+
+        lines = [l for l in subprocess.check_output(args).split('\n')
+                 if len(l) > 0]
+
+        if len(lines):
+            # Split lines, sort and take the last
+            res = sorted(lines)[-1]
+
+    if len(res):
+        parts = res.split(' - ')
+
+        if len(parts) > 1:
+            fname = parts[0]
+            description = '-'.join(parts[1:]).strip()
+
+
+    return description
 
 
 def get_pkg_info(url):
@@ -62,17 +101,11 @@ def get_pkg_info(url):
     _, file_hash = os.path.split(cache_path)
 
     # Get the description based on apt-cache
-    args = ['apt-cache','search', '^%s$' % name]
-    res = subprocess.check_output(args)
+    description = search_apt_cache(name)
 
-    description = None
-
-    if len(res):
-        parts = res.split('-')
-
-        if len(parts) > 1:
-            fname = parts[0]
-            description = '-'.join(parts[1:]).strip()
+    if description is None and not name.startswith('lib'):
+        # Sometimes the names are prefixed with lib in debian
+        description = search_apt_cache('lib' + name.lower())
 
     # Unpack the package and guess the build system
     package_dir = util.unpack_tarball(cache_path)
