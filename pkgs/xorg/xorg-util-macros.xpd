@@ -1,0 +1,25 @@
+name: xorg-util-macros
+description: X.Org Autotools macros
+version: 1.19.0
+
+build-dependencies:
+  - autotools-build
+
+dependencies:
+  - m4
+
+files:
+  md5-1cf984125e75f8204938d998a8b6c1e1:
+    url: http://xorg.freedesktop.org/releases/individual/util/util-macros-1.19.0.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  - make install
+  # Move the pkgconfig to our normal location
+  - install -m755 -d "%(prefix)s/lib"
+  - mv "%(prefix)s/share/pkgconfig" "%(prefix)s/lib/"
