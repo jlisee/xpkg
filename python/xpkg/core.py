@@ -1405,12 +1405,20 @@ class XPD(object):
         else:
             self._data = data
 
+        def get_field(name, default):
+            f = self._data.get(name, default)
+
+            if f is None:
+                f = default
+
+            return f
+
         # Read fields and define properties
         self.name = self._data['name']
         self.version = self._data['version']
-        self.dependencies = self._data.get('dependencies', [])
-        self.build_dependencies = self._data.get('build-dependencies', [])
-        self.description = self._data.get('description', '')
+        self.dependencies = get_field('dependencies', [])
+        self.build_dependencies = get_field('build-dependencies', [])
+        self.description = get_field('description', '')
 
 
     def packages(self):
