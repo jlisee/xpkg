@@ -1,0 +1,33 @@
+name: libxcb
+description: X C Binding
+version: 1.11
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - python
+  - patch
+
+dependencies:
+  - tl:libc
+  - libxau
+  - libxdmcp
+  - xcb-proto
+
+files:
+  md5-5a873ebd383d1a60612dd6ec6b42c781:
+    url: http://xcb.freedesktop.org/dist/libxcb-1.11.tar.bz2
+  md5-888ab0e6017f79ed4bfd43e1ec731b70:
+    url: xpd://libxcb-no-pthread-stubs.patch
+
+configure:
+  - patch -p1 -i ../libxcb-no-pthread-stubs.patch
+  - ./configure --prefix=%(prefix)s
+    --disable-static
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install

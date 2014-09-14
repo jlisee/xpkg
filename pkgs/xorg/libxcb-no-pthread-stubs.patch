@@ -1,0 +1,11 @@
+--- libxcb-1.8.1/configure	2012-03-09 15:38:38.000000000 +0100
++++ libxcb-1.8.1/configure.new	2012-03-09 16:50:40.107109896 +0100
+@@ -19153,7 +19153,7 @@
+ $as_echo "yes" >&6; }
+ 
+ fi
+-NEEDED="pthread-stubs xau >= 0.99.2"
++NEEDED="xau >= 0.99.2"
+ 
+ pkg_failed=no
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NEEDED" >&5
