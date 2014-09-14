@@ -1,0 +1,27 @@
+name: pkg-config
+description: System to manage compile and link flags for libraries
+version: 0.28
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+
+files:
+  md5-aa3c86e67551adc3ac865160e34a2a0d:
+    url: http://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz
+
+# Build with internal glib to break the cycle with glib, not
+# runtime dependence found.
+configure: >-
+  ./configure --prefix=%(prefix)s
+  --with-internal-glib
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
