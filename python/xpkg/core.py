@@ -1677,6 +1677,7 @@ class FileParseCache(object):
 
     def __init__(self, path, name):
         self._path = path
+        self._dirty = False
 
         # Determine the path to our cache
         cache_root = Environment.local_cache_dir()
@@ -1732,6 +1733,9 @@ class FileParseCache(object):
                 'mtime' : mtime,
                 'data' : data,
                 }
+
+            # Mark our selves dirty so we know that we have to save the data
+            self._dirty = True
         else:
             # Load from cache
             data = self._cache[path]['data']
@@ -1756,12 +1760,13 @@ class FileParseCache(object):
         Saves XPA info manifests to JSON cache file.
         """
 
-        cache_dir, _ = os.path.split(self._cache_path)
+        if self._dirty:
+            cache_dir, _ = os.path.split(self._cache_path)
 
-        util.ensure_dir(cache_dir)
+            util.ensure_dir(cache_dir)
 
-        with open(self._cache_path, 'w') as f:
-            json.dump(self._cache, f)
+            with open(self._cache_path, 'w') as f:
+                json.dump(self._cache, f)
 
 
 class PackageDatabase(object):
