@@ -943,7 +943,7 @@ class Environment(object):
         return info
 
 
-    def jump(self, program='bash', args=[], isolate=False):
+    def jump(self, program='bash', args=[], isolate=False, gui=False):
         """
         Jump into the desired environment.  When we isolate all variables will
         be set instead of pre-pended.
@@ -953,7 +953,7 @@ class Environment(object):
             args = []
 
         # Setup the environment variables
-        self.apply_env_variables(isolate=isolate)
+        self.apply_env_variables(isolate=isolate, gui=gui)
 
         # Setup up the PS1 (this doesn't work)
         os.environ['PS1'] = '(xpkg:%s) \u@\h:\w\$' % self.name
@@ -1020,13 +1020,15 @@ class Environment(object):
         return self.toolset.get_env_var_info(subs)
 
 
-    def apply_env_variables(self, isolate=False):
+    def apply_env_variables(self, isolate=False, gui=False):
         """
         Change the current environment variables so that we can use the things
         are in that environment.
 
           isolate - over write local environment variables, try to limit the
                     effect of other things installed on the system.
+          gui - Allow GUI programs (like X11) the environment variables they
+                need to work.
         """
 
         env_paths = self.get_env_variables()
@@ -1041,6 +1043,11 @@ class Environment(object):
                 os.environ[varname] = varpath + sep + cur_var
             else:
                 os.environ[varname] = varpath
+
+        # Hack for linux, keep around DISPLAY so when running isolated mode X11
+        # apps can still talk to the local xserver
+        if gui and 'DISPLAY' in os.environ:
+            env_paths['DISPLAY'] = os.environ['DISPLAY']
 
         # Remove not being set environment environment variables when we are
         # isolating the environment

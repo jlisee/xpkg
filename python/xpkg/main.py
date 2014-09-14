@@ -106,7 +106,7 @@ def jump(args):
     pargs = parts[1:]
 
     # Now lets run the command inside the environment
-    env.jump(program=program, args=pargs, isolate=args.isolate)
+    env.jump(program=program, args=pargs, isolate=args.isolate, gui=True)
 
 
 def info(args):
