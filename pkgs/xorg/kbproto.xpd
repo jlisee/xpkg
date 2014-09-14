@@ -1,0 +1,19 @@
+name: kbproto
+description: X11 XKB extension wire protocol
+version: 1.0.6
+
+build-dependencies:
+  - autotools-build
+
+files:
+  md5-677ea8523eec6caca86121ad2dca0b71:
+    url: http://xorg.freedesktop.org/releases/individual/proto/kbproto-1.0.6.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
