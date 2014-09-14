@@ -36,6 +36,12 @@ except ImportError:
     from yaml import SafeLoader as Loader
     from yaml import SafeDumper as Dumper
 
+# Import to get lzma support
+try:
+    import lzma
+except ImportError:
+    from backports import lzma
+
 
 def shellcmd(cmd, echo=True, stream=True, shell=True):
     """
@@ -132,10 +138,22 @@ def unpack_tarball(tar_url, extract_path='.'):
 
     print 'Unpacking:',tar_url
 
-    # Open and extract
-    with tarfile.open(tar_url, 'r') as tar:
-        tar.extractall(extract_path)
-        filenames = tar.getnames()
+    # Detect whether the file is an lzma file use the magic number
+    with open(tar_url, 'r') as f:
+        front_matter = f.read(10)
+
+    if front_matter.startswith('\xfd7zXZ'):
+        lzf = lzma.LZMAFile(tar_url)
+        try:
+            tar = tarfile.TarFile(mode='r', fileobj=lzf)
+            tar.extractall(extract_path)
+            filenames = tar.getnames()
+        finally:
+            lzf.close()
+    else:
+        with tarfile.open(tar_url, 'r') as tar:
+            tar.extractall(extract_path)
+            filenames = tar.getnames()
 
     # Get root (the shortest path will be the root if there is one)
     unpack_path = sorted(filenames)[0]

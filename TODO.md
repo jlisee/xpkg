@@ -3,13 +3,7 @@ Showstoppers
 
 Things a package manager must have (and ours needs to work)
 
- - fix packing parsing, tasks 3 seconds do an info call on the python package, now everything is freaking slow because of it
-     - maybe switch to msgpack or bson for the file cache
-     - split things into metadata + contents, so we don't have to parse/handle
-       contents all the time
-     - lazy load the content as needed (we don't need the bulky contents all the time)
-     - A pure binary format would be too much right now :(
-
+ - Fix bad expression when removing a non-existent file from the repo
  - split up python into minimal (just core interp, key libs), normal, and dev
  - split out libstdc++ and libgcc_s from gcc
 
@@ -150,10 +144,6 @@ Nice to haves
    - command to setup the temp dir and download files
    - command that lets you jump into the temp dir, and manually examine and
      execute steps
-
- - xz compression support, see: https://github.com/peterjc/backports.lzma
-   - then we can support newer coreutils version
-   - also newer grep versions
 
  - info support for XPD files
 

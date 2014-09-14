@@ -34,6 +34,13 @@ can access the binaries and libraries installed there.  All installed
 packages are contained within that environment.
 
 
+Run Time requirements
+======================
+
+   sudo apt-get install liblzma-dev
+   pip install -r python/requirements.txt
+
+
 Design
 =======
 
