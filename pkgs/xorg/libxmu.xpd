@@ -1,0 +1,27 @@
+name: libxmu
+description: X11 miscellaneous utility library
+version: 1.1.2
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+  - libxext
+  - libxt
+
+files:
+  md5-41d92ab627dfa06568076043f3e089e4:
+    url: http://xorg.freedesktop.org/releases/individual/lib/libXmu-1.1.2.tar.bz2
+
+configure: >-
+  ./configure --prefix=%(prefix)s
+  --disable-static
+
+build:
+  make -j%(jobs)s
+
+install:
+  make -j%(jobs)s install
