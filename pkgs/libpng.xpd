@@ -1,0 +1,24 @@
+name: libpng
+description: PNG library
+version: 1.6.12
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+
+dependencies:
+  - tl:libc
+
+files:
+  md5-297388a6746a65a2127ecdeb1c6e5c82:
+    url: http://downloads.sourceforge.net/project/libpng/libpng16/1.6.12/libpng-1.6.12.tar.gz
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
