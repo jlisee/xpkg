@@ -1,0 +1,26 @@
+name: libice
+description: X11 Inter-Client Exchange library
+version: 1.0.9
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - xtrans
+
+dependencies:
+  - tl:libc
+  - libbsd
+
+files:
+  md5-471b5ca9f5562ac0d6eac7a0bf650738:
+    url: http://xorg.freedesktop.org/releases/individual/lib/libICE-1.0.9.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make -j%(jobs)s install
