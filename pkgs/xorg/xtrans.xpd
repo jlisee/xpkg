@@ -1,0 +1,21 @@
+name: xtrans
+description: X transport library
+version: 1.3.4
+
+build-dependencies:
+  - autotools-build
+
+files:
+  md5-a615e17d9fee6f097fc3b716eacb3dca:
+    url: http://xorg.freedesktop.org/releases/individual/lib/xtrans-1.3.4.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  - make install
+  - install -m755 -d "%(prefix)s/lib"
+  - mv "%(prefix)s/share/pkgconfig" "%(prefix)s/lib/pkgconfig"
