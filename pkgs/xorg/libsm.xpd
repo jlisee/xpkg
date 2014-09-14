@@ -1,0 +1,26 @@
+name: libsm
+description: X11 Session Management library
+version: 1.2.2
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - xtrans
+
+dependencies:
+  - tl:libc
+  - libice
+
+files:
+  md5-499a7773c65aba513609fe651853c5f3:
+    url: http://xorg.freedesktop.org/releases/individual/lib/libSM-1.2.2.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make -j%(jobs)s install
