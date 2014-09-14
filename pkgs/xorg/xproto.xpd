@@ -1,0 +1,20 @@
+name: xproto
+description: X11 core wire protocol and auxiliary headers
+version: 7.0.26
+
+build-dependencies:
+  - xorg-util-macros
+  - autotools-build
+
+files:
+  md5-4dc2464bfeade23dab5de38da0f6b1b5:
+    url: http://xorg.freedesktop.org/releases/individual/proto/xproto-7.0.26.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
