@@ -1,0 +1,20 @@
+name: xcb-proto
+description: X C Binding-protocol descriptions
+version: 1.11
+
+build-dependencies:
+  - autotools-build
+  - python
+
+files:
+  md5-6bf2797445dc6d43e9e4707c082eff9c:
+    url: http://xcb.freedesktop.org/dist/xcb-proto-1.11.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make install
