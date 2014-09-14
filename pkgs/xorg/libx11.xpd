@@ -1,0 +1,35 @@
+name: libx11
+description: X11 client-side library
+version: 1.6.2
+
+build-dependencies:
+  - autotools-build
+  - tl:c-compiler
+  - tl:linker
+  - inputproto
+  - xextproto
+  - xorg-util-macros
+  - xtrans
+
+dependencies:
+  - tl:libc
+  - libxcb
+  - xproto
+  - kbproto
+
+files:
+  md5-c35d6ad95b06635a524579e88622fdb5:
+    url: http://xorg.freedesktop.org/releases/individual/lib/libX11-1.6.2.tar.bz2
+  md5-f7f83282d2e17709a74161bab0fcee46:
+    url: xpd://libx11_fix_typo.patch
+
+configure:
+  - patch -p1 -i ../libx11_fix_typo.patch
+  - ./configure --prefix=%(prefix)s
+    --disable-static
+
+build:
+  make -j%(jobs)s
+
+install:
+  make -j%(jobs)s install
