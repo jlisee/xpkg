@@ -282,6 +282,10 @@ def create(args):
     with open(output_path, 'w') as f:
         f.write(xpd_yaml)
 
+    if args.verbose:
+        print "Contents: "
+        print xpd_yaml
+
     print 'XPD written to:',output_path
 
 
@@ -388,6 +392,8 @@ def main(argv = None):
                           help='URL of archive you wish to create an XPD for')
     parser_i.add_argument('-o', '--output', type=str, default=None,
                           help='(Optional) Output file for the generated XPD')
+    parser_i.add_argument('-v', '--verbose', action='store_true', default=False,
+                          help='Echo the generate file to screen')
     parser_i.add_argument(*root_args, **root_kwargs)
     parser_i.set_defaults(func=create)
 
