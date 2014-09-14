@@ -10,6 +10,7 @@ import subprocess
 from collections import namedtuple, defaultdict
 
 # Project Imports
+from xpkg import cache
 from xpkg import util
 
 
@@ -51,19 +52,14 @@ def get_name_version(url):
 
 
 def get_pkg_info(url):
-    # Grab the file name we are going to get from the URL
-    r, file_name = os.path.split(url)
-
     # Pull out the name and version from the package
     name, version = get_name_version(url)
 
     # Grab the file
-    # TODO: use the cache interface so it's pre-cached for the user
-    util.fetch_url(url, file_name)
+    cache_path = cache.fetch_file('md5-', url)
 
-    # Unpack the package
-    raw_hash = util.hash_file(open(file_name), hash_type=hashlib.md5)
-    file_hash = 'md5-' + raw_hash
+    # Get the file hash out
+    _, file_hash = os.path.split(cache_path)
 
     # Get the description based on apt-cache
     args = ['apt-cache','search', '^%s$' % name]
@@ -79,7 +75,7 @@ def get_pkg_info(url):
             description = '-'.join(parts[1:]).strip()
 
     # Unpack the package and guess the build system
-    package_dir = util.unpack_tarball(file_name)
+    package_dir = util.unpack_tarball(cache_path)
 
     root_files = os.listdir(package_dir)
     #full_file_path = [os.path.join(output_name, f) for f in root_files]

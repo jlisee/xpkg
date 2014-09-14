@@ -9,7 +9,9 @@ import shutil
 from xpkg import paths
 from xpkg import util
 
-# Not really sure this fits here, but it's the only module that uses it
+# Get the hash types
+valid_hash_types = set(['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'])
+
 def fetch_file(filehash, url):
     """
     Download the desired URL with the given hash
@@ -21,25 +23,42 @@ def fetch_file(filehash, url):
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
 
-    # Get the path where the file will be placed in our cache
-    cache_path = os.path.join(cache_dir, filehash)
+    # Get the information we need to do the hashing
+    hash_typename, hex_hash = filehash.split('-')
 
-    # See if we need to download the file
-    download_file = not os.path.exists(cache_path)
+    hash_type = getattr(hashlib, hash_typename)
 
-    if os.path.exists(cache_path):
+    have_hash = len(hex_hash) > 0
+
+
+    # Determine if we have a hash to check against in our cache
+    if have_hash:
+        # Get the path where the file will be placed in our cache
+        cache_path = os.path.join(cache_dir, filehash)
+
+        # See if we need to download the file
+        download_file = not os.path.exists(cache_path)
+
+        check_file = not download_file
+    else:
+        # We don't have the file so download the file here and move it into
+        # our cache
+        download_file = False
+        check_file = False
+
+        with util.temp_dir(suffix='-xpkg-url-hash'):
+            local_path = util.fetch_url(url, 'temp_download')
+
+            hex_hash = util.hash_file(open(local_path), hash_type=hash_type)
+
+            cache_path = os.path.join(cache_dir, filehash + hex_hash)
+
+            shutil.move(local_path, cache_path)
+
+    if check_file:
         # Lets verify the hash of the existing file, it's mostly ok to do this
         # because we need to read the file off disk to unpack it and the OS will
         # cache it.
-
-        # Get the hash types
-        valid_types = set(['md5', 'sha1', 'sha224', 'sha256', 'sha384',
-                           'sha512'])
-
-        # Get the information we need to do the hashing
-        hash_typename, hex_hash = filehash.split('-')
-
-        hash_type = getattr(hashlib, hash_typename)
 
         current_hash = util.hash_file(open(cache_path),
                                       hash_type=hash_type)
@@ -49,12 +68,18 @@ def fetch_file(filehash, url):
         if current_hash != hex_hash:
             download_file = True
 
-    else:
-        download_file = True
-
     # Download if needed
     if download_file:
         p = util.fetch_url(url, cache_path)
         print url,p
+
+    # If the user provided a hash double check that it matches
+    if have_hash:
+        current_hash = util.hash_file(open(cache_path),
+                                      hash_type=hash_type)
+
+        if current_hash != hex_hash:
+            args (hex_hash, current_hash, url)
+            raise BaseException("Error given hash '%s' != actual '%s': %s")
 
     return cache_path
