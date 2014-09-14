@@ -1,0 +1,19 @@
+name: renderproto
+description: X11 Render extension wire protocol
+version: 0.11.1
+
+build-dependencies:
+  - autotools-build
+
+files:
+  md5-a914ccc1de66ddeb4b611c6b0686e274:
+    url: http://xorg.freedesktop.org/releases/individual/proto/renderproto-0.11.1.tar.bz2
+
+configure:
+  ./configure --prefix=%(prefix)s
+
+build:
+  make -j%(jobs)s
+
+install:
+  make -j%(jobs)s install
