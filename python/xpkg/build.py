@@ -981,3 +981,70 @@ class BinaryPackageBuilder(object):
         fmt_str = '%(name)s_%(version)s_%(arch)s_%(linkage)s_%(kernel)s.xpa'
 
         return fmt_str % args
+
+
+def map_files(files, target_dir, base_root='/'):
+    """
+    files - maps the current path on the system, to the target.
+    """
+
+    file_mapping = {
+    }
+
+    for sys_path in files:
+        # Create our plan relative path stripping the base
+        base_len = len(base_root)
+        if base_len > 1:
+            base_len += 1
+        relative_path = sys_path[base_len:]
+
+        # Now remove a leading "usr/" form the path (we don't want those)
+        relative_path = relative_path.lstrip('usr/')
+
+        # Now remove those linux specific include directories we don't use
+        for p in ['/i386-linux-gnu', '/x86_64-linux-gnu']:
+            relative_path = relative_path.replace(p, '')
+
+        # Make the local path by stripping out the base
+        local_path = os.path.join(target_dir, relative_path)
+
+
+        if os.path.isdir(sys_path):
+            # Just make directory in the install path
+            if not os.path.exists(local_path):
+                os.makedirs(local_path)
+        elif os.path.islink(sys_path):
+            # NOTE: links go "source" <- "link_name", where
+            # "link_name" is the file system location of the symbolic link and
+            # "source" is the symbolic path embedded at that location. Here we
+            # translate all paths into relative symbolic links
+
+            # Read in the full target path of the symlink ("source")
+            orig_source = os.readlink(sys_path)
+
+            # We need the directory of the symlink so we can compute a proper
+            # relative path
+            if os.path.isdir(sys_path):
+                link_name_dir = sys_path
+            else:
+                link_name_dir, _ = os.path.split(sys_path)
+
+            # Resolve possibly relative source paths
+            if os.path.isabs(orig_source):
+                abs_source = os.path.abspath(orig_source)
+            else:
+                abs_source = os.path.abspath(os.path.join(link_name_dir, orig_source))
+
+            source = os.path.relpath(abs_source,
+                                     os.path.abspath(link_name_dir))
+
+            os.symlink(source, local_path)
+
+            file_mapping[sys_path] = relative_path
+        else:
+            # Normal file just copy into a normal relative path
+            shutil.copy(sys_path, local_path)
+
+            file_mapping[sys_path] = relative_path
+
+    return file_mapping

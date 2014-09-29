@@ -789,3 +789,13 @@ def pprint(v):
         print json.dumps(v, sort_keys='True', indent=2)
     else:
         pprint_.pprint(v)
+
+
+def write_to_file(path, contents):
+    """
+    Writes data to the given path, overwriting any file that exists there. The
+    directory must exist.
+    """
+
+    with open(path, 'w') as f:
+        f.write(contents)
