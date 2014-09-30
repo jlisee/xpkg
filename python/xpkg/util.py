@@ -799,3 +799,14 @@ def write_to_file(path, contents):
 
     with open(path, 'w') as f:
         f.write(contents)
+
+
+def remove_prefix(string, prefix):
+    """
+    Remove the prefix from a string.
+    """
+
+    if string.startswith(prefix):
+        return string[len(prefix):]
+    else:
+        return string

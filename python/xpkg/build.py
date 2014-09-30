@@ -985,11 +985,34 @@ class BinaryPackageBuilder(object):
 
 def map_files(files, target_dir, base_root='/'):
     """
-    files - maps the current path on the system, to the target.
+    files - a list of files paths on the install system
+    target_dir - the directory to map the files into (this is would be an xpkg
+        environment)
+
+    returns a mapping that goes {'/base/lib/file.so' : 'lib/file.so'}
     """
 
     file_mapping = {
     }
+
+
+    def fix_path(input_path):
+        """
+        Removes parts of the path we don't like.
+        """
+
+        # Now remove a leading "usr/" form the path (we don't want those)
+        input_path = util.remove_prefix(input_path, 'usr/')
+
+        # For absolute paths we are given we also need to remove the "usr"
+        input_path = input_path.replace(os.path.join(base_root, 'usr'), base_root)
+
+        # Now remove those linux specific include directories we don't use
+        for p in ['/i386-linux-gnu', '/x86_64-linux-gnu']:
+            input_path = input_path.replace(p, '')
+
+        return input_path
+
 
     for sys_path in files:
         # Create our plan relative path stripping the base
@@ -998,12 +1021,7 @@ def map_files(files, target_dir, base_root='/'):
             base_len += 1
         relative_path = sys_path[base_len:]
 
-        # Now remove a leading "usr/" form the path (we don't want those)
-        relative_path = relative_path.lstrip('usr/')
-
-        # Now remove those linux specific include directories we don't use
-        for p in ['/i386-linux-gnu', '/x86_64-linux-gnu']:
-            relative_path = relative_path.replace(p, '')
+        relative_path = fix_path(relative_path)
 
         # Make the local path by stripping out the base
         local_path = os.path.join(target_dir, relative_path)
@@ -1034,6 +1052,11 @@ def map_files(files, target_dir, base_root='/'):
                 abs_source = os.path.abspath(orig_source)
             else:
                 abs_source = os.path.abspath(os.path.join(link_name_dir, orig_source))
+
+            # Modify our source and link_name_dir path to handle the removing of
+            # things like /usr and i386-linux-gnu from the paths
+            abs_source = fix_path(abs_source)
+            link_name_dir = fix_path(link_name_dir)
 
             source = os.path.relpath(abs_source,
                                      os.path.abspath(link_name_dir))

@@ -151,6 +151,10 @@ class UtilTests(unittest.TestCase):
             # Now a relative symlink to a directory
             self._make_rel_symlink('lib', 'other_lib'),
             self._make_abs_symlink('lib', 'a_lib'),
+
+            # Make sure symbolic links with edited paths work
+            self._make_abs_symlink('usr/lib/x86_64-linux-gnu/libmine.so', 'lib/libmine.so.other'),
+            self._make_rel_symlink('libmine.so', 'usr/lib/x86_64-linux-gnu/libmine.so.more'),
         ]
 
         # Run the map
@@ -172,6 +176,9 @@ class UtilTests(unittest.TestCase):
         self.assertTargetFileContents('lib/libo.so.1.2', '0!'),
         self.assertTargetPathExists('other_lib')
         self.assertTargetPathExists('a_lib')
+        self.assertTargetFileContents('lib/libmine.so.other', 'Dewey'),
+        self.assertTargetFileContents('lib/libmine.so.more', 'Dewey',)
+
 
         # Now check the mapping
         expected_mapping = {
@@ -182,6 +189,8 @@ class UtilTests(unittest.TestCase):
             files[8] : 'lib/libo.so',
             files[9] : 'lib/libo.so.1',
             files[10] : 'lib/libo.so.1.2',
+            files[13] : 'lib/libmine.so.other',
+            files[14] : 'lib/libmine.so.more',
         }
 
         self.assertEquals(expected_mapping, mapping)
