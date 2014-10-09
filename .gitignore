@@ -2,3 +2,5 @@
 *.pyc
 env
 repo
+old-repo*
+env-bootstrap*

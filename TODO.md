@@ -3,7 +3,8 @@ Showstoppers
 
 Things a package manager must have (and ours needs to work)
 
- - Fix bad expression when removing a non-existent file from the repo
+ - BUG: fix the full package name, not the toolset dep being tied into a package
+ - BUG: Fix bad expression when removing a non-existent file from the repo
  - split up python into minimal (just core interp, key libs), normal, and dev
  - split out libstdc++ and libgcc_s from gcc
 
@@ -14,7 +15,6 @@ Things a package manager must have (and ours needs to work)
 
  - create a way for a for package to hard-link/copy in system libraries
    - used for opengl so we can link again the vendor version
-   - X11 we will just build ourselves
 
  - make sure binutils is not searching the local system directories
 

@@ -1,0 +1,10 @@
+name: local-libc
+description: Local libc library (do not distribute package)
+version: 1
+
+files:
+  md5-e2dd14afb1f2e3126ee6d11018d6515c:
+    url: xpd://genlist.sh
+
+map_files:
+  bash genlist.sh

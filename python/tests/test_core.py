@@ -5,12 +5,10 @@ __doc__ = """Tests for the core module
 
 # Python Imports
 import copy
-import os
 import unittest
 
 # Project Imports
 from xpkg import core
-from xpkg import util
 
 
 class UtilTests(unittest.TestCase):

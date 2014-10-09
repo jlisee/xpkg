@@ -1116,12 +1116,15 @@ class XPA(object):
           'version' : '1.0.0',
           'description' : 'My hello world package',
           'dependencies' : ['libgreet'],
+
           'dirs' : [
             'bin'
           ],
+
           'files' : [
             'bin/hello'
           ],
+
           'install_path_offsets' : {
             'install_dir' : '/tmp/install-list',
             'binary_files' : {
@@ -1133,6 +1136,10 @@ class XPA(object):
             'text_files' : {
                'share/hello/msg.txt' : [5, 100]
             }
+          },
+
+          'mapped_files' : {
+               '/lib/libc.so' : 'lib/libc.so'
           }
         }
     """

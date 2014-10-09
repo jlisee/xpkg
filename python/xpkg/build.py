@@ -178,8 +178,7 @@ GNUToolset = Toolset(
         'linker' : 'binutils',
         'c-compiler' : 'gcc',
         'c++-compiler' : 'gcc',
-        # TODO: check this to "local-libc" package
-        'libc' : 'ubuntu-libc',
+        'libc' : 'local-libc',
     },
     env_vars={
         'CC' : ('gcc', Toolset.REPLACE_VAR),
@@ -318,12 +317,16 @@ class PackageBuilder(object):
                 build_dir = self._work_dir
 
             with util.cd(build_dir):
-                # Standard build configure install
-                self._configure()
+                if 'map_files' in self._xpd._data:
+                    # These are special packages that pull in system libs
+                    new_paths, mapped_files = self._map_files()
+                else:
+                    # Standard build configure install
+                    self._configure()
 
-                self._build()
+                    self._build()
 
-                new_paths = self._install()
+                    new_paths = self._install()
         finally:
             # Put back our environment
             env_vars.restore()
@@ -445,11 +448,47 @@ class PackageBuilder(object):
         return []
 
 
-    def _run_cmds(self, raw):
+    def _map_files(self):
+        """
+        Installs the package, keeping track of what files it creates.
+        """
+
+        # TODO: log this
+        print 'Mapping files...'
+
+        # Create a temporary file to hold output in
+        pre_paths = set(util.list_files(self._target_dir))
+
+        with tempfile.NamedTemporaryFile(dir=self._work_dir) as f:
+            self._run_cmds(self._xpd._data['map_files'], f)
+
+            f.seek(0, 0)
+
+            stripped = [l.strip('\n') for l in f.readlines()
+                        # Ignore echo from shellcmd function
+                        if not l.startswith('[cmd]')]
+            files = [l for l in stripped if len(l) > 0]
+
+        print "DEBUG",len(files)
+        mapped_files = map_files(files, self._target_dir)
+
+        post_paths = set(util.list_files(self._target_dir))
+
+        new_paths = post_paths - pre_paths
+
+        return new_paths, mapped_files
+
+
+    def _run_cmds(self, raw, output=None):
         """
         Runs either a single or list of commands, subbing in all variables as
         needed for each command.
         """
+
+        # Default to internal output file obj
+        if not output:
+            output = self._output
+
 
         # If the raw is a dict, it's a advanced command that sets environment
         # variables so read those variables
@@ -480,7 +519,7 @@ class PackageBuilder(object):
 
             else:
                 # Run our shell command
-                run_cmd = lambda: self._shellcmd(cmd_data, self._output)
+                run_cmd = lambda: self._shellcmd(cmd_data, output)
 
 
             if len(env_vars):
